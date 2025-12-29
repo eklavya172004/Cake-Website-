@@ -1,0 +1,339 @@
+// prisma/schema.prisma
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ============================================
+// USER & AUTH
+// ============================================
+
+model User {
+  id             String         @id @default(cuid())
+  email          String         @unique
+  phone          String?
+  name           String
+  avatar         String?
+  savedAddresses Json[]         
+  fcmToken       String?        // For push notifications
+  
+  // Relations
+  orders         Order[]
+  notifications  Notification[]
+  
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+
+  @@index([email])
+  @@index([phone])
+}
+
+// ============================================
+// VENDORS & CAKES
+// ============================================
+
+model Vendor {
+  id                String   @id @default(cuid())
+  name              String
+  slug              String   @unique
+  razorpayAccountId String?
+  description       String?
+  logo              String?
+  coverImage        String?
+  rating            Float    @default(0)
+  totalReviews      Int      @default(0)
+  serviceAreas      String[] // ["110001", "110002"]
+  deliveryFee       Json     // { "110001": 50, "110002": 70 }
+  minOrderAmount    Float    @default(0)
+  preparationTime   Int      // in minutes
+  isActive          Boolean  @default(true)
+  
+  // Contact
+  phone             String?
+  email             String?
+  address           Json?
+  
+  // Relations
+  cakes             Cake[]
+  orders            Order[]
+  
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  @@index([slug])
+  @@index([isActive])
+}
+
+model Cake {
+  id              String   @id @default(cuid())
+  vendorId        String
+  vendor          Vendor   @relation(fields: [vendorId], references: [id], onDelete: Cascade)
+  name            String
+  slug            String
+  description     String?
+  basePrice       Float
+  category        String   // "Birthday", "Wedding", "Custom"
+  images          String[] // URLs from R2
+  flavors         String[] // ["Chocolate", "Vanilla"]
+  availableSizes  Json     // [{size: "1kg", price: 500}, {size: "2kg", price: 900}]
+  tags            String[] // ["eggless", "sugar-free", "bestseller"]
+  isCustomizable  Boolean  @default(false)
+  customOptions   Json?    // {toppings: [], frostings: [], messages: true}
+  isActive        Boolean  @default(true)
+  popularity      Int      @default(0)
+  
+  // Reviews
+  reviews         CakeReview[]
+  
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  
+  @@unique([vendorId, slug])
+  @@index([vendorId])
+  @@index([category])
+  @@index([isActive])
+  @@index([popularity])
+}
+
+// ============================================
+// ORDERS & TRACKING
+// ============================================
+
+// ============================================
+// CAKE REVIEWS
+// ============================================
+
+model CakeReview {
+  id          String   @id @default(cuid())
+  cakeId      String
+  cake        Cake     @relation(fields: [cakeId], references: [id], onDelete: Cascade)
+  
+  rating      Int      // 1-5 stars
+  text        String
+  userName    String   // Guest or user name
+  userEmail   String?  // Optional email
+  
+  // Photos
+  photos      ReviewPhoto[]
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  @@index([cakeId])
+  @@index([rating])
+  @@index([createdAt])
+}
+
+model ReviewPhoto {
+  id          String   @id @default(cuid())
+  reviewId    String
+  review      CakeReview @relation(fields: [reviewId], references: [id], onDelete: Cascade)
+  
+  url         String   // S3/R2 URL
+  uploadedAt  DateTime @default(now())
+  
+  @@index([reviewId])
+}
+
+// ============================================
+// ORDERS & TRACKING
+// ============================================
+
+model Order {
+  id                    String    @id @default(cuid())
+  orderNumber           String    @unique // "ORD-2025-0001"
+  
+  // Relations
+  userId                String
+  user                  User      @relation(fields: [userId], references: [id])
+  vendorId              String
+  vendor                Vendor    @relation(fields: [vendorId], references: [id])
+  
+  // Order Details
+  items                 Json      // [{cakeId, name, quantity, customization, price}]
+  deliveryAddress       Json      // Full address object
+  deliveryPincode       String
+  
+  // Status & Tracking
+  status                String    @default("pending") 
+  // Statuses: pending → confirmed → preparing → ready → picked_up → out_for_delivery → delivered / cancelled
+  
+  // Pricing
+  totalAmount           Float
+  deliveryFee           Float
+  discount              Float     @default(0)
+  finalAmount           Float
+  
+  // Payment
+  paymentMethod         String?   // "online", "cod", "copay"
+  paymentStatus         String    @default("pending") // pending, processing, completed, failed, refunded
+  razorpayOrderId       String?
+  razorpayPaymentId     String?
+  
+  // Delivery Tracking
+  deliveryPartnerId     String?
+  deliveryPartner       DeliveryPartner? @relation(fields: [deliveryPartnerId], references: [id])
+  trackingNumber        String?
+  currentLocation       Json?     // {lat, lng, address} for live tracking
+  
+  // Timeline Timestamps
+  estimatedDelivery     DateTime?
+  vendorAcceptedAt      DateTime?
+  preparationStartedAt  DateTime?
+  readyForPickupAt      DateTime?
+  pickedUpAt            DateTime?
+  outForDeliveryAt      DateTime?
+  deliveredAt           DateTime?
+  cancelledAt           DateTime?
+  cancellationReason    String?
+  
+  // Additional
+  notes                 String?   // Customer notes
+  vendorNotes           String?   // Internal notes
+  customerRating        Int?      // 1-5 stars
+  customerReview        String?
+  
+  // Relations
+  coPayment             CoPayment?
+  statusHistory         OrderStatusHistory[]
+  notifications         Notification[]
+  
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+
+  @@index([userId])
+  @@index([vendorId])
+  @@index([status])
+  @@index([deliveryPincode])
+  @@index([createdAt])
+}
+
+// ============================================
+// ORDER STATUS HISTORY (Critical for Tracking)
+// ============================================
+
+model OrderStatusHistory {
+  id          String   @id @default(cuid())
+  orderId     String
+  order       Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  
+  status      String   // The status it changed TO
+  message     String?  // Human-readable message: "Order confirmed by Sweet Dreams Bakery"
+  metadata    Json?    // Extra data: location, images, etc.
+  
+  createdBy   String?  // "vendor", "system", "delivery_partner", userId
+  createdAt   DateTime @default(now())
+
+  @@index([orderId, createdAt])
+  @@index([status])
+}
+
+// ============================================
+// DELIVERY PARTNERS
+// ============================================
+
+model DeliveryPartner {
+  id            String   @id @default(cuid())
+  name          String
+  phone         String
+  email         String?
+  avatar        String?
+  
+  // Live Location
+  currentLat    Float?
+  currentLng    Float?
+  lastLocationUpdate DateTime?
+  
+  // Status
+  isAvailable   Boolean  @default(true)
+  isOnline      Boolean  @default(false)
+  
+  // Performance
+  rating        Float?
+  totalDeliveries Int    @default(0)
+  
+  // Relations
+  orders        Order[]
+  
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@index([isAvailable, isOnline])
+}
+
+// ============================================
+// CO-PAYMENT
+// ============================================
+
+model CoPayment {
+  id              String   @id @default(cuid())
+  orderId         String   @unique
+  order           Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  
+  totalAmount     Float
+  contributors    Contributor[]   // [{email, phone, amount, status, paymentLinkId, paidAt}]
+  paymentLinks    Json[]   // Razorpay payment link details
+  
+  status          String   @default("pending") // pending, partial, completed, failed
+  collectedAmount Float    @default(0)
+  
+  expiresAt       DateTime?
+  completedAt     DateTime?
+  
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([status])
+}
+
+model Contributor {
+  id              String    @id @default(cuid())
+  coPaymentId     String
+  coPayment       CoPayment @relation(fields: [coPaymentId], references: [id], onDelete: Cascade)
+  
+  email           String
+  name            String?
+  amount          Float
+  status          String    @default("pending") // pending, paid, failed
+  
+  // Razorpay Specifics
+  paymentLinkId   String?   @unique // The unique link sent to this user
+  paidAt          DateTime?
+  
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+}
+
+// ============================================
+// NOTIFICATIONS
+// ============================================
+
+model Notification {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  orderId   String?
+  order     Order?   @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  
+  type      String   // "order_confirmed", "order_preparing", "out_for_delivery", "delivered", etc.
+  title     String
+  message   String
+  icon      String?  // Emoji or icon name
+  
+  isRead    Boolean  @default(false)
+  readAt    DateTime?
+  
+  metadata  Json?    // Extra data like deep links, images
+  
+  createdAt DateTime @default(now())
+
+  @@index([userId, isRead])
+  @@index([orderId])
+  @@index([createdAt])
+}

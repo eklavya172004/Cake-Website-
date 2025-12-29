@@ -1,0 +1,454 @@
+'use client';
+
+import React, { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
+import { useSession, signOut } from 'next-auth/react';
+import { User, Package, Truck, CreditCard, HelpCircle, MessageSquare, LogOut, ChevronRight } from 'lucide-react';
+import OrderDetailModal from '@/components/orders/OrderDetailModal';
+
+export default function UserDashboard() {
+  const router = useRouter();
+  const { data: session, status } = useSession();
+  const [activeSection, setActiveSection] = useState<'profile' | 'orders' | 'tracking' | 'payments' | 'support' | 'help'>('profile');
+  const [user, setUser] = useState<any>(null);
+  const [orders, setOrders] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+  const [selectedOrderId, setSelectedOrderId] = useState<string | null>(null);
+  const [showOrderDetail, setShowOrderDetail] = useState(false);
+
+  useEffect(() => {
+    if (status === 'unauthenticated') {
+      router.push('/');
+      return;
+    }
+
+    if (status === 'authenticated') {
+      fetchUserProfile();
+    }
+  }, [status, router]);
+
+  const fetchUserProfile = async () => {
+    try {
+      setLoading(true);
+      const response = await fetch('/api/user/profile');
+      
+      if (!response.ok) {
+        throw new Error('Failed to fetch profile');
+      }
+
+      const data = await response.json();
+      setUser(data.user);
+      setOrders(data.orders || []);
+      setError('');
+    } catch (err: any) {
+      setError(err.message || 'Failed to load profile');
+      console.error('Profile fetch error:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleLogout = async () => {
+    await signOut({ redirect: true, callbackUrl: '/' });
+  };
+
+  const handleOrderClick = (orderId: string) => {
+    setSelectedOrderId(orderId);
+    setShowOrderDetail(true);
+  };
+
+  // FAQ and Support data
+  const faqs = [
+    { question: 'How do I track my order?', answer: 'Go to the Order Tracking section to see real-time updates of your order status.' },
+    { question: 'Can I cancel my order?', answer: 'You can cancel orders within 1 hour of placement. Visit Orders section for more details.' },
+    { question: 'What is the delivery time?', answer: 'Delivery typically takes 2-4 hours depending on your location and bakery availability.' },
+    { question: 'Do you offer custom cakes?', answer: 'Yes! You can customize your cake by selecting flavors, toppings, and adding personalized messages.' },
+    { question: 'What payment methods do you accept?', answer: 'We accept Credit Cards, Debit Cards, UPI, and Cash on Delivery.' },
+  ];
+
+  const supportChannels = [
+    { channel: 'Email', contact: 'support@cakeshop.com', icon: '📧', response: '24 hours' },
+    { channel: 'Phone', contact: '+91 1800-CAKE-123', icon: '📞', response: '2 hours' },
+    { channel: 'Live Chat', contact: 'Available 10 AM - 10 PM', icon: '💬', response: 'Instant' },
+    { channel: 'WhatsApp', contact: '+91 98765 43210', icon: '💬', response: '30 mins' },
+  ];
+
+  const joinDate = user?.createdAt ? new Date(user.createdAt).toLocaleDateString('en-US', { year: 'numeric', month: 'long' }) : 'N/A';
+
+  if (status === 'loading' || loading) {
+    return (
+      <div className="min-h-screen bg-[#FFF9EB] flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin w-12 h-12 border-4 border-[#1a1a1a] border-t-[#F7E47D] rounded-full mx-auto"></div>
+          <p className="mt-4 text-[#1a1a1a]">Loading profile...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen bg-[#FFF9EB] flex items-center justify-center">
+        <div className="text-center">
+          <p className="text-red-600 text-lg">{error}</p>
+          <button onClick={fetchUserProfile} className="mt-4 px-6 py-2 bg-[#1a1a1a] text-[#F7E47D] rounded hover:bg-black">
+            Retry
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  if (!user) {
+    return (
+      <div className="min-h-screen bg-[#FFF9EB] flex items-center justify-center">
+        <p className="text-[#1a1a1a]">No user data available</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-[#FFF9EB] text-[#1a1a1a]">
+      {/* Header */}
+      <div className="sticky top-0 z-30 bg-[#FFF9EB] border-b border-[#1a1a1a]/10">
+        <div className="max-w-7xl mx-auto px-4 py-6 flex items-center justify-between">
+          <h1 className="serif text-3xl">My Dashboard</h1>
+          <button onClick={handleLogout} className="flex items-center gap-2 px-4 py-2 text-red-600 hover:bg-red-50 rounded transition-colors">
+            <LogOut className="w-5 h-5" />
+            Logout
+          </button>
+        </div>
+      </div>
+
+      <div className="max-w-7xl mx-auto px-4 py-8">
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
+          {/* Sidebar */}
+          <div className="lg:col-span-1">
+            <div className="bg-white border border-[#1a1a1a]/10 rounded-lg overflow-hidden sticky top-20">
+              {/* Sidebar Header */}
+              <div className="bg-gradient-to-r from-[#1a1a1a] to-[#333333] text-[#F7E47D] p-6 text-center">
+                <div className="text-5xl mb-3">{user.avatar || '👤'}</div>
+                <h3 className="font-bold text-lg">{user.name}</h3>
+                <p className="text-sm opacity-80">{user.email}</p>
+              </div>
+
+              {/* Navigation Items */}
+              <nav className="p-4 space-y-2">
+                <button
+                  onClick={() => setActiveSection('profile')}
+                  className={`w-full flex items-center gap-3 px-4 py-3 rounded transition-colors ${
+                    activeSection === 'profile'
+                      ? 'bg-[#F7E47D] text-[#1a1a1a] font-semibold'
+                      : 'hover:bg-[#FFF9EB] text-[#1a1a1a]'
+                  }`}
+                >
+                  <User className="w-5 h-5" />
+                  <span>My Profile</span>
+                  {activeSection === 'profile' && <ChevronRight className="w-5 h-5 ml-auto" />}
+                </button>
+
+                <button
+                  onClick={() => setActiveSection('orders')}
+                  className={`w-full flex items-center gap-3 px-4 py-3 rounded transition-colors ${
+                    activeSection === 'orders'
+                      ? 'bg-[#F7E47D] text-[#1a1a1a] font-semibold'
+                      : 'hover:bg-[#FFF9EB] text-[#1a1a1a]'
+                  }`}
+                >
+                  <Package className="w-5 h-5" />
+                  <span>My Orders</span>
+                  <span className="ml-auto text-xs bg-[#1a1a1a] text-[#F7E47D] px-2 py-1 rounded-full">{orders.length}</span>
+                </button>
+
+                <button
+                  onClick={() => setActiveSection('tracking')}
+                  className={`w-full flex items-center gap-3 px-4 py-3 rounded transition-colors ${
+                    activeSection === 'tracking'
+                      ? 'bg-[#F7E47D] text-[#1a1a1a] font-semibold'
+                      : 'hover:bg-[#FFF9EB] text-[#1a1a1a]'
+                  }`}
+                >
+                  <Truck className="w-5 h-5" />
+                  <span>Order Tracking</span>
+                </button>
+
+                <button
+                  onClick={() => setActiveSection('payments')}
+                  className={`w-full flex items-center gap-3 px-4 py-3 rounded transition-colors ${
+                    activeSection === 'payments'
+                      ? 'bg-[#F7E47D] text-[#1a1a1a] font-semibold'
+                      : 'hover:bg-[#FFF9EB] text-[#1a1a1a]'
+                  }`}
+                >
+                  <CreditCard className="w-5 h-5" />
+                  <span>Payment Status</span>
+                </button>
+
+                <button
+                  onClick={() => setActiveSection('support')}
+                  className={`w-full flex items-center gap-3 px-4 py-3 rounded transition-colors ${
+                    activeSection === 'support'
+                      ? 'bg-[#F7E47D] text-[#1a1a1a] font-semibold'
+                      : 'hover:bg-[#FFF9EB] text-[#1a1a1a]'
+                  }`}
+                >
+                  <MessageSquare className="w-5 h-5" />
+                  <span>Support</span>
+                </button>
+
+                <button
+                  onClick={() => setActiveSection('help')}
+                  className={`w-full flex items-center gap-3 px-4 py-3 rounded transition-colors ${
+                    activeSection === 'help'
+                      ? 'bg-[#F7E47D] text-[#1a1a1a] font-semibold'
+                      : 'hover:bg-[#FFF9EB] text-[#1a1a1a]'
+                  }`}
+                >
+                  <HelpCircle className="w-5 h-5" />
+                  <span>Help & FAQ</span>
+                </button>
+              </nav>
+            </div>
+          </div>
+
+          {/* Main Content */}
+          <div className="lg:col-span-3">
+            {/* Profile Section */}
+            {activeSection === 'profile' && (
+              <div className="bg-white border border-[#1a1a1a]/10 rounded-lg p-8 space-y-8">
+                <div>
+                  <h2 className="serif text-3xl mb-6">My Profile</h2>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                      <label className="block text-sm font-semibold text-gray-600 mb-2">Full Name</label>
+                      <input type="text" defaultValue={user.name} disabled className="w-full px-4 py-3 border border-[#1a1a1a]/20 rounded focus:outline-none focus:border-[#1a1a1a] bg-gray-100" />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-semibold text-gray-600 mb-2">Email</label>
+                      <input type="email" defaultValue={user.email} disabled className="w-full px-4 py-3 border border-[#1a1a1a]/20 rounded focus:outline-none focus:border-[#1a1a1a] bg-gray-100" />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-semibold text-gray-600 mb-2">Phone Number</label>
+                      <input type="tel" defaultValue={user.phone || ''} disabled className="w-full px-4 py-3 border border-[#1a1a1a]/20 rounded focus:outline-none focus:border-[#1a1a1a] bg-gray-100" />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-semibold text-gray-600 mb-2">Account ID</label>
+                      <input type="text" defaultValue={user.id} disabled className="w-full px-4 py-3 border border-[#1a1a1a]/20 rounded focus:outline-none focus:border-[#1a1a1a] bg-gray-100" />
+                    </div>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                  <div className="bg-[#FFF9EB] p-4 rounded-lg text-center">
+                    <div className="text-3xl font-bold text-[#1a1a1a]">{orders.length}</div>
+                    <p className="text-sm text-gray-600 mt-2">Total Orders</p>
+                  </div>
+                  <div className="bg-[#FFF9EB] p-4 rounded-lg text-center">
+                    <div className="text-3xl font-bold text-green-600">✓</div>
+                    <p className="text-sm text-gray-600 mt-2">Account Verified</p>
+                  </div>
+                  <div className="bg-[#FFF9EB] p-4 rounded-lg text-center">
+                    <div className="text-sm text-gray-600">Joined</div>
+                    <p className="text-sm font-semibold mt-2">{joinDate}</p>
+                  </div>
+                </div>
+
+                <button className="w-full bg-[#1a1a1a] text-[#F7E47D] py-3 font-bold uppercase tracking-widest rounded hover:bg-black transition-colors" disabled>
+                  Profile information is read-only
+                </button>
+              </div>
+            )}
+
+            {/* Orders Section */}
+            {activeSection === 'orders' && (
+              <div className="bg-white border border-[#1a1a1a]/10 rounded-lg p-8 space-y-6">
+                <h2 className="serif text-3xl">My Orders</h2>
+                {orders.length === 0 ? (
+                  <div className="text-center py-12">
+                    <Package className="w-16 h-16 mx-auto text-gray-300 mb-4" />
+                    <p className="text-gray-600 mb-6">No orders yet. Start shopping!</p>
+                    {process.env.NODE_ENV === 'development' && (
+                      <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 inline-block">
+                        <p className="text-sm text-yellow-800 mb-3">
+                          👨‍💻 For testing: Create a test order
+                        </p>
+                        <a
+                          href="/dev/create-test-order"
+                          className="inline-block px-4 py-2 bg-yellow-600 text-white rounded hover:bg-yellow-700 transition-colors text-sm font-semibold"
+                        >
+                          Create Test Order
+                        </a>
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    {orders.map((order) => (
+                      <button
+                        key={order.id}
+                        onClick={() => handleOrderClick(order.id)}
+                        className="w-full text-left border border-[#1a1a1a]/10 rounded-lg p-6 hover:shadow-lg hover:border-[#F7E47D] transition-all hover:bg-[#FFF9EB]/50 cursor-pointer"
+                      >
+                        <div className="flex justify-between items-start mb-4">
+                          <div>
+                            <h3 className="font-bold text-lg text-[#1a1a1a]">{order.orderNumber || 'Order'}</h3>
+                            <p className="text-sm text-gray-600">{order.vendor?.name || 'N/A'}</p>
+                          </div>
+                          <span className={`px-3 py-1 rounded text-sm font-semibold ${
+                            order.status === 'delivered' ? 'bg-green-100 text-green-700' :
+                            order.status === 'cancelled' ? 'bg-red-100 text-red-700' :
+                            order.status === 'pending' ? 'bg-yellow-100 text-yellow-700' :
+                            order.status === 'confirmed' ? 'bg-blue-100 text-blue-700' :
+                            order.status === 'preparing' ? 'bg-purple-100 text-purple-700' :
+                            order.status === 'ready' ? 'bg-indigo-100 text-indigo-700' :
+                            order.status === 'out_for_delivery' ? 'bg-cyan-100 text-cyan-700' :
+                            'bg-gray-100 text-gray-700'
+                          }`}>
+                            {order.status?.replace(/_/g, ' ').toUpperCase() || 'Pending'}
+                          </span>
+                        </div>
+                        <div className="flex justify-between items-center">
+                          <span className="text-sm text-gray-600">{new Date(order.createdAt).toLocaleDateString()}</span>
+                          <div className="flex items-center gap-3">
+                            <span className="font-bold text-lg text-[#F7E47D]">₹{order.finalAmount || order.totalAmount || 0}</span>
+                            <ChevronRight className="w-5 h-5 text-[#1a1a1a]" />
+                          </div>
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Tracking Section */}
+            {activeSection === 'tracking' && (
+              <div className="bg-white border border-[#1a1a1a]/10 rounded-lg p-8 space-y-6">
+                <h2 className="serif text-3xl">Order Tracking</h2>
+                {orders.length === 0 ? (
+                  <div className="text-center py-12">
+                    <Truck className="w-16 h-16 mx-auto text-gray-300 mb-4" />
+                    <p className="text-gray-600">No active orders to track.</p>
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    {orders.filter(o => o.status !== 'Cancelled').map((order) => (
+                      <button
+                        key={order.id}
+                        onClick={() => router.push(`/orders/${order.id}`)}
+                        className="w-full border border-[#1a1a1a]/10 rounded-lg p-6 hover:shadow-lg hover:border-[#F7E47D] transition-all text-left"
+                      >
+                        <div className="flex justify-between items-start">
+                          <div>
+                            <h3 className="font-bold text-lg mb-2">{order.id}</h3>
+                            <p className="text-gray-600 text-sm">Order Status: <span className="font-bold capitalize">{order.status || 'Processing'}</span></p>
+                            <p className="text-xs text-gray-500 mt-2">Last updated: {new Date(order.updatedAt).toLocaleString()}</p>
+                          </div>
+                          <ChevronRight className="w-5 h-5 text-[#F7E47D] flex-shrink-0" />
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Payments Section */}
+            {activeSection === 'payments' && (
+              <div className="bg-white border border-[#1a1a1a]/10 rounded-lg p-8 space-y-6">
+                <h2 className="serif text-3xl">Payment Status</h2>
+                {orders.length === 0 ? (
+                  <div className="text-center py-12">
+                    <CreditCard className="w-16 h-16 mx-auto text-gray-300 mb-4" />
+                    <p className="text-gray-600">No payment records found.</p>
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    {orders.map((order) => (
+                      <div key={order.id} className="border border-[#1a1a1a]/10 rounded-lg p-6">
+                        <div className="flex justify-between items-start">
+                          <div>
+                            <h3 className="font-bold text-lg">{order.id}</h3>
+                            <p className="text-sm text-gray-600">Payment Method: {order.paymentMethod || 'Razorpay'}</p>
+                            <p className="text-xs text-gray-500 mt-2">{new Date(order.createdAt).toLocaleDateString()}</p>
+                          </div>
+                          <div className="text-right">
+                            <p className="text-2xl font-bold">₹{order.totalAmount || 0}</p>
+                            <span className="inline-block mt-2 px-3 py-1 bg-green-100 text-green-700 rounded text-sm font-semibold">
+                              Paid
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Support Section */}
+            {activeSection === 'support' && (
+              <div className="bg-white border border-[#1a1a1a]/10 rounded-lg p-8 space-y-6">
+                <h2 className="serif text-3xl">Customer Support</h2>
+                <p className="text-gray-600">Get in touch with us through any of these channels</p>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  {supportChannels.map((support, idx) => (
+                    <div key={idx} className="border border-[#1a1a1a]/10 rounded-lg p-6 hover:shadow-md transition-shadow">
+                      <div className="text-4xl mb-3">{support.icon}</div>
+                      <h3 className="font-bold text-lg mb-2">{support.channel}</h3>
+                      <p className="text-gray-600 mb-3">{support.contact}</p>
+                      <p className="text-xs text-gray-500">Response time: {support.response}</p>
+                    </div>
+                  ))}
+                </div>
+
+                <div className="bg-[#FFF9EB] border-2 border-[#F7E47D] rounded-lg p-6 mt-8">
+                  <h3 className="font-bold text-lg mb-3">Send us a Message</h3>
+                  <textarea
+                    placeholder="Describe your issue or question..."
+                    className="w-full px-4 py-3 border border-[#1a1a1a]/20 rounded mb-4 focus:outline-none focus:border-[#1a1a1a]"
+                    rows={4}
+                  />
+                  <button className="w-full bg-[#1a1a1a] text-[#F7E47D] py-3 font-bold uppercase tracking-widest rounded hover:bg-black transition-colors">
+                    Submit Message
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {/* Help Section */}
+            {activeSection === 'help' && (
+              <div className="bg-white border border-[#1a1a1a]/10 rounded-lg p-8 space-y-6">
+                <h2 className="serif text-3xl">Help & FAQ</h2>
+                <div className="space-y-4">
+                  {faqs.map((faq, idx) => (
+                    <details key={idx} className="border border-[#1a1a1a]/10 rounded-lg p-6 cursor-pointer hover:bg-[#FFF9EB] transition-colors">
+                      <summary className="font-bold text-lg flex justify-between items-center">
+                        {faq.question}
+                        <span className="text-2xl">+</span>
+                      </summary>
+                      <p className="mt-4 text-gray-600">{faq.answer}</p>
+                    </details>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* Order Detail Modal */}
+      {selectedOrderId && (
+        <OrderDetailModal
+          isOpen={showOrderDetail}
+          orderId={selectedOrderId}
+          onClose={() => {
+            setShowOrderDetail(false);
+            setSelectedOrderId(null);
+          }}
+        />
+      )}
+    </div>
+  );
+}
