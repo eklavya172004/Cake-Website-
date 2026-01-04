@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { signIn } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import { X } from 'lucide-react';
@@ -14,11 +14,14 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
   const router = useRouter();
   const [isSignUp, setIsSignUp] = useState(false);
   const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
   const [firstName, setFirstName] = useState('');
   const [phone, setPhone] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    console.log('AuthModal isOpen:', isOpen);
+  }, [isOpen]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -33,7 +36,6 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             email,
-            password,
             isSignUp: true,
             firstName,
             phone
@@ -51,7 +53,6 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
       // Sign in with NextAuth
       const result = await signIn('credentials', {
         email,
-        password,
         isSignUp: isSignUp ? 'true' : 'false',
         firstName: isSignUp ? firstName : undefined,
         phone: isSignUp ? phone : undefined,
@@ -149,18 +150,6 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
             </div>
           )}
 
-          <div>
-            <label className="text-xs uppercase tracking-widest font-bold block mb-2">Password</label>
-            <input
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              placeholder="••••••••"
-              className="w-full px-4 py-3 border border-[#1a1a1a] bg-transparent focus:outline-none focus:ring-1 focus:ring-[#1a1a1a] transition-colors"
-              required
-            />
-          </div>
-
           {error && (
             <div className="p-3 bg-red-50 border border-red-200 text-red-700 text-xs rounded">
               {error}
@@ -185,7 +174,6 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
               setIsSignUp(!isSignUp);
               setError('');
               setEmail('');
-              setPassword('');
               setFirstName('');
               setPhone('');
             }}

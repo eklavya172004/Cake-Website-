@@ -3,13 +3,14 @@
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useSession, signOut } from 'next-auth/react';
-import { User, Package, Truck, CreditCard, HelpCircle, MessageSquare, LogOut, ChevronRight } from 'lucide-react';
+import { User, Package, Truck, CreditCard, HelpCircle, MessageSquare, LogOut, ChevronRight, Users } from 'lucide-react';
 import OrderDetailModal from '@/components/orders/OrderDetailModal';
 
 export default function UserDashboard() {
   const router = useRouter();
   const { data: session, status } = useSession();
   const [activeSection, setActiveSection] = useState<'profile' | 'orders' | 'tracking' | 'payments' | 'support' | 'help'>('profile');
+  const [paymentSubSection, setPaymentSubSection] = useState<'all' | 'split'>('all');
   const [user, setUser] = useState<any>(null);
   const [orders, setOrders] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -57,6 +58,18 @@ export default function UserDashboard() {
     setSelectedOrderId(orderId);
     setShowOrderDetail(true);
   };
+
+  const getSplitPaymentData = (order: any) => {
+    if (!order.notes) return null;
+    try {
+      const notes = typeof order.notes === 'string' ? JSON.parse(order.notes) : order.notes;
+      return notes.splitPaymentLinks ? { coPayers: notes.splitPaymentLinks } : null;
+    } catch (e) {
+      return null;
+    }
+  };
+
+  const splitPaymentOrders = orders.filter(order => getSplitPaymentData(order) !== null);
 
   // FAQ and Support data
   const faqs = [
@@ -109,7 +122,7 @@ export default function UserDashboard() {
   }
 
   return (
-    <div className="min-h-screen bg-[#FFF9EB] text-[#1a1a1a]">
+    <div className="min-h-screen mt-15  bg-[#FFF9EB] text-[#1a1a1a]">
       {/* Header */}
       <div className="sticky top-0 z-30 bg-[#FFF9EB] border-b border-[#1a1a1a]/10">
         <div className="max-w-7xl mx-auto px-4 py-6 flex items-center justify-between">
@@ -358,31 +371,168 @@ export default function UserDashboard() {
             {activeSection === 'payments' && (
               <div className="bg-white border border-[#1a1a1a]/10 rounded-lg p-8 space-y-6">
                 <h2 className="serif text-3xl">Payment Status</h2>
-                {orders.length === 0 ? (
-                  <div className="text-center py-12">
-                    <CreditCard className="w-16 h-16 mx-auto text-gray-300 mb-4" />
-                    <p className="text-gray-600">No payment records found.</p>
-                  </div>
-                ) : (
-                  <div className="space-y-4">
-                    {orders.map((order) => (
-                      <div key={order.id} className="border border-[#1a1a1a]/10 rounded-lg p-6">
-                        <div className="flex justify-between items-start">
-                          <div>
-                            <h3 className="font-bold text-lg">{order.id}</h3>
-                            <p className="text-sm text-gray-600">Payment Method: {order.paymentMethod || 'Razorpay'}</p>
-                            <p className="text-xs text-gray-500 mt-2">{new Date(order.createdAt).toLocaleDateString()}</p>
-                          </div>
-                          <div className="text-right">
-                            <p className="text-2xl font-bold">₹{order.totalAmount || 0}</p>
-                            <span className="inline-block mt-2 px-3 py-1 bg-green-100 text-green-700 rounded text-sm font-semibold">
-                              Paid
-                            </span>
-                          </div>
-                        </div>
+                
+                {/* Payment Subsection Tabs */}
+                <div className="flex gap-4 border-b border-[#1a1a1a]/10">
+                  <button
+                    onClick={() => setPaymentSubSection('all')}
+                    className={`px-4 py-3 font-semibold border-b-2 transition-colors ${
+                      paymentSubSection === 'all'
+                        ? 'border-[#F7E47D] text-[#F7E47D]'
+                        : 'border-transparent text-gray-600 hover:text-[#1a1a1a]'
+                    }`}
+                  >
+                    All Payments
+                  </button>
+                  <button
+                    onClick={() => setPaymentSubSection('split')}
+                    className={`px-4 py-3 font-semibold border-b-2 transition-colors flex items-center gap-2 ${
+                      paymentSubSection === 'split'
+                        ? 'border-[#F7E47D] text-[#F7E47D]'
+                        : 'border-transparent text-gray-600 hover:text-[#1a1a1a]'
+                    }`}
+                  >
+                    Split Payments
+                    {splitPaymentOrders.length > 0 && (
+                      <span className="bg-[#F7E47D] text-[#1a1a1a] text-xs px-2 py-1 rounded-full font-bold">
+                        {splitPaymentOrders.length}
+                      </span>
+                    )}
+                  </button>
+                </div>
+
+                {/* All Payments Tab */}
+                {paymentSubSection === 'all' && (
+                  <>
+                    {orders.length === 0 ? (
+                      <div className="text-center py-12">
+                        <CreditCard className="w-16 h-16 mx-auto text-gray-300 mb-4" />
+                        <p className="text-gray-600">No payment records found.</p>
                       </div>
-                    ))}
-                  </div>
+                    ) : (
+                      <div className="space-y-4">
+                        {orders.map((order) => {
+                          const splitData = getSplitPaymentData(order);
+                          return (
+                            <div key={order.id} className="border border-[#1a1a1a]/10 rounded-lg p-6">
+                              <div className="flex justify-between items-start">
+                                <div>
+                                  <h3 className="font-bold text-lg">{order.orderNumber || order.id}</h3>
+                                  <p className="text-sm text-gray-600">
+                                    Payment Method: {order.paymentMethod === 'split' ? 'Split Payment' : order.paymentMethod || 'Razorpay'}
+                                  </p>
+                                  <p className="text-xs text-gray-500 mt-2">{new Date(order.createdAt).toLocaleDateString()}</p>
+                                  {splitData && (
+                                    <button
+                                      onClick={() => router.push(`/split-payment-status/${order.id}`)}
+                                      className="mt-3 px-3 py-1 bg-blue-100 text-blue-700 rounded text-xs font-semibold hover:bg-blue-200 transition-colors"
+                                    >
+                                      View Split Payment Details →
+                                    </button>
+                                  )}
+                                </div>
+                                <div className="text-right">
+                                  <p className="text-2xl font-bold">₹{order.finalAmount || order.totalAmount || 0}</p>
+                                  <span className="inline-block mt-2 px-3 py-1 bg-green-100 text-green-700 rounded text-sm font-semibold">
+                                    {order.paymentStatus === 'pending' ? 'Pending' : 'Paid'}
+                                  </span>
+                                </div>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </>
+                )}
+
+                {/* Split Payments Tab */}
+                {paymentSubSection === 'split' && (
+                  <>
+                    {splitPaymentOrders.length === 0 ? (
+                      <div className="text-center py-12">
+                        <Users className="w-16 h-16 mx-auto text-gray-300 mb-4" />
+                        <p className="text-gray-600">No split payment orders found.</p>
+                      </div>
+                    ) : (
+                      <div className="space-y-4">
+                        {splitPaymentOrders.map((order) => {
+                          const splitData = getSplitPaymentData(order);
+                          const coPayers = splitData?.coPayers || [];
+                          const paidCount = coPayers.filter((p: any) => p.status === 'paid').length;
+                          const totalCount = coPayers.length;
+                          const paidAmount = coPayers
+                            .filter((p: any) => p.status === 'paid')
+                            .reduce((sum: number, p: any) => sum + (p.amount || 0), 0);
+                          const totalAmount = coPayers.reduce((sum: number, p: any) => sum + (p.amount || 0), 0);
+
+                          return (
+                            <div 
+                              key={order.id} 
+                              onClick={() => router.push(`/split-payment-status/${order.id}`)}
+                              className="border border-[#1a1a1a]/10 rounded-lg p-6 hover:shadow-lg hover:border-[#F7E47D] transition-all cursor-pointer"
+                            >
+                              <div className="flex justify-between items-start mb-4">
+                                <div>
+                                  <h3 className="font-bold text-lg text-[#1a1a1a]">{order.orderNumber || order.id}</h3>
+                                  <p className="text-sm text-gray-600">Split Payment • {new Date(order.createdAt).toLocaleDateString()}</p>
+                                </div>
+                                <span className={`px-3 py-1 rounded text-sm font-semibold ${
+                                  paidCount === totalCount 
+                                    ? 'bg-green-100 text-green-700' 
+                                    : paidCount > 0 
+                                    ? 'bg-blue-100 text-blue-700' 
+                                    : 'bg-yellow-100 text-yellow-700'
+                                }`}>
+                                  {paidCount === totalCount ? 'Completed' : `${paidCount}/${totalCount} Paid`}
+                                </span>
+                              </div>
+
+                              {/* Progress Bar */}
+                              <div className="mb-4">
+                                <div className="w-full bg-gray-200 rounded-full h-2">
+                                  <div
+                                    className="bg-gradient-to-r from-[#F7E47D] to-[#F7D547] h-2 rounded-full transition-all"
+                                    style={{ width: `${totalCount > 0 ? (paidCount / totalCount) * 100 : 0}%` }}
+                                  />
+                                </div>
+                                <p className="text-xs text-gray-600 mt-2">₹{paidAmount.toFixed(2)} / ₹{totalAmount.toFixed(2)}</p>
+                              </div>
+
+                              {/* Co-payers Summary */}
+                              <div className="space-y-2">
+                                {coPayers.slice(0, 2).map((payer: any, idx: number) => (
+                                  <div key={idx} className="flex justify-between items-center text-sm">
+                                    <div className="flex items-center gap-2">
+                                      <span className={`w-2 h-2 rounded-full ${payer.status === 'paid' ? 'bg-green-500' : 'bg-gray-300'}`}></span>
+                                      <span className="text-gray-600">{payer.email}</span>
+                                    </div>
+                                    <div className="flex items-center gap-3">
+                                      <span className="font-semibold">₹{payer.amount}</span>
+                                      <span className={`text-xs px-2 py-0.5 rounded ${
+                                        payer.status === 'paid' 
+                                          ? 'bg-green-100 text-green-700' 
+                                          : 'bg-gray-100 text-gray-700'
+                                      }`}>
+                                        {payer.status === 'paid' ? '✓ Paid' : 'Pending'}
+                                      </span>
+                                    </div>
+                                  </div>
+                                ))}
+                                {totalCount > 2 && (
+                                  <p className="text-xs text-gray-600 pt-2">+{totalCount - 2} more co-payer(s)</p>
+                                )}
+                              </div>
+
+                              <div className="mt-4 flex items-center gap-2 text-[#F7E47D] font-semibold">
+                                View Details <ChevronRight className="w-4 h-4" />
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </>
                 )}
               </div>
             )}

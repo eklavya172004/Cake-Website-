@@ -3,11 +3,11 @@ import { prisma } from "@/lib/db/client";
 
 export async function POST(request: NextRequest) {
   try {
-    const { email, password, isSignUp, firstName, phone } = await request.json();
+    const { email, isSignUp, firstName, phone } = await request.json();
 
-    if (!email || !password) {
+    if (!email) {
       return NextResponse.json(
-        { error: "Email and password are required" },
+        { error: "Email is required" },
         { status: 400 }
       );
     }
@@ -47,16 +47,19 @@ export async function POST(request: NextRequest) {
         phone: newUser.phone
       });
     } else {
-      // Login
-      const user = await prisma.user.findUnique({
+      // Login - check if user exists, if not create a guest account
+      let user = await prisma.user.findUnique({
         where: { email }
       });
 
       if (!user) {
-        return NextResponse.json(
-          { error: "Invalid email or password" },
-          { status: 401 }
-        );
+        user = await prisma.user.create({
+          data: {
+            email,
+            name: "Guest User",
+            phone: ""
+          }
+        });
       }
 
       return NextResponse.json({

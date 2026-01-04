@@ -130,7 +130,7 @@ export default function CakeDetailClient({ cake }: CakeDetailClientProps) {
   const totalPrice = calculateTotal();
 
   return (
-    <div className="min-h-screen bg-[#FFF9EB] text-[#1a1a1a]">
+    <div className="min-h-screen mt-15 bg-[#FFF9EB] text-[#1a1a1a]">
       {/* Header */}
       <div className="sticky top-0 z-30 bg-[#FFF9EB] border-b border-[#1a1a1a]/10">
         <div className="max-w-7xl mx-auto px-4 py-6 flex items-center justify-between">

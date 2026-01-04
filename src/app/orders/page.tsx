@@ -8,7 +8,10 @@ interface Order {
   id: string;
   orderNumber: string;
   status: string;
+  paymentMethod?: string;
+  paymentStatus?: string;
   finalAmount: number;
+  notes?: string | null;
   items: Array<{
     name: string;
     quantity: number;
@@ -23,6 +26,14 @@ interface Order {
   estimatedDelivery: string;
 }
 
+interface SplitPaymentData {
+  coPayers: Array<{
+    email: string;
+    amount: number;
+    status: 'pending' | 'paid';
+  }>;
+}
+
 const statusColors = {
   pending: { bg: 'bg-yellow-100', text: 'text-yellow-800', label: 'Pending' },
   confirmed: { bg: 'bg-blue-100', text: 'text-blue-800', label: 'Confirmed' },
@@ -34,6 +45,35 @@ const statusColors = {
   cancelled: { bg: 'bg-red-100', text: 'text-red-800', label: 'Cancelled' },
 };
 
+const getSplitPaymentData = (order: Order): SplitPaymentData | null => {
+  if (!order.notes) return null;
+  try {
+    const notes = JSON.parse(order.notes);
+    return notes.splitPaymentLinks ? { coPayers: notes.splitPaymentLinks } : null;
+  } catch (e) {
+    return null;
+  }
+};
+
+const calculatePaymentStatus = (data: SplitPaymentData) => {
+  const paidAmount = data.coPayers
+    .filter(p => p.status === 'paid')
+    .reduce((sum, p) => sum + p.amount, 0);
+  const pendingAmount = data.coPayers
+    .filter(p => p.status === 'pending')
+    .reduce((sum, p) => sum + p.amount, 0);
+  const totalAmount = data.coPayers.reduce((sum, p) => sum + p.amount, 0);
+  const paidCount = data.coPayers.filter(p => p.status === 'paid').length;
+  
+  return {
+    paidAmount,
+    pendingAmount,
+    totalAmount,
+    paidCount,
+    totalCount: data.coPayers.length,
+  };
+};
+
 export default function OrdersHistoryPage() {
   const router = useRouter();
   const [orders, setOrders] = useState<Order[]>([]);
@@ -43,14 +83,49 @@ export default function OrdersHistoryPage() {
   useEffect(() => {
     const fetchOrders = async () => {
       try {
-        // For now, load from localStorage (mock data from past sessions)
-        const storedOrders = localStorage.getItem('userOrders');
-        if (storedOrders) {
-          setOrders(JSON.parse(storedOrders));
+        // Fetch orders from API
+        const response = await fetch('/api/user/orders');
+        if (response.ok) {
+          const data = await response.json();
+          const apiOrders = data.orders || [];
+          setOrders(apiOrders);
+          console.log('Orders loaded from API:', apiOrders);
+        } else if (response.status === 401) {
+          // Not authenticated - load from localStorage
+          console.log('Not authenticated, loading from localStorage');
+          const storedOrders = localStorage.getItem('userOrders');
+          console.log('Stored orders from localStorage:', storedOrders);
+          if (storedOrders) {
+            const parsedOrders = JSON.parse(storedOrders);
+            setOrders(parsedOrders);
+            console.log('Parsed and set orders:', parsedOrders);
+          } else {
+            console.log('No orders found in localStorage');
+            setOrders([]);
+          }
+        } else {
+          // Other error - fallback to localStorage
+          console.log('API returned status:', response.status, 'falling back to localStorage');
+          const storedOrders = localStorage.getItem('userOrders');
+          if (storedOrders) {
+            const parsedOrders = JSON.parse(storedOrders);
+            setOrders(parsedOrders);
+            console.log('Fallback orders from localStorage:', parsedOrders);
+          } else {
+            setOrders([]);
+          }
         }
-        // In production, fetch from /api/orders/user or /api/user/orders
       } catch (error) {
         console.error('Failed to fetch orders:', error);
+        // Fallback to localStorage
+        const storedOrders = localStorage.getItem('userOrders');
+        console.log('Exception caught, loading from localStorage:', storedOrders);
+        if (storedOrders) {
+          const parsedOrders = JSON.parse(storedOrders);
+          setOrders(parsedOrders);
+        } else {
+          setOrders([]);
+        }
       } finally {
         setLoading(false);
       }
@@ -69,7 +144,7 @@ export default function OrdersHistoryPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-[#FFF9EB] p-4 pt-24">
+      <div className= "min-h-screen bg-[#FFF9EB] p-4 pt-24">
         <div className="max-w-4xl mx-auto text-center py-20">
           <div className="inline-block animate-spin rounded-full h-12 w-12 border-4 border-[#1a1a1a] border-t-[#F7E47D]"></div>
           <p className="mt-4 text-[#1a1a1a]">Loading your orders...</p>
@@ -82,7 +157,7 @@ export default function OrdersHistoryPage() {
     <div className="min-h-screen bg-[#FFF9EB] py-12 px-4 text-[#1a1a1a]">
       <div className="max-w-4xl mx-auto">
         {/* Header */}
-        <div className="mb-8">
+        <div className=" mb-8">
           <button
             onClick={() => router.back()}
             className="flex items-center gap-2 text-[#1a1a1a] hover:text-[#F7E47D] mb-6 transition-colors font-semibold"
@@ -141,10 +216,19 @@ export default function OrdersHistoryPage() {
           <div className="space-y-4">
             {filteredOrders.map(order => {
               const statusColor = getStatusColor(order.status);
+              const splitPaymentData = order.paymentMethod === 'split' ? getSplitPaymentData(order) : null;
+              const paymentStatus = splitPaymentData ? calculatePaymentStatus(splitPaymentData) : null;
+              
               return (
                 <button
                   key={order.id}
-                  onClick={() => router.push(`/orders/${order.id}`)}
+                  onClick={() => {
+                    if (order.paymentMethod === 'split') {
+                      router.push(`/split-payment-status/${order.id}`);
+                    } else {
+                      router.push(`/orders/${order.id}`);
+                    }
+                  }}
                   className="w-full text-left bg-white rounded-lg border border-[#1a1a1a]/10 p-6 hover:shadow-lg hover:border-[#F7E47D] transition-all group"
                 >
                   <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
@@ -202,6 +286,70 @@ export default function OrdersHistoryPage() {
                       <ChevronRight className="w-5 h-5 text-[#1a1a1a]/40 group-hover:text-[#F7E47D] group-hover:translate-x-1 transition-all flex-shrink-0" />
                     </div>
                   </div>
+
+                  {/* Split Payment Status Section */}
+                  {order.paymentMethod === 'split' && paymentStatus && (
+                    <div className="mt-6 pt-6 border-t border-[#1a1a1a]/10">
+                      <h4 className="text-xs font-bold uppercase tracking-widest text-[#1a1a1a]/60 mb-3">
+                        Split Payment Status
+                      </h4>
+                      
+                      {/* Progress Bar */}
+                      <div className="mb-4">
+                        <div className="flex justify-between items-center mb-2">
+                          <span className="text-xs font-semibold text-[#1a1a1a]">
+                            {paymentStatus.paidCount} of {paymentStatus.totalCount} Paid
+                          </span>
+                          <span className="text-xs font-semibold text-[#F7E47D]">
+                            {Math.round((paymentStatus.paidCount / paymentStatus.totalCount) * 100)}%
+                          </span>
+                        </div>
+                        <div className="w-full bg-gray-200 rounded-full h-2">
+                          <div
+                            className="bg-gradient-to-r from-[#F7E47D] to-[#d946a6] h-full rounded-full transition-all"
+                            style={{
+                              width: `${(paymentStatus.paidCount / paymentStatus.totalCount) * 100}%`,
+                            }}
+                          />
+                        </div>
+                      </div>
+
+                      {/* Payment Amounts */}
+                      <div className="grid grid-cols-2 gap-3 text-xs">
+                        <div className="bg-green-50 rounded p-2">
+                          <p className="text-green-600 font-semibold">Paid</p>
+                          <p className="text-green-800 font-bold">₹{paymentStatus.paidAmount.toFixed(2)}</p>
+                        </div>
+                        <div className="bg-orange-50 rounded p-2">
+                          <p className="text-orange-600 font-semibold">Pending</p>
+                          <p className="text-orange-800 font-bold">₹{paymentStatus.pendingAmount.toFixed(2)}</p>
+                        </div>
+                      </div>
+
+                      {/* Co-payers List */}
+                      <div className="mt-4 space-y-2">
+                        {splitPaymentData?.coPayers.map((payer, idx) => (
+                          <div key={idx} className="flex items-center justify-between text-xs p-2 bg-gray-50 rounded">
+                            <div className="flex-1">
+                              <p className="text-[#1a1a1a]/70 truncate">{payer.email}</p>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <span className="font-semibold text-[#1a1a1a]">₹{payer.amount.toFixed(2)}</span>
+                              <span
+                                className={`px-2 py-0.5 rounded text-white text-[10px] font-bold ${
+                                  payer.status === 'paid'
+                                    ? 'bg-green-600'
+                                    : 'bg-orange-600'
+                                }`}
+                              >
+                                {payer.status === 'paid' ? '✓ Paid' : 'Pending'}
+                              </span>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                 </button>
               );
             })}

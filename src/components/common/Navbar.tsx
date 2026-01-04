@@ -4,15 +4,23 @@ import { useState } from 'react';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import { Menu, X } from 'lucide-react';
+import AuthModal from '@/components/auth/AuthModal';
 
 export default function Navbar() {
   const { data: session } = useSession();
   const router = useRouter();
   const [menuOpen, setMenuOpen] = useState(false);
+  const [authModalOpen, setAuthModalOpen] = useState(false);
+
+  const handleAuthClick = () => {
+    console.log('Auth button clicked, current state:', authModalOpen);
+    setAuthModalOpen(true);
+    console.log('Auth modal state should be true now');
+  };
 
   return (
     <>
-      <nav className="fixed top-0 w-full z-50 bg-white border-b border-[#1a1a1a]/10 flex justify-between items-center px-6 py-4">
+      <nav className="fixed  top-0 w-full z-50 bg-white border-b border-[#1a1a1a]/10 flex justify-between items-center px-6 py-4">
         {/* Logo */}
         <button onClick={() => router.push('/')} className="serif text-2xl font-bold text-[#1a1a1a]">
           SAVOR
@@ -42,7 +50,7 @@ export default function Navbar() {
             </button>
           ) : (
             <button
-              onClick={() => router.push('/')}
+              onClick={handleAuthClick}
               className="hidden md:inline bg-[#1a1a1a] text-[#F7E47D] px-6 py-2 rounded-full text-[10px] uppercase font-bold tracking-widest hover:shadow-lg transition-all"
             >
               Login / Sign Up
@@ -106,7 +114,7 @@ export default function Navbar() {
             ) : (
               <button
                 onClick={() => {
-                  router.push('/');
+                  handleAuthClick();
                   setMenuOpen(false);
                 }}
                 className="bg-[#1a1a1a] text-[#F7E47D] px-4 py-2 rounded-full text-sm font-bold uppercase w-full"
@@ -117,6 +125,7 @@ export default function Navbar() {
           </div>
         </div>
       )}
+      <AuthModal isOpen={authModalOpen} onClose={() => setAuthModalOpen(false)} />
     </>
   );
 }

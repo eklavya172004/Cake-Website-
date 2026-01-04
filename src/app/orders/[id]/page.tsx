@@ -120,7 +120,7 @@ export default function OrderTrackingPage() {
 
   if (!order) {
     return (
-      <div className="min-h-screen bg-[#FFF9EB] p-4">
+      <div className="min-h-screen mt-15 bg-[#FFF9EB] p-4">
         <div className="max-w-4xl mx-auto">
           <button
             onClick={() => router.back()}
@@ -144,7 +144,7 @@ export default function OrderTrackingPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#FFF9EB] py-8 px-4 text-[#1a1a1a]">
+    <div className="min-h-screen mt-15 bg-[#FFF9EB] py-8 px-4 text-[#1a1a1a]">
       <div className="max-w-4xl mx-auto">
         {/* Header */}
         <div className="mb-8">

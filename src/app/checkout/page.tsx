@@ -5,6 +5,8 @@ import { useCart } from '@/components/cart/CartProvider';
 import { useRouter } from 'next/navigation';
 import { ArrowLeft, ShieldCheck } from 'lucide-react';
 import Link from 'next/link';
+import { signIn } from 'next-auth/react';
+import SplitPaymentUI from '@/components/checkout/SplitPaymentUI';
 
 export default function CheckoutPage() {
   const { items, getTotal, clearCart } = useCart();
@@ -12,6 +14,7 @@ export default function CheckoutPage() {
   const [step, setStep] = useState(1);
   const [loading, setLoading] = useState(false);
   const [paymentMethod, setPaymentMethod] = useState('cod');
+  const [splitPaymentLinks, setSplitPaymentLinks] = useState<any[]>([]);
 
   const [formData, setFormData] = useState({
     firstName: '',
@@ -47,6 +50,121 @@ export default function CheckoutPage() {
 
   const handlePaymentSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // For split payment, redirect to payment status page
+    if (paymentMethod === 'split') {
+      if (splitPaymentLinks.length === 0) {
+        alert('Please generate and send payment links to co-payers first');
+        return;
+      }
+      
+      console.log('Split Payment Links being stored:', splitPaymentLinks); // Debug
+      
+      setLoading(true);
+      
+      try {
+        const orderData = {
+          items: items.map(item => ({
+            cakeId: item.id,
+            name: item.name,
+            quantity: item.quantity,
+            customization: item.customization,
+            price: item.price,
+          })),
+          deliveryDetails: {
+            fullName: `${formData.firstName} ${formData.lastName}`,
+            email: formData.email,
+            phone: formData.phone,
+            address: formData.address,
+            city: formData.city,
+            landmark: formData.instructions,
+            pincode: formData.pincode,
+          },
+          deliveryType: 'delivery',
+          paymentMethod: paymentMethod,
+          subtotal: getTotal(),
+          deliveryFee: 50,
+          discount: 0,
+          total: getTotal() + 50,
+          paymentStatus: 'pending',
+          notes: JSON.stringify({
+            splitPaymentLinks: splitPaymentLinks,
+          }),
+        };
+
+        const response = await fetch('/api/orders', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(orderData),
+        });
+
+        const result = await response.json();
+        console.log('Order created:', result); // Debug
+
+        if (!response.ok) {
+          alert(result.error || 'Failed to create order');
+          setLoading(false);
+          return;
+        }
+
+        // Save order to localStorage for guest users
+        try {
+          const storedOrders = localStorage.getItem('userOrders');
+          const orders = storedOrders ? JSON.parse(storedOrders) : [];
+          const newOrder = {
+            id: result.orderId,
+            orderNumber: result.orderNumber,
+            status: 'pending',
+            paymentMethod: 'split',
+            paymentStatus: 'pending',
+            finalAmount: getTotal() + 50,
+            notes: JSON.stringify({
+              splitPaymentLinks: splitPaymentLinks,
+            }),
+            items: items.map(item => ({
+              name: item.name,
+              quantity: item.quantity,
+            })),
+            deliveryAddress: {
+              city: formData.city,
+            },
+            vendor: {
+              name: 'Unknown Vendor',
+            },
+            createdAt: new Date().toISOString(),
+            estimatedDelivery: new Date(Date.now() + 4 * 60 * 60 * 1000).toISOString(),
+          };
+          orders.unshift(newOrder);
+          localStorage.setItem('userOrders', JSON.stringify(orders));
+          console.log('Order saved to localStorage:', newOrder);
+          console.log('Total orders in localStorage:', orders.length);
+        } catch (error) {
+          console.error('Failed to save order to localStorage:', error);
+        }
+
+        // Auto-login user with their email so they can see orders in dashboard
+        try {
+          await signIn('credentials', {
+            email: formData.email,
+            redirect: false,
+          });
+          console.log('User auto-logged in with email:', formData.email);
+        } catch (signInError) {
+          console.error('Auto-login failed:', signInError);
+          // Still redirect even if auto-login fails
+        }
+
+        // Redirect to split payment status page instead of orders page
+        clearCart();
+        router.push(`/split-payment-status/${result.orderId}`);
+      } catch (error) {
+        console.error('Error creating order:', error);
+        alert('An error occurred. Please try again.');
+        setLoading(false);
+      }
+      return;
+    }
+    
     setLoading(true);
 
     try {
@@ -89,6 +207,49 @@ export default function CheckoutPage() {
         alert(result.error || 'Failed to create order');
         setLoading(false);
         return;
+      }
+
+      // Save order to localStorage
+      try {
+        const storedOrders = localStorage.getItem('userOrders');
+        const orders = storedOrders ? JSON.parse(storedOrders) : [];
+        const newOrder = {
+          id: result.orderId,
+          orderNumber: result.orderNumber,
+          status: 'pending',
+          paymentMethod: paymentMethod,
+          paymentStatus: paymentMethod === 'cod' ? 'pending' : 'pending',
+          finalAmount: getTotal() + 50,
+          notes: null,
+          items: items.map(item => ({
+            name: item.name,
+            quantity: item.quantity,
+          })),
+          deliveryAddress: {
+            city: formData.city,
+          },
+          vendor: {
+            name: 'Unknown Vendor',
+          },
+          createdAt: new Date().toISOString(),
+          estimatedDelivery: new Date(Date.now() + 4 * 60 * 60 * 1000).toISOString(),
+        };
+        orders.unshift(newOrder);
+        localStorage.setItem('userOrders', JSON.stringify(orders));
+        console.log('Order saved to localStorage:', newOrder);
+      } catch (error) {
+        console.error('Failed to save order to localStorage:', error);
+      }
+
+      // Auto-login user with their email
+      try {
+        await signIn('credentials', {
+          email: formData.email,
+          redirect: false,
+        });
+        console.log('User auto-logged in with email:', formData.email);
+      } catch (signInError) {
+        console.error('Auto-login failed:', signInError);
       }
 
       // If Razorpay payment
@@ -276,12 +437,45 @@ export default function CheckoutPage() {
                       <div className="text-sm text-gray-600 mt-1">Credit/Debit Card, UPI, or Net Banking</div>
                     </div>
                   </label>
+
+                  {/* Split Payment Option */}
+                  <label className={`flex items-start p-4 border-2 rounded-lg cursor-pointer transition-all ${
+                    paymentMethod === 'split'
+                      ? 'border-pink-600 bg-pink-50'
+                      : 'border-gray-200 bg-white'
+                  }`}>
+                    <input
+                      type="radio"
+                      name="payment"
+                      value="split"
+                      checked={paymentMethod === 'split'}
+                      onChange={(e) => setPaymentMethod(e.target.value)}
+                      className="mt-1 w-4 h-4 cursor-pointer"
+                    />
+                    <div className="ml-4 flex-1">
+                      <div className="font-semibold text-gray-900">Split Payment</div>
+                      <div className="text-sm text-gray-600 mt-1">Split with friends - Everyone pays their share</div>
+                    </div>
+                  </label>
                 </div>
 
                 <div className="bg-gray-50 p-4 rounded text-xs text-gray-500 flex gap-3 mb-8">
                   <ShieldCheck className="w-5 h-5 shrink-0" />
                   <p>Secure checkout. Your payment information is encrypted and safe.</p>
                 </div>
+
+                {paymentMethod === 'split' && (
+                  <div className="mb-8">
+                    <SplitPaymentUI 
+                      totalAmount={getTotal() + 50}
+                      cakeName={items.map(i => i.name).join(', ')}
+                      onPaymentLinksGenerated={(links) => {
+                        setSplitPaymentLinks(links);
+                        alert('Payment links have been sent. Order will be placed once all co-payers complete their payment.');
+                      }}
+                    />
+                  </div>
+                )}
 
                 <div className="flex gap-4">
                   <button
@@ -293,7 +487,7 @@ export default function CheckoutPage() {
                   </button>
                   <button
                     type="submit"
-                    disabled={loading}
+                    disabled={loading || (paymentMethod === 'split' && splitPaymentLinks.length === 0)}
                     className="flex-1 py-4 bg-black text-white uppercase tracking-widest font-bold hover:bg-gray-900 transition-colors disabled:opacity-50"
                   >
                     {loading ? 'Processing...' : `Pay ₹${getTotal() + 50}`}

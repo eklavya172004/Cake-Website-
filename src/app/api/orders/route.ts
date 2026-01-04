@@ -13,6 +13,8 @@ export async function POST(req: NextRequest) {
       deliveryFee,
       discount,
       total,
+      notes,
+      paymentStatus,
     } = body;
 
     if (!items || items.length === 0) {
@@ -88,12 +90,13 @@ export async function POST(req: NextRequest) {
         deliveryPincode: deliveryDetails.pincode,
         status: 'pending',
         paymentMethod: paymentMethod || 'cod',
-        paymentStatus: paymentMethod === 'cod' ? 'pending' : 'processing',
+        paymentStatus: paymentStatus || (paymentMethod === 'cod' ? 'pending' : 'processing'),
         totalAmount: subtotal,
         deliveryFee,
         discount,
         finalAmount: total,
         estimatedDelivery: new Date(Date.now() + 4 * 60 * 60 * 1000), // 4 hours from now
+        notes: notes || null,
       },
       include: {
         vendor: true,

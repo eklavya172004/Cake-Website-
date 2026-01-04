@@ -18,7 +18,22 @@ export async function GET(request: NextRequest) {
       where: { email: session.user.email },
       include: {
         orders: {
-          include: {
+          select: {
+            id: true,
+            orderNumber: true,
+            status: true,
+            paymentMethod: true,
+            paymentStatus: true,
+            totalAmount: true,
+            deliveryFee: true,
+            discount: true,
+            finalAmount: true,
+            notes: true,
+            items: true,
+            deliveryAddress: true,
+            estimatedDelivery: true,
+            createdAt: true,
+            updatedAt: true,
             vendor: {
               select: {
                 name: true,
@@ -46,6 +61,12 @@ export async function GET(request: NextRequest) {
         { status: 404 }
       );
     }
+
+    console.log('Profile API - User orders:', user.orders.map(o => ({
+      id: o.id,
+      paymentMethod: o.paymentMethod,
+      notes: o.notes ? (o.notes.length > 100 ? o.notes.substring(0, 100) + '...' : o.notes) : 'null'
+    })));
 
     return NextResponse.json({
       user: {

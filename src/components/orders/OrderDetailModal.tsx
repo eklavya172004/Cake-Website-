@@ -74,7 +74,7 @@ export default function OrderDetailModal({ isOpen, orderId, onClose }: OrderDeta
         </div>
 
         {loading && (
-          <div className="p-12 text-center">
+          <div className="mt-15 p-12 text-center">
             <div className="animate-spin w-12 h-12 border-4 border-[#1a1a1a] border-t-[#F7E47D] rounded-full mx-auto"></div>
             <p className="mt-4 text-gray-600">Loading order details...</p>
           </div>

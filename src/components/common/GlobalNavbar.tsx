@@ -4,6 +4,7 @@ import { useState, useRef, useEffect } from 'react';
 import { useSession } from 'next-auth/react';
 import { useRouter, usePathname } from 'next/navigation';
 import gsap from 'gsap';
+import AuthModal from '@/components/auth/AuthModal';
 
 export default function GlobalNavbar() {
   const { data: session } = useSession();
@@ -12,6 +13,12 @@ export default function GlobalNavbar() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [authModalOpen, setAuthModalOpen] = useState(false);
   const navRef = useRef<HTMLElement>(null);
+
+  const handleAuthClick = () => {
+    console.log('Auth button clicked, current state:', authModalOpen);
+    setAuthModalOpen(true);
+    console.log('Auth modal state should be true now');
+  };
 
   // Animate navbar on mount
   useEffect(() => {
@@ -71,23 +78,21 @@ export default function GlobalNavbar() {
             </button>
           ) : (
             <button
-              onClick={() => {
-                const authModal = document.getElementById('auth-modal');
-                if (authModal) authModal.style.display = 'block';
-              }}
+              onClick={handleAuthClick}
               className="bg-white text-black px-6 py-2 rounded-full text-[10px] uppercase font-bold tracking-widest hover:bg-gray-100 transition-colors"
             >
               Login / Sign Up
             </button>
           )}
         </nav>
+        <AuthModal isOpen={authModalOpen} onClose={() => setAuthModalOpen(false)} />
       </>
     );
   }
 
   // For other pages, show a simpler navbar
   return (
-    <nav ref={navRef} className="fixed top-0 w-full z-50 bg-white border-b border-[#1a1a1a]/10 flex justify-between items-center px-6 py-4">
+    <nav ref={navRef} className="fixed  top-0 w-full z-50 bg-white border-b border-[#1a1a1a]/10 flex justify-between items-center px-6 py-4">
       {/* Logo */}
       <button onClick={() => router.push('/')} className="serif text-2xl font-bold text-[#1a1a1a]">
         SAVOR
@@ -117,13 +122,14 @@ export default function GlobalNavbar() {
           </button>
         ) : (
           <button
-            onClick={() => router.push('/')}
+            onClick={handleAuthClick}
             className="bg-[#1a1a1a] text-[#F7E47D] px-6 py-2 rounded-full text-[10px] uppercase font-bold tracking-widest hover:shadow-lg transition-all"
           >
             Login / Sign Up
           </button>
         )}
       </div>
+      <AuthModal isOpen={authModalOpen} onClose={() => setAuthModalOpen(false)} />
     </nav>
   );
 }

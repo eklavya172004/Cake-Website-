@@ -13,14 +13,13 @@ export const authOptions: NextAuthOptions = {
       name: "Credentials",
       credentials: {
         email: { label: "Email", type: "email" },
-        password: { label: "Password", type: "password" },
         isSignUp: { label: "isSignUp", type: "checkbox" },
         firstName: { label: "First Name", type: "text" },
         phone: { label: "Phone", type: "text" }
       },
       async authorize(credentials) {
-        if (!credentials?.email || !credentials?.password) {
-          throw new Error("Invalid credentials");
+        if (!credentials?.email) {
+          throw new Error("Email is required");
         }
 
         if (credentials.isSignUp === "true") {
@@ -56,18 +55,23 @@ export const authOptions: NextAuthOptions = {
             throw new Error(error.message || "Failed to create user");
           }
         } else {
-          // Login
+          // Login - just check if user exists with this email
           try {
-            const user = await prisma.user.findUnique({
+            let user = await prisma.user.findUnique({
               where: { email: credentials.email }
             });
 
+            // If user doesn't exist, create a guest user with that email
             if (!user) {
-              throw new Error("Invalid email or password");
+              user = await prisma.user.create({
+                data: {
+                  email: credentials.email,
+                  name: "Guest User",
+                  phone: ""
+                }
+              });
             }
 
-            // In production, use bcrypt to compare passwords
-            // For now, assuming password validation is done elsewhere
             return {
               id: user.id,
               email: user.email,
@@ -76,7 +80,7 @@ export const authOptions: NextAuthOptions = {
             };
           } catch (error: any) {
             console.error("Login error:", error);
-            throw new Error("Invalid email or password");
+            throw new Error("Failed to login");
           }
         }
       }
