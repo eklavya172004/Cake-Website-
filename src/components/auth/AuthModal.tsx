@@ -14,6 +14,7 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
   const router = useRouter();
   const [isSignUp, setIsSignUp] = useState(false);
   const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [firstName, setFirstName] = useState('');
   const [phone, setPhone] = useState('');
   const [error, setError] = useState('');
@@ -36,6 +37,7 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             email,
+            password,
             isSignUp: true,
             firstName,
             phone
@@ -53,6 +55,7 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
       // Sign in with NextAuth
       const result = await signIn('credentials', {
         email,
+        password,
         isSignUp: isSignUp ? 'true' : 'false',
         firstName: isSignUp ? firstName : undefined,
         phone: isSignUp ? phone : undefined,
@@ -89,26 +92,6 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
           </button>
         </div>
 
-        {/* Google Login Button - Disabled for now */}
-        {/* <button
-          onClick={handleGoogleLogin}
-          className="w-full flex items-center justify-center gap-2 px-4 py-3 border border-[#1a1a1a] text-[#1a1a1a] font-semibold hover:bg-[#1a1a1a] hover:text-[#F7E47D] transition-colors uppercase tracking-widest text-xs mb-6"
-        >
-          <svg className="w-4 h-4" viewBox="0 0 24 24">
-            <text x="12" y="18" textAnchor="middle" fill="currentColor" fontSize="16" fontWeight="bold">G</text>
-          </svg>
-          Login with Google
-        </button>
-
-        <div className="relative mb-6">
-          <div className="absolute inset-0 flex items-center">
-            <div className="w-full border-t border-gray-300"></div>
-          </div>
-          <div className="relative flex justify-center text-sm">
-            <span className="px-4 bg-[#FFF9EB] text-gray-500">Or with email</span>
-          </div>
-        </div> */}
-
         <form onSubmit={handleSubmit} className="space-y-4">
           {isSignUp && (
             <div>
@@ -131,6 +114,18 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder="you@example.com"
+              className="w-full px-4 py-3 border border-[#1a1a1a] bg-transparent focus:outline-none focus:ring-1 focus:ring-[#1a1a1a] transition-colors"
+              required
+            />
+          </div>
+
+          <div>
+            <label className="text-xs uppercase tracking-widest font-bold block mb-2">Password</label>
+            <input
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              placeholder="••••••••"
               className="w-full px-4 py-3 border border-[#1a1a1a] bg-transparent focus:outline-none focus:ring-1 focus:ring-[#1a1a1a] transition-colors"
               required
             />
@@ -174,6 +169,7 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
               setIsSignUp(!isSignUp);
               setError('');
               setEmail('');
+              setPassword('');
               setFirstName('');
               setPhone('');
             }}

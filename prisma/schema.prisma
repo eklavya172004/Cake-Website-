@@ -34,6 +34,48 @@ model User {
 }
 
 // ============================================
+// VENDOR & ADMIN ACCOUNT MANAGEMENT
+// ============================================
+
+model Account {
+  id              String   @id @default(cuid())
+  email           String   @unique
+  password        String?  // Hashed password for vendor/admin
+  phone           String?
+  name            String
+  avatar          String?
+  
+  // Role Management
+  role            String   // "vendor", "admin"
+  
+  // Vendor Account
+  vendorId        String? @unique
+  vendor          Vendor?  @relation(fields: [vendorId], references: [id], onDelete: Cascade)
+  
+  // Admin Account
+  isAdmin         Boolean  @default(false)
+  adminRole       String?  // "super_admin", "admin", "moderator"
+  adminPermissions String[] // Granular permissions
+  
+  // Status
+  isActive        Boolean  @default(true)
+  isVerified      Boolean  @default(false)
+  verifiedAt      DateTime?
+  lastLogin       DateTime?
+  
+  // Audit
+  auditLogs       AuditLog[]
+  
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([email])
+  @@index([role])
+  @@index([vendorId])
+  @@index([isActive])
+}
+
+// ============================================
 // VENDORS & CAKES
 // ============================================
 
@@ -47,18 +89,25 @@ model Vendor {
   coverImage        String?
   rating            Float    @default(0)
   totalReviews      Int      @default(0)
-  serviceAreas      String[] // ["110001", "110002"]
-  deliveryFee       Json     // { "110001": 50, "110002": 70 }
   minOrderAmount    Float    @default(0)
   preparationTime   Int      // in minutes
   isActive          Boolean  @default(true)
   
-  // Contact
-  phone             String?
-  email             String?
-  address           Json?
+  // Vendor Status
+  verificationStatus String  @default("pending") // pending, verified, rejected
+  verifiedAt        DateTime?
+  approvalStatus    String   @default("pending") // pending, approved, rejected
+  approvedAt        DateTime?
   
   // Relations
+  account           Account?
+  profile           VendorProfile?
+  locations         VendorLocation[]
+  serviceAreas      VendorServiceArea[]
+  requests          VendorRequest[]
+  analytics         VendorAnalytics?
+  supportTickets    SupportTicket[]
+  
   cakes             Cake[]
   orders            Order[]
   
@@ -67,6 +116,334 @@ model Vendor {
 
   @@index([slug])
   @@index([isActive])
+  @@index([verificationStatus])
+  @@index([approvalStatus])
+}
+
+// ============================================
+// VENDOR PROFILE & ONBOARDING
+// ============================================
+
+model VendorProfile {
+  id                    String   @id @default(cuid())
+  vendorId              String   @unique
+  vendor                Vendor   @relation(fields: [vendorId], references: [id], onDelete: Cascade)
+  
+  // Business Information
+  businessName          String
+  businessType          String   // "Sole Proprietor", "Partnership", "Company"
+  businessRegistration  String?
+  gstNumber             String?  @unique
+  panNumber             String?  @unique
+  
+  // Owner Information
+  ownerName             String
+  ownerPhone            String
+  ownerEmail            String
+  
+  // Bank Details
+  bankAccountNumber     String
+  bankIfscCode          String
+  bankAccountHolderName String
+  
+  // Documents
+  businessProof         String?  // URL
+  idProof               String?  // URL
+  addressProof          String?  // URL
+  
+  // Operational Details
+  cuisineTypes          String[] // ["Cakes", "Pastries"]
+  maxOrders             Int?
+  
+  // Compliance
+  verificationStatus    String   @default("pending") // pending, verified, rejected
+  verificationNotes     String?
+  verifiedBy            String?
+  verifiedAt            DateTime?
+  isApproved            Boolean  @default(false)
+  approvedAt            DateTime?
+  
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+
+  @@index([verificationStatus])
+  @@index([isApproved])
+}
+
+// ============================================
+// VENDOR LOCATIONS & SERVICE AREAS
+// ============================================
+
+model VendorLocation {
+  id                    String   @id @default(cuid())
+  vendorId              String
+  vendor                Vendor   @relation(fields: [vendorId], references: [id], onDelete: Cascade)
+  
+  // Address Details
+  type                  String   // "primary", "warehouse", "outlet"
+  locationName          String   // "Main Store", "Downtown Outlet"
+  
+  street                String
+  city                  String
+  state                 String
+  postalCode            String
+  country               String   @default("India")
+  
+  // Geolocation
+  latitude              Float
+  longitude             Float
+  placeId               String?  // Google Maps place ID
+  
+  // Operational
+  phone                 String?
+  email                 String?
+  operatingHours        Json     // {mon: {open: "09:00", close: "22:00"}}
+  
+  // Availability
+  isActive              Boolean  @default(true)
+  maxOrders             Int?     // Max orders per day from this location
+  preparationTime       Int?     // minutes (if different from vendor default)
+  
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+
+  @@index([vendorId])
+  @@index([type])
+  @@index([isActive])
+  @@unique([vendorId, postalCode, type])
+}
+
+model VendorServiceArea {
+  id                    String   @id @default(cuid())
+  vendorId              String
+  vendor                Vendor   @relation(fields: [vendorId], references: [id], onDelete: Cascade)
+  
+  // Area Details
+  areaName              String   // "Delhi Central", "Bangalore North"
+  pincode               String   // "110001"
+  city                  String
+  state                 String
+  
+  // Coverage
+  centerLatitude        Float
+  centerLongitude       Float
+  deliveryRadius        Float    // in km
+  
+  // Delivery
+  deliveryFee           Float
+  minDeliveryTime       Int      // minutes
+  maxDeliveryTime       Int      // minutes
+  freeDeliveryAbove     Float?   // Free delivery for orders above this
+  
+  // Restrictions
+  isAvailable           Boolean  @default(true)
+  maxOrdersPerDay       Int?
+  
+  // Coverage Polygon (optional - for complex shapes)
+  polygonCoordinates    Json?    // [{lat, lng}, ...]
+  
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+
+  @@unique([vendorId, pincode])
+  @@index([vendorId])
+  @@index([city, state])
+  @@index([isAvailable])
+}
+
+// ============================================
+// VENDOR REQUESTS & MANAGEMENT
+// ============================================
+
+model VendorRequest {
+  id                    String   @id @default(cuid())
+  vendorId              String
+  vendor                Vendor   @relation(fields: [vendorId], references: [id], onDelete: Cascade)
+  
+  requestType           String   // "onboarding", "service_area_change", "profile_update"
+  status                String   @default("pending") // pending, approved, rejected
+  
+  // Request Details
+  details               Json     // The actual request data
+  submittedBy           String   // Vendor account email
+  reviewedBy            String?  // Admin email
+  
+  rejectionReason       String?
+  notes                 String?
+  
+  submittedAt           DateTime @default(now())
+  reviewedAt            DateTime?
+  
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+
+  @@index([vendorId])
+  @@index([status])
+  @@index([requestType])
+}
+
+// ============================================
+// VENDOR ANALYTICS & PERFORMANCE
+// ============================================
+
+model VendorAnalytics {
+  id                    String   @id @default(cuid())
+  vendorId              String   @unique
+  vendor                Vendor   @relation(fields: [vendorId], references: [id], onDelete: Cascade)
+  
+  // Order Metrics (Daily)
+  totalOrders           Int      @default(0)
+  completedOrders       Int      @default(0)
+  cancelledOrders       Int      @default(0)
+  totalRevenue          Float    @default(0)
+  averageOrderValue     Float    @default(0)
+  
+  // Performance
+  orderAcceptanceRate   Float    @default(100) // %
+  orderCompletionRate   Float    @default(100) // %
+  averageDeliveryTime   Int      @default(0)   // minutes
+  
+  // Customer Satisfaction
+  averageRating         Float    @default(0)
+  totalReviews          Int      @default(0)
+  customerSatisfaction  Float    @default(0)   // %
+  
+  // Product Performance
+  topProducts           Json     // [{cakeId, name, orders, revenue}]
+  lowPerformingProducts Json     // [{cakeId, name, orders}]
+  
+  // Operational
+  preparationTimeAvg    Int      @default(0)   // minutes
+  deliveryAreaCoverage  Int      @default(0)   // % of area
+  
+  // Timestamps
+  date                  DateTime @default(now())
+  
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+
+  @@unique([vendorId, date])
+  @@index([vendorId])
+  @@index([date])
+}
+
+// ============================================
+// ADMIN & AUDIT
+// ============================================
+
+model AuditLog {
+  id                    String   @id @default(cuid())
+  accountId             String
+  account               Account  @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  
+  action                String   // "vendor_approved", "vendor_rejected", "order_refunded"
+  entityType            String   // "Vendor", "Order", "User"
+  entityId              String
+  changes               Json?    // What changed: {from: {}, to: {}}
+  
+  ipAddress             String?
+  userAgent             String?
+  
+  createdAt             DateTime @default(now())
+
+  @@index([accountId])
+  @@index([action])
+  @@index([entityType])
+  @@index([createdAt])
+}
+
+// ============================================
+// SUPPORT TICKETS
+// ============================================
+
+model SupportTicket {
+  id                    String   @id @default(cuid())
+  vendorId              String?
+  vendor                Vendor?  @relation(fields: [vendorId], references: [id])
+  
+  subject               String
+  description           String
+  status                String   @default("open") // open, in_progress, resolved, closed
+  priority              String   @default("medium") // low, medium, high, urgent
+  
+  assignedTo            String?  // Admin email
+  assignedAt            DateTime?
+  
+  messages              Json[]   // Chat history
+  attachments           String[] // URLs
+  
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+  closedAt              DateTime?
+
+  @@index([vendorId])
+  @@index([status])
+  @@index([priority])
+}
+
+// ============================================
+// PROMOTIONS & MARKETING
+// ============================================
+
+model CouponCode {
+  id                    String   @id @default(cuid())
+  code                  String   @unique
+  
+  type                  String   // "percentage", "fixed"
+  value                 Float
+  maxDiscount           Float?
+  minOrderAmount        Float?
+  
+  applicableTo          String   @default("all") // "all", "specific_vendors", "specific_cakes"
+  applicableVendors     String[] @default([])
+  applicableCakes       String[] @default([])
+  
+  usageLimit            Int?
+  usageCount            Int      @default(0)
+  usagePerUser          Int      @default(1)
+  
+  validFrom             DateTime
+  validUntil            DateTime
+  
+  isActive              Boolean  @default(true)
+  createdBy             String   // Admin email
+  
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+
+  @@index([code])
+  @@index([validFrom, validUntil])
+  @@index([isActive])
+}
+
+// ============================================
+// DISPUTE & COMPLAINTS
+// ============================================
+
+model Dispute {
+  id                    String   @id @default(cuid())
+  orderId               String
+  order                 Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  
+  complainantId         String   // User or Vendor ID
+  complainantType       String   // "user", "vendor"
+  
+  subject               String
+  description           String
+  attachments           String[]
+  
+  status                String   @default("open") // open, investigating, resolved, closed
+  resolution            String?
+  
+  assignedTo            String?  // Admin email
+  
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+  resolvedAt            DateTime?
+
+  @@index([orderId])
+  @@index([status])
+  @@index([complainantType])
 }
 
 model Cake {
@@ -202,6 +579,7 @@ model Order {
   coPayment             CoPayment?
   statusHistory         OrderStatusHistory[]
   notifications         Notification[]
+  disputes              Dispute[]
   
   createdAt             DateTime  @default(now())
   updatedAt             DateTime  @updatedAt

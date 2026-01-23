@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db/client';
+import { getServerSession } from 'next-auth';
+import { authOptions } from '@/lib/auth';
 
 export async function POST(req: NextRequest) {
   try {
@@ -53,18 +55,28 @@ export async function POST(req: NextRequest) {
     const timestamp = new Date();
     const orderNumber = `ORD-${timestamp.getFullYear()}-${String(timestamp.getTime()).slice(-6)}`;
 
-    // Create or get temporary user
+    // Check if user is logged in - if so, use their email instead of delivery email
+    const session = await getServerSession(authOptions);
+    const userEmail = session?.user?.email || deliveryDetails.email;
+    
+    console.log('Order API - Session user:', session?.user?.email);
+    console.log('Order API - Using email:', userEmail);
+    console.log('Order API - Payment method:', paymentMethod);
+
+    // Create or get user
     const tempUserId = 'guest-' + Date.now();
     const user = await prisma.user.upsert({
-      where: { email: deliveryDetails.email },
+      where: { email: userEmail },
       update: {},
       create: {
         id: tempUserId,
-        email: deliveryDetails.email,
+        email: userEmail,
         name: deliveryDetails.fullName,
         phone: deliveryDetails.phone,
       },
     });
+
+    console.log('Order API - User ID:', user.id);
 
     // Create order
     const order = await prisma.order.create({

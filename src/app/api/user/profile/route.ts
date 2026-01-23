@@ -1,85 +1,53 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
-import { prisma } from "@/lib/db/client";
+import { PrismaClient } from "@prisma/client";
 
-export async function GET(request: NextRequest) {
+const prisma = new PrismaClient();
+
+export async function GET() {
   try {
     const session = await getServerSession(authOptions);
+    
+    console.log("Profile API - Session:", session?.user?.email);
 
-    if (!session || !session.user?.email) {
+    if (!session?.user?.email) {
       return NextResponse.json(
-        { error: "Unauthorized" },
+        { error: "Unauthorized - no session" },
         { status: 401 }
       );
     }
 
     const user = await prisma.user.findUnique({
-      where: { email: session.user.email },
+      where: { email: session.user.email! },
       include: {
         orders: {
-          select: {
-            id: true,
-            orderNumber: true,
-            status: true,
-            paymentMethod: true,
-            paymentStatus: true,
-            totalAmount: true,
-            deliveryFee: true,
-            discount: true,
-            finalAmount: true,
-            notes: true,
-            items: true,
-            deliveryAddress: true,
-            estimatedDelivery: true,
-            createdAt: true,
-            updatedAt: true,
-            vendor: {
-              select: {
-                name: true,
-                slug: true
-              }
-            }
-          },
-          orderBy: {
-            createdAt: 'desc'
-          },
+          orderBy: { createdAt: 'desc' },
           take: 10
-        },
-        notifications: {
-          take: 5,
-          orderBy: {
-            createdAt: 'desc'
-          }
         }
       }
     });
 
+    console.log("Profile API - User found:", user?.email, "Orders:", user?.orders.length);
+
     if (!user) {
       return NextResponse.json(
-        { error: "User not found" },
+        { error: "User not found in database" },
         { status: 404 }
       );
     }
-
-    console.log('Profile API - User orders:', user.orders.map(o => ({
-      id: o.id,
-      paymentMethod: o.paymentMethod,
-      notes: o.notes ? (o.notes.length > 100 ? o.notes.substring(0, 100) + '...' : o.notes) : 'null'
-    })));
 
     return NextResponse.json({
       user: {
         id: user.id,
         name: user.name,
         email: user.email,
-        phone: user.phone,
-        avatar: user.avatar,
+        phone: user.phone || null,
+        avatar: user.avatar || null,
         createdAt: user.createdAt
       },
-      orders: user.orders,
-      totalOrders: user.orders.length,
-      recentNotifications: user.notifications
+      orders: user.orders || [],
+      totalOrders: user.orders?.length || 0
     });
   } catch (error: any) {
     console.error("Profile fetch error:", error);
@@ -87,5 +55,7 @@ export async function GET(request: NextRequest) {
       { error: error.message || "Failed to fetch profile" },
       { status: 500 }
     );
+  } finally {
+    await prisma.$disconnect();
   }
 }

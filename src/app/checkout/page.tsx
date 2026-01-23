@@ -111,6 +111,13 @@ export default function CheckoutPage() {
         try {
           const storedOrders = localStorage.getItem('userOrders');
           const orders = storedOrders ? JSON.parse(storedOrders) : [];
+          
+          // Extract vendor name from the first item
+          let vendorName = 'Unknown Vendor';
+          if (items.length > 0 && items[0].vendor) {
+            vendorName = items[0].vendor;
+          }
+          
           const newOrder = {
             id: result.orderId,
             orderNumber: result.orderNumber,
@@ -124,12 +131,18 @@ export default function CheckoutPage() {
             items: items.map(item => ({
               name: item.name,
               quantity: item.quantity,
+              price: item.price,
+              customization: item.customization,
             })),
             deliveryAddress: {
+              fullName: `${formData.firstName} ${formData.lastName}`,
+              email: formData.email,
+              phone: formData.phone,
+              address: formData.address,
               city: formData.city,
             },
             vendor: {
-              name: 'Unknown Vendor',
+              name: vendorName,
             },
             createdAt: new Date().toISOString(),
             estimatedDelivery: new Date(Date.now() + 4 * 60 * 60 * 1000).toISOString(),

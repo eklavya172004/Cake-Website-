@@ -5,13 +5,15 @@ export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
     const pincode = searchParams.get('pincode');
-    
+
     const vendors = await prisma.vendor.findMany({
       where: {
         isActive: true,
         ...(pincode && {
           serviceAreas: {
-            has: pincode
+            some: {
+              pincode: pincode
+            }
           }
         })
       },
@@ -22,8 +24,6 @@ export async function GET(request: Request) {
         logo: true,
         rating: true,
         totalReviews: true,
-        serviceAreas: true,
-        deliveryFee: true,
         preparationTime: true,
         isActive: true,
       },
@@ -31,7 +31,7 @@ export async function GET(request: Request) {
         rating: 'desc'
       }
     });
-    
+
     return NextResponse.json(vendors);
   } catch (error) {
     console.error('Error fetching vendors:', error);

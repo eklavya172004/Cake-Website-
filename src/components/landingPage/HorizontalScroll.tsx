@@ -37,8 +37,8 @@ export default function HorizontalScroll() {
         
         <section className="panel w-screen h-screen flex items-center px-[10vw] bg-[#F7E47D] text-black">
           <div className="grid md:grid-cols-2 gap-10">
-            <h2 className="serif text-6xl md:text-8xl italic">02. <br />Bid</h2>
-            <p className="text-xl opacity-80 self-center">Upload a reference photo. Vendors bid on price.</p>
+            <h2 className="serif text-6xl md:text-8xl italic">02. <br />Generate Cake</h2>
+            <p className="text-xl opacity-80 self-center">See how your cake will look after customization through AI.</p>
           </div>
         </section>
 

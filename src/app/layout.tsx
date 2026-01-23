@@ -5,8 +5,8 @@ import { CartProvider } from "@/components/cart/CartProvider";
 import { CartButton } from "@/components/cart/CartButton";
 import { CartSidebar } from "@/components/cart/CartSidebar";
 import { AuthSessionProvider } from "@/components/auth/AuthSessionProvider";
-import GlobalNavbar from "@/components/common/GlobalNavbar";
-import Footer from "@/components/common/Footer";
+import NavbarWrapper from "@/components/common/NavbarWrapper";
+import FooterWrapper from "@/components/common/FooterWrapper";
 
 const dmSans = DM_Sans({
   variable: "--font-dm-sans",
@@ -36,13 +36,13 @@ export default function RootLayout({
         className={`${dmSans.variable} ${dmSerif.variable} antialiased`}
       >
         <AuthSessionProvider>
-          <GlobalNavbar  />
+          <NavbarWrapper />
           <CartProvider>
             {children}
             <CartButton />
             <CartSidebar />
           </CartProvider>
-          <Footer />
+          <FooterWrapper />
         </AuthSessionProvider>
       </body>
     </html>

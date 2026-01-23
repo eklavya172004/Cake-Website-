@@ -102,34 +102,34 @@ export async function POST(request: NextRequest) {
 
     // Generate payment links for each co-payer
     const links = await Promise.all(
-      coPayers.map(async (payer) => {
+      coPayers.map(async (payer: any) => {
         console.log(`Creating payment link for ${payer.email} with amount ${payer.amount}`);
-        
+
         const link = await razorpay.paymentLink.create({
           amount: Math.round(payer.amount * 100),
           currency: 'INR',
           description: `Split payment for ${cakeName} - ${payer.email}`,
-        });
-        
-        console.log(`Payment link created: ${link.short_url || link.url}`);
-        
+        } as any);
+
+        console.log(`Payment link created: ${link.short_url}`);
+
         // Send email with payment link
         if (payer.email) {
           console.log(`Sending email to ${payer.email}...`);
           const emailSent = await sendPaymentEmail(
             payer.email,
-            link.short_url || link.url,
+            link.short_url || `https://rzp.io/${link.id}`,
             payer.amount,
             cakeName
           );
           console.log(`Email sent result: ${emailSent}`);
         }
-        
+
         // Return link with co-payer details
         return {
           id: link.id,
-          shortUrl: link.short_url || link.url,
-          url: link.url,
+          shortUrl: link.short_url || `https://rzp.io/${link.id}`,
+          url: link.short_url || `https://rzp.io/${link.id}`,
           email: payer.email,
           amount: payer.amount,
           status: 'pending',

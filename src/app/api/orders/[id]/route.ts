@@ -1,10 +1,12 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
-import { prisma } from "@/lib/db/client";
+import { PrismaClient } from "@prisma/client";
+
+const prisma = new PrismaClient();
 
 export async function GET(
-  request: NextRequest,
+  request: any,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
@@ -27,11 +29,9 @@ export async function GET(
             id: true,
             name: true,
             slug: true,
-            phone: true,
-            email: true,
-            address: true,
             logo: true,
             rating: true,
+            description: true,
           }
         },
         user: {
@@ -51,7 +51,6 @@ export async function GET(
           select: {
             id: true,
             name: true,
-            phone: true,
             currentLat: true,
             currentLng: true,
             lastLocationUpdate: true,
@@ -82,5 +81,7 @@ export async function GET(
       { error: error.message || "Failed to fetch order" },
       { status: 500 }
     );
+  } finally {
+    await prisma.$disconnect();
   }
 }

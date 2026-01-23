@@ -144,7 +144,7 @@ export default function OrdersHistoryPage() {
 
   if (loading) {
     return (
-      <div className= "min-h-screen bg-[#FFF9EB] p-4 pt-24">
+      <div className= "min-h-screen mt-15 bg-[#FFF9EB] p-4 pt-24">
         <div className="max-w-4xl mx-auto text-center py-20">
           <div className="inline-block animate-spin rounded-full h-12 w-12 border-4 border-[#1a1a1a] border-t-[#F7E47D]"></div>
           <p className="mt-4 text-[#1a1a1a]">Loading your orders...</p>
@@ -154,7 +154,7 @@ export default function OrdersHistoryPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#FFF9EB] py-12 px-4 text-[#1a1a1a]">
+    <div className="min-h-screen mt-15 bg-[#FFF9EB] py-12 px-4 text-[#1a1a1a]">
       <div className="max-w-4xl mx-auto">
         {/* Header */}
         <div className=" mb-8">

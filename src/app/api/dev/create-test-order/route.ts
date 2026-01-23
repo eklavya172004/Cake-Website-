@@ -107,9 +107,6 @@ export async function POST(request: NextRequest) {
             id: true,
             name: true,
             slug: true,
-            phone: true,
-            email: true,
-            address: true,
             logo: true,
             rating: true
           }

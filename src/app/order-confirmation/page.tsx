@@ -5,6 +5,8 @@ import { useSearchParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { CheckCircle, Package, Truck, MapPin, Phone, Mail, Clock, ArrowRight } from 'lucide-react';
 
+export const dynamic = 'force-dynamic';
+
 interface Order {
   id: string;
   orderNumber: string;

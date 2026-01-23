@@ -42,7 +42,7 @@ export async function GET(request: NextRequest) {
     }
 
     // Parse split payment data from order notes
-    let splitPaymentData = { coPayers: [], status: 'pending' };
+    let splitPaymentData: { coPayers: any[]; status: string } = { coPayers: [], status: 'pending' };
     if (order.notes) {
       try {
         console.log('Raw order.notes:', order.notes); // Debug - check if it's already stringified
@@ -65,7 +65,7 @@ export async function GET(request: NextRequest) {
                   const paymentLink = await razorpay.paymentLink.fetch(link.id);
                   // Only update to 'paid' if Razorpay says it's completed
                   // Otherwise keep the current status from database (to preserve manual test updates)
-                  const newStatus = paymentLink.status === 'completed' ? 'paid' : link.status;
+                  const newStatus = paymentLink.status === 'paid' ? 'paid' : link.status;
                   updatedLinks.push({
                     ...link,
                     status: newStatus,

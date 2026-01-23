@@ -15,7 +15,7 @@ export async function GET(request: NextRequest) {
 
     // Get user by email
     const user = await prisma.user.findUnique({
-      where: { email: session.user.email },
+      where: { email: session.user.email! },
     });
 
     if (!user) {
@@ -59,6 +59,16 @@ export async function GET(request: NextRequest) {
       estimatedDelivery: order.estimatedDelivery,
       vendor: order.vendor,
     }));
+
+    console.log("User orders API - User:", session.user.email);
+    console.log("User orders API - Total orders:", formattedOrders.length);
+    
+    // Log all split payment orders
+    const splitOrders = formattedOrders.filter(o => o.paymentMethod === 'split');
+    console.log("Split payment orders found:", splitOrders.length);
+    splitOrders.forEach((order, idx) => {
+      console.log(`  [${idx}] Order ${order.orderNumber} - Notes:`, order.notes ? JSON.parse(order.notes).splitPaymentLinks?.length + " links" : "no notes");
+    });
 
     return NextResponse.json({
       success: true,

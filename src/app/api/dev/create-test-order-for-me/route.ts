@@ -28,7 +28,7 @@ export async function POST(request: NextRequest) {
 
     // Get or create user
     let user = await prisma.user.findUnique({
-      where: { email: session.user.email }
+      where: { email: session.user.email! }
     });
 
     if (!user) {
@@ -109,9 +109,6 @@ export async function POST(request: NextRequest) {
             id: true,
             name: true,
             slug: true,
-            phone: true,
-            email: true,
-            address: true,
             logo: true,
             rating: true
           }

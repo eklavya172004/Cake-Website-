@@ -4,76 +4,59 @@ export async function POST(req: Request) {
   try {
     const { name, flavor, size, toppings, frosting, message, theme } = await req.json();
 
-    // Build a detailed prompt based on cake customization
-    const promptParts = [
-      'professional beautiful delicious cake',
-      `${flavor} flavor`,
-      `${size} size`,
-      frosting && `${frosting} frosting`,
-      toppings && toppings.length > 0 && `decorated with ${toppings.join(', ')}`,
-      'bakery shop style photography, studio lighting, 8k, professional',
-      'no text, no words, no watermark'
-    ].filter(Boolean);
+    // Validate inputs
+    if (!name || !flavor) {
+      return NextResponse.json({
+        success: false,
+        error: 'Name and flavor are required'
+      }, { status: 400 });
+    }
 
-    const prompt = promptParts.join(', ');
+    // Generate SVG directly - it's reliable and works everywhere
+    const svgCake = generateCakeSVG(name, flavor, frosting || 'Classic', toppings || []);
     
-    // Try Pollinations.ai but with a very short timeout and quick fallback
-    let imageUrl = null;
-    let method = 'svg-fallback';
-
+    // Encode SVG to base64 using btoa (available on both server and client)
+    let base64Svg = '';
     try {
-      const encodedPrompt = encodeURIComponent(prompt);
-      const seed = Math.floor(Math.random() * 1000000);
-      const pollUrl = `https://image.pollinations.ai/prompt/${encodedPrompt}?seed=${seed}&width=512&height=512&nologo=true`;
-
-      // Use Promise.race to implement timeout
-      const fetchPromise = fetch(pollUrl, {
-        method: 'HEAD',
-        headers: {
-          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
-        }
-      });
-
-      const timeoutPromise = new Promise((_, reject) =>
-        setTimeout(() => reject(new Error('Timeout')), 3000) // 3 second timeout
-      );
-
-      const testResponse = await Promise.race([fetchPromise, timeoutPromise]);
-      
-      if ((testResponse as Response).ok) {
-        imageUrl = pollUrl;
-        method = 'pollinations';
+      // Server-side: use Buffer
+      if (typeof Buffer !== 'undefined') {
+        base64Svg = Buffer.from(svgCake, 'utf-8').toString('base64');
+      } else {
+        // Fallback: use btoa
+        base64Svg = btoa(unescape(encodeURIComponent(svgCake)));
       }
-    } catch (pollError) {
-      console.log('Pollinations.ai unavailable, using SVG fallback:', (pollError as Error).message);
-      // Continue to fallback
+    } catch (encodeError) {
+      // Final fallback
+      base64Svg = Buffer.from(svgCake).toString('base64');
     }
-
-    // Use SVG fallback if Pollinations didn't work
-    if (!imageUrl) {
-      const svgCake = generateCakeSVG(name, flavor, frosting, toppings);
-      const base64Svg = Buffer.from(svgCake).toString('base64');
-      imageUrl = `data:image/svg+xml;base64,${base64Svg}`;
-    }
+    
+    const imageUrl = `data:image/svg+xml;base64,${base64Svg}`;
 
     return NextResponse.json({
       imageUrl,
-      prompt: prompt.substring(0, 150),
       success: true,
-      method: method
+      method: 'svg-generated'
     });
   } catch (error) {
     console.error('Error generating cake image:', error);
-    
-    // Even if something goes wrong, return a basic SVG
-    const fallbackSvg = generateCakeSVG('Custom Cake', 'Delicious', 'Creamy', []);
-    const base64Svg = Buffer.from(fallbackSvg).toString('base64');
-    
-    return NextResponse.json({
-      imageUrl: `data:image/svg+xml;base64,${base64Svg}`,
-      success: true,
-      method: 'emergency-fallback'
-    });
+
+    // Return fallback SVG even on error
+    try {
+      const fallbackSvg = generateCakeSVG('Your Cake', 'Delicious', 'Creamy', []);
+      const base64Svg = Buffer.from(fallbackSvg).toString('base64');
+      
+      return NextResponse.json({
+        imageUrl: `data:image/svg+xml;base64,${base64Svg}`,
+        success: true,
+        method: 'fallback-svg'
+      });
+    } catch (fallbackError) {
+      console.error('Fallback failed:', fallbackError);
+      return NextResponse.json({
+        success: false,
+        error: 'Failed to generate image'
+      }, { status: 500 });
+    }
   }
 }
 
@@ -96,7 +79,7 @@ function generateCakeSVG(name: string, flavor: string, frosting: string, topping
 
   const flavorLower = flavor.toLowerCase();
   let colors = colorMap['default'];
-  
+
   for (const key in colorMap) {
     if (flavorLower.includes(key)) {
       colors = colorMap[key];
@@ -104,7 +87,10 @@ function generateCakeSVG(name: string, flavor: string, frosting: string, topping
     }
   }
 
-  const toppingsList = toppings && toppings.length > 0 ? toppings.join(', ') : 'elegantly decorated';
+  const toppingsList = toppings && toppings.length > 0 ? toppings.join(', ') : 'decorated';
+  const safeName = name.substring(0, 20).replace(/[<>&"']/g, '');
+  const safeFlavor = flavor.substring(0, 15).replace(/[<>&"']/g, '');
+  const safeToppings = toppingsList.substring(0, 30).replace(/[<>&"']/g, '');
 
   return `
     <svg width="512" height="512" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
@@ -121,69 +107,56 @@ function generateCakeSVG(name: string, flavor: string, frosting: string, topping
           <feDropShadow dx="0" dy="4" stdDeviation="3" flood-opacity="0.3"/>
         </filter>
       </defs>
-      
-      <!-- Background -->
+
       <rect width="512" height="512" fill="#FFF9EB"/>
-      
-      <!-- Plate -->
+
       <ellipse cx="256" cy="380" rx="140" ry="50" fill="#F0F0F0" filter="url(#shadow)"/>
       <ellipse cx="256" cy="375" rx="135" ry="45" fill="#FFFFFF" filter="url(#shadow)"/>
-      
-      <!-- Cake Layers -->
-      <!-- Bottom layer -->
+
       <ellipse cx="256" cy="330" rx="120" ry="40" fill="url(#cakeGrad)" filter="url(#shadow)"/>
       <rect x="136" y="270" width="240" height="60" fill="url(#cakeGrad)" filter="url(#shadow)"/>
       <ellipse cx="256" cy="270" rx="120" ry="8" fill="rgba(0,0,0,0.1)"/>
-      
-      <!-- Middle layer -->
+
       <ellipse cx="256" cy="220" rx="100" ry="35" fill="url(#cakeGrad)" filter="url(#shadow)"/>
       <rect x="156" y="170" width="200" height="50" fill="url(#cakeGrad)" filter="url(#shadow)"/>
       <ellipse cx="256" cy="170" rx="100" ry="8" fill="rgba(0,0,0,0.1)"/>
-      
-      <!-- Top layer -->
+
       <ellipse cx="256" cy="130" rx="80" ry="30" fill="url(#cakeGrad)" filter="url(#shadow)"/>
       <rect x="176" y="90" width="160" height="40" fill="url(#cakeGrad)" filter="url(#shadow)"/>
       <ellipse cx="256" cy="90" rx="80" ry="8" fill="rgba(0,0,0,0.1)"/>
-      
-      <!-- Frosting -->
-      <path d="M 150 280 Q 170 260 190 280 Q 210 300 230 280 Q 250 260 270 280 Q 290 300 310 280 Q 330 260 350 280" 
+
+      <path d="M 150 280 Q 170 260 190 280 Q 210 300 230 280 Q 250 260 270 280 Q 290 300 310 280 Q 330 260 350 280"
             stroke="url(#frostingGrad)" stroke-width="8" fill="none" stroke-linecap="round"/>
-      <path d="M 160 180 Q 180 160 200 180 Q 220 200 240 180 Q 260 160 280 180 Q 300 200 320 180 Q 340 160 350 180" 
+      <path d="M 160 180 Q 180 160 200 180 Q 220 200 240 180 Q 260 160 280 180 Q 300 200 320 180 Q 340 160 350 180"
             stroke="url(#frostingGrad)" stroke-width="6" fill="none" stroke-linecap="round" opacity="0.8"/>
-      
-      <!-- Decorative sprinkles/toppings -->
+
       <circle cx="180" cy="200" r="3" fill="#FFD700"/>
       <circle cx="210" cy="190" r="3" fill="#FF69B4"/>
       <circle cx="250" cy="185" r="3" fill="#FFD700"/>
       <circle cx="290" cy="195" r="3" fill="#FF69B4"/>
       <circle cx="320" cy="210" r="3" fill="#FFD700"/>
-      
+
       <line x1="200" y1="240" x2="205" y2="250" stroke="#FFD700" stroke-width="2.5" stroke-linecap="round"/>
       <line x1="240" y1="235" x2="235" y2="245" stroke="#FF69B4" stroke-width="2.5" stroke-linecap="round"/>
       <line x1="280" y1="235" x2="285" y2="245" stroke="#FFD700" stroke-width="2.5" stroke-linecap="round"/>
       <line x1="310" y1="245" x2="305" y2="255" stroke="#FF69B4" stroke-width="2.5" stroke-linecap="round"/>
-      
-      <!-- Candle -->
+
       <rect x="248" y="45" width="8" height="35" fill="#FFD700" filter="url(#shadow)"/>
       <ellipse cx="252" cy="42" rx="6" ry="8" fill="#FFA500"/>
       <circle cx="252" cy="35" r="4" fill="#FF6347" opacity="0.8"/>
       <circle cx="252" cy="34" r="2" fill="#FFD700" opacity="0.6"/>
-      
-      <!-- Text -->
+
       <text x="256" y="410" font-size="22" font-weight="bold" text-anchor="middle" fill="#8B4513" font-family="Georgia, serif">
-        ${name.substring(0, 20)}
+        ${safeName}
       </text>
-      
+
       <text x="256" y="445" font-size="14" text-anchor="middle" fill="#A0522D" font-family="Georgia, serif">
-        ${flavor}
+        ${safeFlavor}
       </text>
-      
+
       <text x="256" y="475" font-size="11" text-anchor="middle" fill="#999999" font-family="Arial, sans-serif">
-        ${toppingsList.substring(0, 30)}
+        ${safeToppings}
       </text>
     </svg>
   `;
 }
-
-
-
