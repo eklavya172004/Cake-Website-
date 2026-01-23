@@ -37,7 +37,7 @@ export default function AdminDashboard() {
     fetchDashboard();
   }, []);
 
-  if (loading) return <div className="p-6 text-center">Loading dashboard...</div>;
+  if (loading) return <div className="p-6 text-center text-gray-600">Loading dashboard...</div>;
   if (error) return <div className="p-6 text-red-600">Error: {error}</div>;
   if (!dashboardData) return <div className="p-6 text-red-600">No data available</div>;
 
@@ -67,55 +67,63 @@ export default function AdminDashboard() {
   ];
 
   return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold text-gray-900">Dashboard</h1>
-        <p className="text-gray-600 mt-1">Welcome back! Here&apos;s your platform overview</p>
+    <div className="space-y-6 bg-gradient-to-br from-gray-50 to-white p-6 rounded-lg">
+      <div className="mb-8">
+        <h1 className="text-4xl font-bold text-gray-900">Dashboard</h1>
+        <p className="text-gray-600 mt-2">Welcome back! Here&apos;s your platform overview</p>
       </div>
 
-      {/* KPI Cards */}
+      {/* KPI Cards - Bakingo Style */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <div className="bg-white rounded-lg shadow p-6 border-l-4 border-pink-600">
+        <div className="bg-white rounded-xl shadow-sm hover:shadow-md transition-all duration-300 p-6 border-l-4 border-pink-600 hover:border-pink-700 group">
           <div className="flex items-start justify-between">
             <div>
-              <p className="text-gray-600 text-sm font-medium">Total Revenue</p>
-              <p className="text-3xl font-bold text-gray-900 mt-1">₹{(dashboardData.totalRevenue / 100000).toFixed(1)}L</p>
-              <p className="text-green-600 text-sm mt-2">↑ 12.5% from last month</p>
+              <p className="text-gray-600 text-sm font-medium uppercase tracking-wide">Total Revenue</p>
+              <p className="text-3xl font-bold text-gray-900 mt-2">₹{(dashboardData.totalRevenue / 100000).toFixed(1)}L</p>
+              <p className="text-green-600 text-sm mt-3 font-semibold">↑ 12.5% from last month</p>
             </div>
-            <TrendingUp className="w-12 h-12 text-pink-600 opacity-20" />
+            <div className="p-3 bg-pink-100 rounded-lg group-hover:bg-pink-200 transition-colors">
+              <TrendingUp className="w-6 h-6 text-pink-600" />
+            </div>
           </div>
         </div>
 
-        <div className="bg-white rounded-lg shadow p-6 border-l-4 border-blue-600">
+        <div className="bg-white rounded-xl shadow-sm hover:shadow-md transition-all duration-300 p-6 border-l-4 border-blue-600 hover:border-blue-700 group">
           <div className="flex items-start justify-between">
             <div>
-              <p className="text-gray-600 text-sm font-medium">Total Orders</p>
-              <p className="text-3xl font-bold text-gray-900 mt-1">{dashboardData.totalOrders}</p>
-              <p className="text-green-600 text-sm mt-2">↑ 8.2% from last month</p>
+              <p className="text-gray-600 text-sm font-medium uppercase tracking-wide">Total Orders</p>
+              <p className="text-3xl font-bold text-gray-900 mt-2">{dashboardData.totalOrders}</p>
+              <p className="text-green-600 text-sm mt-3 font-semibold">↑ 8.2% from last month</p>
             </div>
-            <ShoppingCart className="w-12 h-12 text-blue-600 opacity-20" />
+            <div className="p-3 bg-blue-100 rounded-lg group-hover:bg-blue-200 transition-colors">
+              <ShoppingCart className="w-6 h-6 text-blue-600" />
+            </div>
           </div>
         </div>
 
-        <div className="bg-white rounded-lg shadow p-6 border-l-4 border-purple-600">
+        <div className="bg-white rounded-xl shadow-sm hover:shadow-md transition-all duration-300 p-6 border-l-4 border-purple-600 hover:border-purple-700 group">
           <div className="flex items-start justify-between">
             <div>
-              <p className="text-gray-600 text-sm font-medium">Active Vendors</p>
-              <p className="text-3xl font-bold text-gray-900 mt-1">{dashboardData.activeVendors}</p>
-              <p className="text-blue-600 text-sm mt-2">Platform vendors</p>
+              <p className="text-gray-600 text-sm font-medium uppercase tracking-wide">Active Vendors</p>
+              <p className="text-3xl font-bold text-gray-900 mt-2">{dashboardData.activeVendors}</p>
+              <p className="text-blue-600 text-sm mt-3 font-semibold">Platform vendors</p>
             </div>
-            <Users className="w-12 h-12 text-purple-600 opacity-20" />
+            <div className="p-3 bg-purple-100 rounded-lg group-hover:bg-purple-200 transition-colors">
+              <Users className="w-6 h-6 text-purple-600" />
+            </div>
           </div>
         </div>
 
-        <div className="bg-white rounded-lg shadow p-6 border-l-4 border-red-600">
+        <div className="bg-white rounded-xl shadow-sm hover:shadow-md transition-all duration-300 p-6 border-l-4 border-red-600 hover:border-red-700 group">
           <div className="flex items-start justify-between">
             <div>
-              <p className="text-gray-600 text-sm font-medium">Open Disputes</p>
-              <p className="text-3xl font-bold text-gray-900 mt-1">{dashboardData.disputes}</p>
-              <p className="text-red-600 text-sm mt-2">Needs attention</p>
+              <p className="text-gray-600 text-sm font-medium uppercase tracking-wide">Open Disputes</p>
+              <p className="text-3xl font-bold text-gray-900 mt-2">{dashboardData.disputes}</p>
+              <p className="text-red-600 text-sm mt-3 font-semibold">Needs attention</p>
             </div>
-            <AlertCircle className="w-12 h-12 text-red-600 opacity-20" />
+            <div className="p-3 bg-red-100 rounded-lg group-hover:bg-red-200 transition-colors">
+              <AlertCircle className="w-6 h-6 text-red-600" />
+            </div>
           </div>
         </div>
       </div>
@@ -123,22 +131,22 @@ export default function AdminDashboard() {
       {/* Charts */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Revenue Trend */}
-        <div className="bg-white rounded-lg shadow p-6">
+        <div className="bg-white rounded-xl shadow-sm hover:shadow-md transition-all p-6 border border-gray-200">
           <h3 className="text-lg font-bold text-gray-900 mb-4">Revenue Trend</h3>
           <ResponsiveContainer width="100%" height={300}>
             <LineChart data={revenueData}>
-              <CartesianGrid strokeDasharray="3 3" />
-              <XAxis dataKey="date" />
-              <YAxis />
-              <Tooltip />
+              <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+              <XAxis dataKey="date" stroke="#6b7280" />
+              <YAxis stroke="#6b7280" />
+              <Tooltip contentStyle={{ backgroundColor: '#1f2937', border: 'none', borderRadius: '8px', color: '#fff' }} />
               <Legend />
-              <Line type="monotone" dataKey="revenue" stroke="#ec4899" strokeWidth={2} name="Revenue (₹)" />
+              <Line type="monotone" dataKey="revenue" stroke="#ec4899" strokeWidth={3} name="Revenue (₹)" dot={{ fill: '#ec4899', r: 4 }} />
             </LineChart>
           </ResponsiveContainer>
         </div>
 
         {/* Order Status Distribution */}
-        <div className="bg-white rounded-lg shadow p-6">
+        <div className="bg-white rounded-xl shadow-sm hover:shadow-md transition-all p-6 border border-gray-200">
           <h3 className="text-lg font-bold text-gray-900 mb-4">Order Status Distribution</h3>
           <ResponsiveContainer width="100%" height={300}>
             <PieChart>
@@ -156,32 +164,32 @@ export default function AdminDashboard() {
                   <Cell key={`cell-${index}`} fill={entry.fill} />
                 ))}
               </Pie>
-              <Tooltip />
+              <Tooltip contentStyle={{ backgroundColor: '#1f2937', border: 'none', borderRadius: '8px', color: '#fff' }} />
             </PieChart>
           </ResponsiveContainer>
         </div>
       </div>
 
       {/* Top Vendors */}
-      <div className="bg-white rounded-lg shadow p-6">
+      <div className="bg-white rounded-xl shadow-sm hover:shadow-md transition-all p-6 border border-gray-200">
         <h3 className="text-lg font-bold text-gray-900 mb-4">Top Performing Vendors</h3>
         <div className="overflow-x-auto">
           <table className="w-full">
-            <thead className="bg-gray-50">
+            <thead className="bg-gradient-to-r from-gray-50 to-gray-100 border-b-2 border-gray-200">
               <tr>
-                <th className="px-6 py-3 text-left text-sm font-semibold text-gray-700">Vendor</th>
-                <th className="px-6 py-3 text-left text-sm font-semibold text-gray-700">Orders</th>
-                <th className="px-6 py-3 text-left text-sm font-semibold text-gray-700">Revenue</th>
-                <th className="px-6 py-3 text-left text-sm font-semibold text-gray-700">Avg Order Value</th>
+                <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900">Vendor</th>
+                <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900">Orders</th>
+                <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900">Revenue</th>
+                <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900">Avg Order Value</th>
               </tr>
             </thead>
             <tbody>
               {topVendors.map((vendor, idx) => (
-                <tr key={idx} className="border-t border-gray-200 hover:bg-gray-50">
-                  <td className="px-6 py-3 font-medium text-gray-900">{vendor.name}</td>
-                  <td className="px-6 py-3 text-gray-600">{vendor.orders}</td>
-                  <td className="px-6 py-3 text-gray-600">₹{(vendor.revenue / 1000).toFixed(0)}K</td>
-                  <td className="px-6 py-3 text-gray-600">₹{(vendor.revenue / vendor.orders).toFixed(0)}</td>
+                <tr key={idx} className="border-b border-gray-200 hover:bg-gray-50 transition-colors">
+                  <td className="px-6 py-4 font-medium text-gray-900">{vendor.name}</td>
+                  <td className="px-6 py-4 text-gray-600">{vendor.orders}</td>
+                  <td className="px-6 py-4 text-gray-600 font-semibold">₹{(vendor.revenue / 1000).toFixed(0)}K</td>
+                  <td className="px-6 py-4 text-gray-600">₹{(vendor.revenue / vendor.orders).toFixed(0)}</td>
                 </tr>
               ))}
             </tbody>

@@ -144,33 +144,33 @@ export default function OrdersHistoryPage() {
 
   if (loading) {
     return (
-      <div className= "min-h-screen mt-15 bg-[#FFF9EB] p-4 pt-24">
+      <div className="min-h-screen bg-white p-4 pt-24">
         <div className="max-w-4xl mx-auto text-center py-20">
-          <div className="inline-block animate-spin rounded-full h-12 w-12 border-4 border-[#1a1a1a] border-t-[#F7E47D]"></div>
-          <p className="mt-4 text-[#1a1a1a]">Loading your orders...</p>
+          <div className="inline-block animate-spin rounded-full h-12 w-12 border-4 border-pink-600 border-t-transparent"></div>
+          <p className="mt-4 text-gray-900">Loading your orders...</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen mt-15 bg-[#FFF9EB] py-12 px-4 text-[#1a1a1a]">
+    <div className="min-h-screen bg-white py-12 px-4 text-gray-900 pt-32">
       <div className="max-w-4xl mx-auto">
         {/* Header */}
-        <div className=" mb-8">
+        <div className="mb-8">
           <button
             onClick={() => router.back()}
-            className="flex items-center gap-2 text-[#1a1a1a] hover:text-[#F7E47D] mb-6 transition-colors font-semibold"
+            className="flex items-center gap-2 text-gray-600 hover:text-pink-600 mb-6 transition-colors font-semibold"
           >
             <ChevronLeft className="w-5 h-5" />
             Back
           </button>
-          <h1 className="serif text-4xl mb-2">My Orders</h1>
-          <p className="text-[#1a1a1a]/70">Track and manage all your cake orders</p>
+          <h1 className="text-4xl font-bold text-gray-900 mb-2">My Orders</h1>
+          <p className="text-gray-600">Track and manage all your cake orders</p>
         </div>
 
         {/* Filter Tabs */}
-        <div className="bg-white rounded-lg p-4 mb-8 border border-[#1a1a1a]/10">
+        <div className="bg-white rounded-xl p-4 mb-8 border border-gray-200 shadow-sm">
           <div className="flex gap-2 overflow-x-auto pb-2">
             {[
               { value: 'all', label: 'All Orders' },
@@ -183,10 +183,10 @@ export default function OrdersHistoryPage() {
               <button
                 key={tab.value}
                 onClick={() => setFilter(tab.value)}
-                className={`px-4 py-2 rounded font-semibold transition-all whitespace-nowrap ${
+                className={`px-4 py-2 rounded-lg font-semibold transition-all whitespace-nowrap ${
                   filter === tab.value
-                    ? 'bg-[#1a1a1a] text-[#F7E47D] shadow-lg'
-                    : 'bg-[#FFF9EB] text-[#1a1a1a] border border-[#1a1a1a]/10 hover:border-[#F7E47D]'
+                    ? 'bg-pink-600 text-white shadow-md'
+                    : 'bg-gray-100 text-gray-700 border border-gray-200 hover:bg-gray-200 hover:border-pink-300'
                 }`}
               >
                 {tab.label}
@@ -197,17 +197,17 @@ export default function OrdersHistoryPage() {
 
         {/* Orders List */}
         {filteredOrders.length === 0 ? (
-          <div className="bg-white rounded-lg p-12 text-center border border-[#1a1a1a]/10">
-            <Package className="w-16 h-16 text-[#1a1a1a]/20 mx-auto mb-4" />
-            <h2 className="serif text-2xl mb-2">No orders yet</h2>
-            <p className="text-[#1a1a1a]/70 mb-6">
+          <div className="bg-white rounded-xl p-12 text-center border border-gray-200 shadow-sm">
+            <Package className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+            <h2 className="text-2xl font-bold text-gray-900 mb-2">No orders yet</h2>
+            <p className="text-gray-600 mb-6">
               {filter === 'all'
                 ? 'You haven\'t placed any orders yet. Start shopping for delicious cakes!'
                 : `No orders found with status "${filter}".`}
             </p>
             <button
               onClick={() => router.push('/')}
-              className="bg-[#1a1a1a] text-[#F7E47D] px-6 py-3 rounded font-semibold hover:shadow-lg transition-all"
+              className="bg-pink-600 hover:bg-pink-700 text-white px-6 py-3 rounded-lg font-semibold transition-all duration-300"
             >
               Start Shopping
             </button>
@@ -229,21 +229,21 @@ export default function OrdersHistoryPage() {
                       router.push(`/orders/${order.id}`);
                     }
                   }}
-                  className="w-full text-left bg-white rounded-lg border border-[#1a1a1a]/10 p-6 hover:shadow-lg hover:border-[#F7E47D] transition-all group"
+                  className="w-full text-left bg-white rounded-xl border border-gray-200 p-6 hover:shadow-md hover:border-pink-300 transition-all group"
                 >
                   <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                     {/* Left Section */}
                     <div className="flex-1">
                       <div className="flex items-center gap-4 mb-3">
-                        <div className="w-12 h-12 bg-[#F7E47D]/20 rounded flex items-center justify-center text-xl">
+                        <div className="w-12 h-12 bg-pink-100 rounded-lg flex items-center justify-center text-xl">
                           🎂
                         </div>
                         <div>
-                          <h3 className="font-bold text-[#1a1a1a]">{order.orderNumber}</h3>
-                          <p className="text-sm text-[#1a1a1a]/70">{order.vendor.name}</p>
+                          <h3 className="font-bold text-gray-900">{order.orderNumber}</h3>
+                          <p className="text-sm text-gray-600">{order.vendor.name}</p>
                         </div>
                       </div>
-                      <p className="text-sm text-[#1a1a1a]/70">
+                      <p className="text-sm text-gray-600">
                         {order.items.length} item{order.items.length > 1 ? 's' : ''} •{' '}
                         {order.items.map(item => item.name).join(', ')}
                       </p>
@@ -261,52 +261,52 @@ export default function OrdersHistoryPage() {
                       {/* Details */}
                       <div className="flex gap-6 text-sm">
                         <div className="flex items-center gap-2">
-                          <Clock className="w-4 h-4 text-[#F7E47D]" />
+                          <Clock className="w-4 h-4 text-pink-600" />
                           <div>
-                            <p className="text-xs text-[#1a1a1a]/60">Placed</p>
-                            <p className="font-semibold text-[#1a1a1a]">
+                            <p className="text-xs text-gray-600">Placed</p>
+                            <p className="font-semibold text-gray-900">
                               {new Date(order.createdAt).toLocaleDateString()}
                             </p>
                           </div>
                         </div>
                         <div className="flex items-center gap-2">
-                          <MapPin className="w-4 h-4 text-[#F7E47D]" />
+                          <MapPin className="w-4 h-4 text-pink-600" />
                           <div>
-                            <p className="text-xs text-[#1a1a1a]/60">Delivery</p>
-                            <p className="font-semibold text-[#1a1a1a]">{order.deliveryAddress.city}</p>
+                            <p className="text-xs text-gray-600">Delivery</p>
+                            <p className="font-semibold text-gray-900">{order.deliveryAddress.city}</p>
                           </div>
                         </div>
                         <div>
-                          <p className="text-xs text-[#1a1a1a]/60">Amount</p>
-                          <p className="font-bold text-[#F7E47D]">₹{order.finalAmount}</p>
+                          <p className="text-xs text-gray-600">Amount</p>
+                          <p className="font-bold text-pink-600">₹{order.finalAmount}</p>
                         </div>
                       </div>
 
                       {/* Arrow */}
-                      <ChevronRight className="w-5 h-5 text-[#1a1a1a]/40 group-hover:text-[#F7E47D] group-hover:translate-x-1 transition-all flex-shrink-0" />
+                      <ChevronRight className="w-5 h-5 text-gray-400 group-hover:text-pink-600 group-hover:translate-x-1 transition-all flex-shrink-0" />
                     </div>
                   </div>
 
                   {/* Split Payment Status Section */}
                   {order.paymentMethod === 'split' && paymentStatus && (
-                    <div className="mt-6 pt-6 border-t border-[#1a1a1a]/10">
-                      <h4 className="text-xs font-bold uppercase tracking-widest text-[#1a1a1a]/60 mb-3">
+                    <div className="mt-6 pt-6 border-t border-gray-200">
+                      <h4 className="text-xs font-bold uppercase tracking-widest text-gray-600 mb-3">
                         Split Payment Status
                       </h4>
                       
                       {/* Progress Bar */}
                       <div className="mb-4">
                         <div className="flex justify-between items-center mb-2">
-                          <span className="text-xs font-semibold text-[#1a1a1a]">
+                          <span className="text-xs font-semibold text-gray-900">
                             {paymentStatus.paidCount} of {paymentStatus.totalCount} Paid
                           </span>
-                          <span className="text-xs font-semibold text-[#F7E47D]">
+                          <span className="text-xs font-semibold text-pink-600">
                             {Math.round((paymentStatus.paidCount / paymentStatus.totalCount) * 100)}%
                           </span>
                         </div>
                         <div className="w-full bg-gray-200 rounded-full h-2">
                           <div
-                            className="bg-gradient-to-r from-[#F7E47D] to-[#d946a6] h-full rounded-full transition-all"
+                            className="bg-gradient-to-r from-pink-500 to-pink-700 h-full rounded-full transition-all"
                             style={{
                               width: `${(paymentStatus.paidCount / paymentStatus.totalCount) * 100}%`,
                             }}
@@ -316,30 +316,30 @@ export default function OrdersHistoryPage() {
 
                       {/* Payment Amounts */}
                       <div className="grid grid-cols-2 gap-3 text-xs">
-                        <div className="bg-green-50 rounded p-2">
-                          <p className="text-green-600 font-semibold">Paid</p>
-                          <p className="text-green-800 font-bold">₹{paymentStatus.paidAmount.toFixed(2)}</p>
+                        <div className="bg-green-50 rounded-lg p-2 border border-green-100">
+                          <p className="text-green-700 font-semibold">Paid</p>
+                          <p className="text-green-900 font-bold">₹{paymentStatus.paidAmount.toFixed(2)}</p>
                         </div>
-                        <div className="bg-orange-50 rounded p-2">
-                          <p className="text-orange-600 font-semibold">Pending</p>
-                          <p className="text-orange-800 font-bold">₹{paymentStatus.pendingAmount.toFixed(2)}</p>
+                        <div className="bg-amber-50 rounded-lg p-2 border border-amber-100">
+                          <p className="text-amber-700 font-semibold">Pending</p>
+                          <p className="text-amber-900 font-bold">₹{paymentStatus.pendingAmount.toFixed(2)}</p>
                         </div>
                       </div>
 
                       {/* Co-payers List */}
                       <div className="mt-4 space-y-2">
                         {splitPaymentData?.coPayers.map((payer, idx) => (
-                          <div key={idx} className="flex items-center justify-between text-xs p-2 bg-gray-50 rounded">
+                          <div key={idx} className="flex items-center justify-between text-xs p-2 bg-gray-50 rounded-lg border border-gray-200">
                             <div className="flex-1">
-                              <p className="text-[#1a1a1a]/70 truncate">{payer.email}</p>
+                              <p className="text-gray-700 truncate">{payer.email}</p>
                             </div>
                             <div className="flex items-center gap-2">
-                              <span className="font-semibold text-[#1a1a1a]">₹{payer.amount.toFixed(2)}</span>
+                              <span className="font-semibold text-gray-900">₹{payer.amount.toFixed(2)}</span>
                               <span
-                                className={`px-2 py-0.5 rounded text-white text-[10px] font-bold ${
+                                className={`px-2 py-0.5 rounded-lg text-white text-[10px] font-bold ${
                                   payer.status === 'paid'
                                     ? 'bg-green-600'
-                                    : 'bg-orange-600'
+                                    : 'bg-amber-600'
                                 }`}
                               >
                                 {payer.status === 'paid' ? '✓ Paid' : 'Pending'}
@@ -357,20 +357,35 @@ export default function OrdersHistoryPage() {
         )}
 
         {/* Help Section */}
-        <div className="mt-12 bg-[#1a1a1a] rounded-lg p-8 border border-[#F7E47D]">
-          <h2 className="serif text-2xl text-[#F7E47D] mb-6">Need Help With Your Orders?</h2>
+        <div className="mt-12 bg-gradient-to-br from-pink-50 to-pink-100 rounded-xl p-8 border border-pink-200">
+          <h2 className="text-2xl font-bold text-gray-900 mb-6">Need Help With Your Orders?</h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div>
-              <h3 className="font-semibold text-[#F7E47D] mb-2">Track Status</h3>
-              <p className="text-[#F7E47D]/70 text-sm">Click on any order to see real-time tracking updates</p>
+            <div className="bg-white rounded-lg p-6 border border-gray-200 hover:border-pink-300 hover:shadow-md transition-all">
+              <div className="flex items-center gap-3 mb-3">
+                <div className="w-10 h-10 bg-pink-100 rounded-lg flex items-center justify-center">
+                  <MapPin className="w-5 h-5 text-pink-600" />
+                </div>
+                <h3 className="font-semibold text-gray-900">Track Status</h3>
+              </div>
+              <p className="text-gray-600 text-sm">Click on any order to see real-time tracking updates and order progress</p>
             </div>
-            <div>
-              <h3 className="font-semibold text-[#F7E47D] mb-2">Contact Support</h3>
-              <p className="text-[#F7E47D]/70 text-sm">Need assistance? Reach out to our support team</p>
+            <div className="bg-white rounded-lg p-6 border border-gray-200 hover:border-pink-300 hover:shadow-md transition-all">
+              <div className="flex items-center gap-3 mb-3">
+                <div className="w-10 h-10 bg-pink-100 rounded-lg flex items-center justify-center">
+                  <Package className="w-5 h-5 text-pink-600" />
+                </div>
+                <h3 className="font-semibold text-gray-900">Contact Support</h3>
+              </div>
+              <p className="text-gray-600 text-sm">Need assistance? Reach out to our support team for any questions or concerns</p>
             </div>
-            <div>
-              <h3 className="font-semibold text-[#F7E47D] mb-2">Reorder</h3>
-              <p className="text-[#F7E47D]/70 text-sm">Order your favorite cakes again from order history</p>
+            <div className="bg-white rounded-lg p-6 border border-gray-200 hover:border-pink-300 hover:shadow-md transition-all">
+              <div className="flex items-center gap-3 mb-3">
+                <div className="w-10 h-10 bg-pink-100 rounded-lg flex items-center justify-center">
+                  <ChevronRight className="w-5 h-5 text-pink-600" />
+                </div>
+                <h3 className="font-semibold text-gray-900">Reorder</h3>
+              </div>
+              <p className="text-gray-600 text-sm">Order your favorite cakes again from order history with just one click</p>
             </div>
           </div>
         </div>

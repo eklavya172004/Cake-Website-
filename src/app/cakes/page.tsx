@@ -62,47 +62,48 @@ export default function AllCakesPage() {
     });
 
   return (
-    <div className="min-h-screen bg-[#FFF9EB] text-[#1a1a1a] font-sans">
-      {/* Header */}
-      <nav className="fixed top-0 w-full z-50 flex justify-between items-center px-10 py-6 bg-[#FFF9EB]/90 backdrop-blur-md border-b border-[#1a1a1a]/10">
-        <Link href="/" className="text-2xl font-bold tracking-tighter cursor-pointer">SAVOR</Link>
-        <div className="hidden md:flex space-x-10 text-[10px] uppercase tracking-widest font-bold">
-          <Link href="/" className="hover:opacity-50">Home</Link>
-          <Link href="/cakes" className="opacity-50 cursor-default">Cakes</Link>
-        </div>
-        <button className="bg-[#1a1a1a] text-[#F7E47D] px-6 py-2 rounded-full text-[10px] uppercase font-bold tracking-widest">Cart (0)</button>
-      </nav>
-
-      <div className="pt-32 px-4 container mx-auto max-w-6xl">
+    <div className="min-h-screen bg-white text-gray-900 font-sans">
+      <div className="pt-40 px-4 container mx-auto max-w-6xl">
+        {/* Header Section */}
         <div className="text-center mb-16">
-          <h1 className="serif text-5xl md:text-7xl mb-6">All Cakes</h1>
-          <p className="text-xl text-gray-600 font-light">Explore our complete collection of artisanal confections.</p>
+          <h1 className="text-5xl md:text-6xl font-bold text-gray-900 mb-4">All Cakes</h1>
+          <p className="text-lg text-gray-600">Explore our complete collection of artisanal confections.</p>
         </div>
 
         {/* Search Bar */}
         <div className="max-w-2xl mx-auto mb-12">
           <div className="relative group">
-            <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5 group-focus-within:text-[#1a1a1a] transition-colors" />
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5 group-focus-within:text-pink-600 transition-colors" />
             <input
               type="text"
               placeholder="Search for cakes, vendors, or occasions..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-12 pr-4 py-4 bg-transparent border-b-2 border-gray-200 focus:border-[#1a1a1a] focus:outline-none text-lg transition-colors placeholder:font-light"
+              className="w-full pl-12 pr-4 py-4 bg-white border-2 border-gray-300 rounded-lg focus:border-pink-600 focus:outline-none text-lg transition-colors placeholder:text-gray-500"
             />
           </div>
         </div>
 
         {/* Categories */}
-        <div className="flex flex-wrap justify-center gap-4 mb-16">
+        <div className="flex flex-wrap justify-center gap-4 mb-12">
+          <button
+            onClick={() => setSelectedCategory('all')}
+            className={`px-6 py-2 rounded-lg border-2 transition-all duration-300 font-semibold ${
+              selectedCategory === 'all'
+                ? 'bg-pink-600 text-white border-pink-600 shadow-md'
+                : 'border-gray-300 text-gray-700 hover:border-pink-600 hover:text-pink-600'
+            }`}
+          >
+            All Cakes
+          </button>
           {categories.map((category) => (
             <button
               key={category}
               onClick={() => setSelectedCategory(category === selectedCategory ? 'all' : category)}
-              className={`px-6 py-2 rounded-full border transition-all duration-300 ${
+              className={`px-6 py-2 rounded-lg border-2 transition-all duration-300 font-semibold ${
                 selectedCategory === category
-                  ? 'bg-[#1a1a1a] text-[#F7E47D] border-[#1a1a1a]'
-                  : 'border-gray-300 hover:border-[#1a1a1a] text-gray-600'
+                  ? 'bg-pink-600 text-white border-pink-600 shadow-md'
+                  : 'border-gray-300 text-gray-700 hover:border-pink-600 hover:text-pink-600'
               }`}
             >
               {category}
@@ -111,57 +112,67 @@ export default function AllCakesPage() {
         </div>
 
         {/* Sort & Stats */}
-        <div className="flex flex-wrap items-center justify-between gap-4 border-y border-gray-200 py-4 mb-12">
-          <div className="flex items-center gap-4">
-            <span className="font-serif italic text-gray-500">Sort by:</span>
+        <div className="flex flex-wrap items-center justify-between gap-4 border-y-2 border-gray-200 py-6 mb-12">
+          <div className="flex items-center gap-6">
+            <span className="font-semibold text-gray-700">Sort by:</span>
             <button
               onClick={() => setSortBy('popularity')}
-              className={`text-sm uppercase tracking-widest font-bold transition-colors ${
-                sortBy === 'popularity' ? 'text-[#1a1a1a]' : 'text-gray-400 hover:text-[#1a1a1a]'
+              className={`text-sm font-semibold transition-colors ${
+                sortBy === 'popularity' ? 'text-pink-600' : 'text-gray-500 hover:text-gray-900'
               }`}
             >
               Popularity
             </button>
             <button
               onClick={() => setSortBy('price')}
-              className={`text-sm uppercase tracking-widest font-bold transition-colors ${
-                sortBy === 'price' ? 'text-[#1a1a1a]' : 'text-gray-400 hover:text-[#1a1a1a]'
+              className={`text-sm font-semibold transition-colors ${
+                sortBy === 'price' ? 'text-pink-600' : 'text-gray-500 hover:text-gray-900'
               }`}
             >
               Price
             </button>
           </div>
-          <div className="text-sm text-gray-500 font-light">
+          <div className="text-sm text-gray-600 font-medium">
             Showing {filteredCakes.length} results
           </div>
         </div>
 
         {/* Cakes Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 mb-20">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-20">
           {filteredCakes.map((cake) => (
-            <div
+            <Link
               key={cake.id}
+              href={`/cakes/${cake.vendorId}/${cake.slug}`}
               className="group cursor-pointer"
             >
-              <div className="aspect-[4/5] overflow-hidden bg-gray-100 mb-4 relative">
-                <div className="absolute inset-0 flex items-center justify-center text-6xl group-hover:scale-110 transition-transform duration-700">
-                  {cake.images && cake.images[0] ? <img src={cake.images[0]} alt={cake.name} className="w-full h-full object-cover" /> : '🎂'}
+              <div className="bg-white rounded-xl shadow-sm hover:shadow-md transition-all duration-300 border border-gray-200 overflow-hidden h-full flex flex-col">
+                {/* Cake Image */}
+                <div className="aspect-square overflow-hidden bg-gradient-to-br from-pink-50 to-orange-50 flex items-center justify-center relative">
+                  <div className="absolute inset-0 flex items-center justify-center text-6xl group-hover:scale-110 transition-transform duration-500">
+                    {cake.images && cake.images[0] ? <img src={cake.images[0]} alt={cake.name} className="w-full h-full object-cover" /> : '🎂'}
+                  </div>
+                  <div className="absolute top-4 right-4 bg-pink-600 text-white px-3 py-1 text-xs font-bold rounded-lg shadow-sm">
+                    {cake.category}
+                  </div>
                 </div>
-                <div className="absolute top-4 right-4 bg-white/90 backdrop-blur px-3 py-1 text-xs font-bold uppercase tracking-widest">
-                  {cake.category}
+
+                {/* Cake Details */}
+                <div className="p-4 flex-1 flex flex-col">
+                  <h3 className="text-lg font-bold text-gray-900 mb-2 group-hover:text-pink-600 transition-colors line-clamp-2">{cake.name}</h3>
+                  <p className="text-xs text-gray-600 font-medium mb-4">{cake.vendorName}</p>
+                  
+                  {/* Price */}
+                  <div className="mb-4 mt-auto">
+                    <span className="text-2xl font-bold text-gray-900">₹{cake.price}</span>
+                  </div>
+
+                  {/* View Details Button */}
+                  <button className="w-full py-2 bg-pink-600 text-white font-semibold rounded-lg hover:bg-pink-700 transition-all duration-300 text-sm shadow-sm hover:shadow-md">
+                    View Details
+                  </button>
                 </div>
               </div>
-              <div className="flex justify-between items-start">
-                <div>
-                  <h3 className="serif text-2xl mb-1 group-hover:underline decoration-1 underline-offset-4">{cake.name}</h3>
-                  <p className="text-xs text-gray-500 uppercase tracking-widest mb-2">{cake.vendorName}</p>
-                </div>
-                <span className="serif text-xl">₹{cake.price}</span>
-              </div>
-              <Link href={`/cakes/${cake.vendorId}/${cake.slug}`} className="block mt-4 w-full py-3 border border-[#1a1a1a] text-center text-xs uppercase tracking-widest font-bold hover:bg-[#1a1a1a] hover:text-[#F7E47D] transition-colors">
-                View Details
-              </Link>
-            </div>
+            </Link>
           ))}
         </div>
       </div>

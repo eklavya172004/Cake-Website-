@@ -454,15 +454,20 @@ model Cake {
   slug            String
   description     String?
   basePrice       Float
-  category        String   // "Birthday", "Wedding", "Custom"
+  category        String   // "Cakes", "Theme Cakes", "Desserts", "Birthday", "Hampers", "Anniversary", "Occasions", "Customized Cakes"
+  cakeType        String?  // "Ribbon Cakes", "Fresh Drops", "Gourmet Cakes", "Bento Cakes", etc.
+  flavor          String?  // "Chocolate", "Vanilla", "Strawberry", etc.
+  deliveryCity    String?  // "Bangalore", "Delhi", "Gurgaon", etc.
   images          String[] // URLs from R2
   flavors         String[] // ["Chocolate", "Vanilla"]
   availableSizes  Json     // [{size: "1kg", price: 500}, {size: "2kg", price: 900}]
-  tags            String[] // ["eggless", "sugar-free", "bestseller"]
+  tags            String[] // ["eggless", "sugar-free", "bestseller", "trending", "new"]
   isCustomizable  Boolean  @default(false)
   customOptions   Json?    // {toppings: [], frostings: [], messages: true}
   isActive        Boolean  @default(true)
   popularity      Int      @default(0)
+  rating          Float    @default(0)
+  reviewCount     Int      @default(0)
   
   // Reviews
   reviews         CakeReview[]
@@ -473,8 +478,12 @@ model Cake {
   @@unique([vendorId, slug])
   @@index([vendorId])
   @@index([category])
+  @@index([cakeType])
+  @@index([flavor])
+  @@index([deliveryCity])
   @@index([isActive])
   @@index([popularity])
+  @@index([tags])
 }
 
 // ============================================

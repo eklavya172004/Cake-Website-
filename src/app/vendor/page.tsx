@@ -70,61 +70,71 @@ export default function VendorDashboard() {
     fetchDashboard();
   }, []);
 
-  if (loading) return <div className="p-6 text-center">Loading dashboard...</div>;
-  if (error) return <div className="p-6 text-red-600">Error: {error}</div>;
-  if (!stats) return <div className="p-6 text-red-600">No data available</div>;
+  if (loading) return <div className="p-6 text-center text-gray-600 font-medium">Loading dashboard...</div>;
+  if (error) return <div className="p-6 text-red-600 font-semibold">Error: {error}</div>;
+  if (!stats) return <div className="p-6 text-red-600 font-semibold">No data available</div>;
 
   return (
-    <div className="space-y-6">
-      {/* Quick Stats */}
+    <div className="space-y-6 bg-gradient-to-br from-gray-50 to-white p-6 rounded-lg pt-32 mt-0">
+      {/* Quick Stats - Bakingo Modern Style */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
-        <div className="bg-white rounded-lg shadow p-4 border-l-4 border-pink-600">
+        <div className="bg-white rounded-xl shadow-sm hover:shadow-lg transition-all duration-300 p-5 border-l-4 border-pink-600 hover:border-pink-700 group">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-gray-600 text-xs font-medium">Today&apos;s Orders</p>
-              <p className="text-2xl font-bold text-gray-900 mt-1">{stats.todayOrders}</p>
+              <p className="text-gray-600 text-xs font-semibold uppercase tracking-wide">Today&apos;s Orders</p>
+              <p className="text-2xl font-bold text-gray-900 mt-2">{stats.todayOrders}</p>
             </div>
-            <ShoppingCart className="w-10 h-10 text-pink-600 opacity-20" />
+            <div className="p-3 bg-pink-100 rounded-lg group-hover:bg-pink-200 transition-colors">
+              <ShoppingCart className="w-5 h-5 text-pink-600" />
+            </div>
           </div>
         </div>
 
-        <div className="bg-white rounded-lg shadow p-4 border-l-4 border-green-600">
+        <div className="bg-white rounded-xl shadow-sm hover:shadow-lg transition-all duration-300 p-5 border-l-4 border-green-600 hover:border-green-700 group">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-gray-600 text-xs font-medium">Total Revenue</p>
-              <p className="text-2xl font-bold text-gray-900 mt-1">₹{(stats.totalRevenue / 1000).toFixed(0)}K</p>
+              <p className="text-gray-600 text-xs font-semibold uppercase tracking-wide">Total Revenue</p>
+              <p className="text-2xl font-bold text-gray-900 mt-2">₹{(stats.totalRevenue / 1000).toFixed(0)}K</p>
             </div>
-            <TrendingUp className="w-10 h-10 text-green-600 opacity-20" />
+            <div className="p-3 bg-green-100 rounded-lg group-hover:bg-green-200 transition-colors">
+              <TrendingUp className="w-5 h-5 text-green-600" />
+            </div>
           </div>
         </div>
 
-        <div className="bg-white rounded-lg shadow p-4 border-l-4 border-yellow-600">
+        <div className="bg-white rounded-xl shadow-sm hover:shadow-lg transition-all duration-300 p-5 border-l-4 border-yellow-600 hover:border-yellow-700 group">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-gray-600 text-xs font-medium">Rating</p>
-              <p className="text-2xl font-bold text-gray-900 mt-1">⭐ {stats.rating.toFixed(1)}</p>
+              <p className="text-gray-600 text-xs font-semibold uppercase tracking-wide">Rating</p>
+              <p className="text-2xl font-bold text-gray-900 mt-2">⭐ {stats.rating.toFixed(1)}</p>
             </div>
-            <Star className="w-10 h-10 text-yellow-600 opacity-20" />
+            <div className="p-3 bg-yellow-100 rounded-lg group-hover:bg-yellow-200 transition-colors">
+              <Star className="w-5 h-5 text-yellow-600" />
+            </div>
           </div>
         </div>
 
-        <div className="bg-white rounded-lg shadow p-4 border-l-4 border-blue-600">
+        <div className="bg-white rounded-xl shadow-sm hover:shadow-lg transition-all duration-300 p-5 border-l-4 border-blue-600 hover:border-blue-700 group">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-gray-600 text-xs font-medium">Completion Rate</p>
-              <p className="text-2xl font-bold text-gray-900 mt-1">{stats.completionRate}%</p>
+              <p className="text-gray-600 text-xs font-semibold uppercase tracking-wide">Completion Rate</p>
+              <p className="text-2xl font-bold text-gray-900 mt-2">{stats.completionRate}%</p>
             </div>
-            <Clock className="w-10 h-10 text-blue-600 opacity-20" />
+            <div className="p-3 bg-blue-100 rounded-lg group-hover:bg-blue-200 transition-colors">
+              <Clock className="w-5 h-5 text-blue-600" />
+            </div>
           </div>
         </div>
 
-        <div className="bg-white rounded-lg shadow p-4 border-l-4 border-purple-600">
+        <div className="bg-white rounded-xl shadow-sm hover:shadow-lg transition-all duration-300 p-5 border-l-4 border-purple-600 hover:border-purple-700 group">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-gray-600 text-xs font-medium">Pending</p>
-              <p className="text-2xl font-bold text-gray-900 mt-1">{stats.pendingOrders}</p>
+              <p className="text-gray-600 text-xs font-semibold uppercase tracking-wide">Pending Orders</p>
+              <p className="text-2xl font-bold text-gray-900 mt-2">{stats.pendingOrders}</p>
             </div>
-            <Users className="w-10 h-10 text-purple-600 opacity-20" />
+            <div className="p-3 bg-purple-100 rounded-lg group-hover:bg-purple-200 transition-colors">
+              <Users className="w-5 h-5 text-purple-600" />
+            </div>
           </div>
         </div>
       </div>
@@ -132,7 +142,7 @@ export default function VendorDashboard() {
       {/* Charts */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Revenue Chart */}
-        <div className="lg:col-span-2 bg-white rounded-lg shadow p-6">
+        <div className="lg:col-span-2 bg-white rounded-xl shadow-sm hover:shadow-md transition-all p-6 border border-gray-200">
           <h3 className="text-lg font-bold text-gray-900 mb-4">Weekly Revenue & Orders</h3>
           <ResponsiveContainer width="100%" height={300}>
             <AreaChart data={revenueData}>
@@ -152,7 +162,7 @@ export default function VendorDashboard() {
         </div>
 
         {/* Order Status */}
-        <div className="bg-white rounded-lg shadow p-6">
+        <div className="bg-white rounded-xl shadow-sm hover:shadow-md transition-all p-6 border border-gray-200">
           <h3 className="text-lg font-bold text-gray-900 mb-4">Order Status</h3>
           <ResponsiveContainer width="100%" height={300}>
             <PieChart>
@@ -177,25 +187,25 @@ export default function VendorDashboard() {
       </div>
 
       {/* Top Products */}
-      <div className="bg-white rounded-lg shadow p-6">
+      <div className="bg-white rounded-xl shadow-sm hover:shadow-md transition-all p-6 border border-gray-200">
         <h3 className="text-lg font-bold text-gray-900 mb-4">Top Selling Products</h3>
         <div className="overflow-x-auto">
           <table className="w-full">
-            <thead className="bg-gray-50">
+            <thead className="bg-gradient-to-r from-gray-50 to-gray-100 border-b-2 border-gray-200">
               <tr>
-                <th className="px-6 py-3 text-left text-sm font-semibold text-gray-700">Product</th>
-                <th className="px-6 py-3 text-left text-sm font-semibold text-gray-700">Orders</th>
-                <th className="px-6 py-3 text-left text-sm font-semibold text-gray-700">Revenue</th>
-                <th className="px-6 py-3 text-left text-sm font-semibold text-gray-700">Avg Sale</th>
+                <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900">Product</th>
+                <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900">Orders</th>
+                <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900">Revenue</th>
+                <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900">Avg Sale</th>
               </tr>
             </thead>
             <tbody>
               {topProducts.map((product, idx) => (
-                <tr key={idx} className="border-t border-gray-200 hover:bg-gray-50">
-                  <td className="px-6 py-3 font-medium text-gray-900">{product.name}</td>
-                  <td className="px-6 py-3 text-gray-600">{product.orders}</td>
-                  <td className="px-6 py-3 text-gray-600">₹{(product.revenue / 1000).toFixed(1)}K</td>
-                  <td className="px-6 py-3 text-gray-600">₹{(product.revenue / product.orders).toFixed(0)}</td>
+                <tr key={idx} className="border-b border-gray-200 hover:bg-gray-50 transition-colors">
+                  <td className="px-6 py-4 font-medium text-gray-900">{product.name}</td>
+                  <td className="px-6 py-4 text-gray-600">{product.orders}</td>
+                  <td className="px-6 py-4 text-gray-600 font-semibold">₹{(product.revenue / 1000).toFixed(1)}K</td>
+                  <td className="px-6 py-4 text-gray-600">₹{(product.revenue / product.orders).toFixed(0)}</td>
                 </tr>
               ))}
             </tbody>

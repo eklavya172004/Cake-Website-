@@ -2,10 +2,7 @@
 import { useState, useEffect } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
-import { MapPin, Search, Star, Truck, Clock, Award, Heart, ChevronLeft, ChevronRight, ShoppingCart, User } from "lucide-react";
-import Link from "next/link";
-import Image from "next/image";
-import AuthModal from "@/components/auth/AuthModal";
+import { Star, Heart, ChevronLeft, ChevronRight, Clock } from "lucide-react";
 
 interface CakeProduct {
   id: string;
@@ -53,93 +50,6 @@ const heroBanners: HeroBanner[] = [
   },
 ];
 
-const categories = ["Cakes", "Theme Cakes", "By Relationship", "Desserts", "Birthday", "Hampers", "Anniversary", "Occasions", "Customized Cakes"];
-
-const categoryMenus: Record<string, { title: string; items: string[] }[]> = {
-  "Cakes": [
-    {
-      title: "⭐ Trending Cakes",
-      items: ["Ribbon Cakes", "Fresh Drops", "Gourmet Cakes", "Bento Cakes", "Camera Cakes", "Anime Cakes", "Labubu Cakes", "Cricket Cakes", "Pinata Cakes", "Drip Cakes"]
-    },
-    {
-      title: "⭐ By Type",
-      items: ["Bestsellers", "Eggless Cakes", "Photo Cakes", "Cheese Cakes", "Half Cakes", "Heart Shaped Cakes", "Rose Cakes", "All Cakes"]
-    },
-    {
-      title: "⭐ By Flavours",
-      items: ["Chocolate Cakes", "Butterscotch Cakes", "Strawberry Cakes", "Pineapple Cakes", "Kit Kat Cakes", "Black Forest Cakes", "Red Velvet Cakes", "Vanilla Cakes", "Fruit Cakes", "Blueberry Cakes"]
-    },
-    {
-      title: "⭐ Delivery Cities",
-      items: ["Cakes To Bangalore", "Cakes To Delhi", "Cakes To Gurgaon", "Cakes To Hyderabad", "Cakes To Noida", "Cakes To Mumbai", "Cakes To Jaipur", "Cakes To Pune", "Cakes To Chandigarh", "Cakes To Chennai"]
-    }
-  ],
-  "Theme Cakes": [
-    {
-      title: "⭐ Popular Themes",
-      items: ["Barbie Cakes", "Spiderman Cakes", "Avengers Cakes", "Cars Cakes", "Disney Cakes", "Harry Potter Cakes", "Minecraft Cakes"]
-    },
-    {
-      title: "⭐ By Occasion",
-      items: ["Birthday Cakes", "Wedding Cakes", "Anniversary Cakes", "Graduation Cakes"]
-    }
-  ],
-  "By Relationship": [
-    {
-      title: "⭐ For Him",
-      items: ["Boyfriend Cakes", "Father Cakes", "Brother Cakes", "Son Cakes"]
-    },
-    {
-      title: "⭐ For Her",
-      items: ["Girlfriend Cakes", "Mother Cakes", "Sister Cakes", "Daughter Cakes"]
-    },
-    {
-      title: "⭐ For Others",
-      items: ["Friend Cakes", "Teacher Cakes", "Colleague Cakes", "Boss Cakes"]
-    }
-  ],
-  "Desserts": [
-    {
-      title: "⭐ Sweet Treats",
-      items: ["Brownies", "Cupcakes", "Jar Cakes", "Pastries", "Cookies", "Cheesecakes", "Mousse Cakes"]
-    }
-  ],
-  "Birthday": [
-    {
-      title: "⭐ Birthday Cakes",
-      items: ["Kids Birthday Cakes", "Adult Birthday Cakes", "Themed Birthday Cakes", "Personalized Cakes"]
-    }
-  ],
-  "Hampers": [
-    {
-      title: "⭐ Gift Hampers",
-      items: ["Cake Hampers", "Chocolate Hampers", "Dry Fruit Hampers", "Fruit Hampers", "Combo Hampers"]
-    }
-  ],
-  "Anniversary": [
-    {
-      title: "⭐ Anniversary Cakes",
-      items: ["1st Anniversary", "5th Anniversary", "10th Anniversary", "25th Anniversary", "50th Anniversary"]
-    }
-  ],
-  "Occasions": [
-    {
-      title: "⭐ Festival Cakes",
-      items: ["Diwali Cakes", "Christmas Cakes", "New Year Cakes", "Valentine Cakes", "Holi Cakes"]
-    },
-    {
-      title: "⭐ Special Days",
-      items: ["Mother's Day", "Father's Day", "Women's Day", "Friendship Day", "Teachers Day"]
-    }
-  ],
-  "Customized Cakes": [
-    {
-      title: "⭐ Personalized",
-      items: ["Photo Cakes", "Name Cakes", "Message Cakes", "Custom Flavour", "Custom Design"]
-    }
-  ]
-};
-
 const promises = [
   { title: "ON-TIME DELIVERY", description: "Because no one likes late surprises." },
   { title: "500+ DESIGNS", description: "Wishes come in all shapes and sizes." },
@@ -148,18 +58,11 @@ const promises = [
 ];
 
 export default function Home() {
-  const [authModalOpen, setAuthModalOpen] = useState(false);
-  const [showLocationModal, setShowLocationModal] = useState(true);
-  const [selectedLocation, setSelectedLocation] = useState("Delivering To");
   const [currentBannerIdx, setCurrentBannerIdx] = useState(0);
-  const [locationInput, setLocationInput] = useState("");
-  const [hoveredCategory, setHoveredCategory] = useState<string | null>(null);
   const [cakes, setCakes] = useState<CakeProduct[]>([]);
   const [loadingCakes, setLoadingCakes] = useState(true);
   const router = useRouter();
   const { data: session } = useSession();
-
-  const availableAreas = ["Noida", "Gurgaon", "Delhi", "North Delhi", "South Delhi", "Faridabad", "Ghaziabad", "Greater Noida"];
 
   // Fetch cakes from API
   useEffect(() => {
@@ -204,31 +107,6 @@ export default function Home() {
     return () => clearInterval(interval);
   }, []);
 
-  const handleLocationSelect = (location: string) => {
-    setSelectedLocation(location);
-    setShowLocationModal(false);
-    // Store in localStorage
-    if (typeof window !== "undefined") {
-      localStorage.setItem("userLocation", location);
-    }
-  };
-
-  const handleDetectLocation = () => {
-    if (navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition((position) => {
-        const { latitude, longitude } = position.coords;
-        // For now, we'll just select "North Delhi" as default
-        handleLocationSelect("North Delhi");
-      });
-    } else {
-      alert("Geolocation not supported by your browser");
-    }
-  };
-
-  const handleLocationChange = () => {
-    setShowLocationModal(true);
-  };
-
   const handleCakeClick = (cakeId: string, vendorId: string, slug: string) => {
     // Use actual vendor and cake slug from database
     router.push(`/cakes/${vendorId}/${slug}`);
@@ -245,195 +123,9 @@ export default function Home() {
   const currentBanner = heroBanners[currentBannerIdx];
 
   return (
-    <main className="w-full bg-white">
-      {/* Location Selection Modal */}
-      {showLocationModal && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[100]">
-          <div className="bg-white rounded-3xl max-w-2xl w-full mx-4 p-8 relative">
-            {/* Close Button */}
-            <button
-              onClick={() => setShowLocationModal(false)}
-              className="absolute top-6 right-6 text-gray-400 hover:text-gray-600"
-            >
-              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-              </svg>
-            </button>
-
-            {/* Title */}
-            <h2 className="text-4xl font-bold text-gray-900 mb-6">Select Delivery Location</h2>
-
-            {/* Description */}
-            <p className="text-gray-600 text-lg mb-8">
-              We currently deliver to <span className="font-semibold text-gray-900">North Delhi, South Delhi, Gurgaon, Faridabad, Ghaziabad, Noida, and Greater Noida.</span>
-            </p>
-
-            {/* Detect Location Button */}
-            <button
-              onClick={handleDetectLocation}
-              className="w-full bg-yellow-400 hover:bg-yellow-500 text-black font-bold py-4 px-6 rounded-2xl mb-8 flex items-center justify-center gap-3 transition text-lg"
-            >
-              <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
-                <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm3.5-9c.83 0 1.5-.67 1.5-1.5S16.33 8 15.5 8 14 8.67 14 9.5s.67 1.5 1.5 1.5z" />
-              </svg>
-              Detect My Current Location
-            </button>
-
-            {/* Divider */}
-            <div className="flex items-center gap-4 mb-8">
-              <div className="flex-1 h-px bg-gray-300"></div>
-              <span className="text-gray-400 font-medium text-sm uppercase">Or Enter Manually</span>
-              <div className="flex-1 h-px bg-gray-300"></div>
-            </div>
-
-            {/* Location Input */}
-            <input
-              type="text"
-              placeholder="Enter Pincode or City"
-              value={locationInput}
-              onChange={(e) => setLocationInput(e.target.value)}
-              className="w-full px-6 py-4 border-2 border-gray-300 rounded-2xl mb-8 text-lg focus:outline-none focus:border-red-600"
-            />
-
-            {/* Quick Selection Buttons */}
-            <div className="flex flex-wrap gap-3">
-              {availableAreas.map((area) => (
-                <button
-                  key={area}
-                  onClick={() => handleLocationSelect(area)}
-                  className="px-6 py-3 bg-gray-100 hover:bg-gray-200 text-gray-700 font-medium rounded-full transition text-sm"
-                >
-                  {area}
-                </button>
-              ))}
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Red Header */}
-      <header className="fixed top-0 left-0 right-0 z-[100] bg-red-600 text-white py-3 px-4">
-        <div className="max-w-full mx-auto">
-          {/* Top Bar */}
-          <div className="flex items-center justify-between mb-3">
-            <div className="flex items-center gap-6">
-              <div className="border-2 border-white rounded-lg px-3 py-1">
-                <h1 className="text-2xl font-bold italic">PurplePalace</h1>
-              </div>
-              <button
-                onClick={handleLocationChange}
-                className="flex items-center gap-2 text-sm bg-red-700 hover:bg-red-800 px-3 py-2 rounded transition"
-              >
-                <MapPin size={16} />
-                {selectedLocation}
-              </button>
-            </div>
-
-            {/* Search Bar */}
-            <div className="flex-1 max-w-2xl mx-8">
-              <div className="relative bg-white rounded-full">
-                <input
-                  type="text"
-                  placeholder="Search For Cakes, Occasion, Flavour And More..."
-                  className="w-full px-4 py-2 rounded-full text-black placeholder-gray-500 focus:outline-none bg-white"
-                />
-                <Search className="absolute right-4 top-2.5 text-gray-400" size={18} />
-              </div>
-            </div>
-
-            {/* Right Icons */}
-            <div className="flex items-center gap-6 text-sm font-medium">
-              <button className="flex flex-col items-center gap-1 hover:opacity-80">
-                <Award size={18} />
-                <span className="text-xs">Track Order</span>
-              </button>
-              <button className="flex flex-col items-center gap-1 hover:opacity-80">
-                <ShoppingCart size={18} />
-                <span className="text-xs">Cart</span>
-              </button>
-              <button
-                onClick={() => session ? router.push("/profile") : setAuthModalOpen(true)}
-                className="flex flex-col items-center gap-1 hover:opacity-80"
-              >
-                <User size={18} />
-                <span className="text-xs">{session ? "Profile" : "Login/Signup"}</span>
-              </button>
-            </div>
-          </div>
-        </div>
-      </header>
-
-      {/* White Navigation Bar */}
-      <nav 
-        className="fixed top-20 left-0 right-0 z-[999] bg-white border-b border-gray-100 shadow-lg"
-        onMouseLeave={() => setHoveredCategory(null)}
-      >
-        <div className="max-w-full mx-auto px-4">
-          <div className="flex gap-8 overflow-visible pb-2 text-sm font-medium">
-            {categories.map((category) => (
-              <div 
-                key={category} 
-                className="relative"
-              >
-                <button
-                  className={`transition whitespace-nowrap flex items-center gap-1 py-3 px-2 ${
-                    hoveredCategory === category 
-                      ? "text-red-600 border-b-2 border-red-600" 
-                      : "text-gray-700 border-b-2 border-transparent hover:text-red-600"
-                  }`}
-                  onMouseEnter={() => setHoveredCategory(category)}
-                >
-                  {category}
-                  {category === "Hampers" && <span className="bg-red-500 text-white text-xs px-2 py-0.5 rounded-full ml-1">New</span>}
-                </button>
-
-                {/* Dropdown Menu */}
-                {categoryMenus[category] && hoveredCategory === category && (
-                  <div 
-                    className="fixed left-0 right-0 z-[9999] bg-white shadow-2xl border-t-2 border-red-600"
-                    style={{ top: "140px", paddingTop: "24px", paddingBottom: "24px", paddingLeft: "32px", paddingRight: "32px" }}
-                  >
-                    <div className="max-w-7xl mx-auto grid grid-cols-4 gap-12">
-                      {categoryMenus[category].map((section, idx) => (
-                        <div key={idx} className="pr-4">
-                          <h3 className="font-bold text-gray-900 mb-5 text-sm flex items-center gap-2">
-                            <span className="text-lg">⭐</span>
-                            {section.title.replace("⭐ ", "")}
-                          </h3>
-                          <ul className="space-y-3">
-                            {section.items.map((item) => (
-                              <li key={item}>
-                                <a
-                                  href="#"
-                                  className="text-gray-700 hover:text-red-600 text-sm transition font-medium"
-                                  onClick={(e) => e.preventDefault()}
-                                >
-                                  {item}
-                                </a>
-                              </li>
-                            ))}
-                          </ul>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                {/* Invisible Bridge - Covers gap between navbar and dropdown */}
-                {hoveredCategory === category && categoryMenus[category] && (
-                  <div 
-                    className="fixed left-0 right-0 z-[9998]"
-                    style={{ top: "80px", height: "60px", pointerEvents: "auto" }}
-                  />
-                )}
-              </div>
-            ))}
-          </div>
-        </div>
-      </nav>
-
+    <main className="w-full bg-white pt-36">
       {/* Hero Section with Full-Screen Carousel */}
-      <section className="relative w-full h-screen overflow-hidden pt-32 z-0">
+      <section className="relative w-full h-screen overflow-hidden z-0">
         {/* Carousel Images */}
         <div className="relative w-full h-full">
           {heroBanners.map((banner, idx) => (
@@ -466,7 +158,7 @@ export default function Home() {
             </p>
             <button
               onClick={() => router.push("/cakes")}
-              className="px-8 py-3 bg-red-600 text-white font-bold text-lg rounded hover:bg-red-700 transition"
+              className="px-8 py-3 bg-pink-600 text-white font-bold text-lg rounded-lg hover:bg-pink-700 transition-all duration-300 shadow-lg hover:shadow-xl"
             >
               {currentBanner.buttonText}
             </button>
@@ -481,13 +173,13 @@ export default function Home() {
         {/* Navigation Arrows */}
         <button
           onClick={prevBanner}
-          className="absolute left-6 top-1/2 -translate-y-1/2 bg-white/20 hover:bg-white/40 rounded-full p-3 transition z-10"
+          className="absolute left-6 top-1/2 -translate-y-1/2 bg-white/20 hover:bg-pink-600 rounded-full p-3 transition-all duration-300 z-10 hover:shadow-lg"
         >
           <ChevronLeft className="text-white" size={32} />
         </button>
         <button
           onClick={nextBanner}
-          className="absolute right-6 top-1/2 -translate-y-1/2 bg-white/20 hover:bg-white/40 rounded-full p-3 transition z-10"
+          className="absolute right-6 top-1/2 -translate-y-1/2 bg-white/20 hover:bg-pink-600 rounded-full p-3 transition-all duration-300 z-10 hover:shadow-lg"
         >
           <ChevronRight className="text-white" size={32} />
         </button>
@@ -500,8 +192,8 @@ export default function Home() {
               onClick={() => setCurrentBannerIdx(idx)}
               className={`transition-all ${
                 idx === currentBannerIdx 
-                  ? "bg-white w-8 h-3" 
-                  : "bg-white/50 w-3 h-3 hover:bg-white/70"
+                  ? "bg-pink-600 w-8 h-3" 
+                  : "bg-white/40 w-3 h-3 hover:bg-pink-400"
               } rounded-full`}
             />
           ))}
@@ -648,18 +340,18 @@ export default function Home() {
                 <div
                   key={cake.id}
                   onClick={() => handleCakeClick(cake.id, cake.vendorId || '', cake.slug || '')}
-                  className="bg-white rounded-lg overflow-hidden hover:shadow-lg transition cursor-pointer border border-gray-200"
+                  className="bg-white rounded-xl overflow-hidden hover:shadow-lg transition cursor-pointer border border-gray-200 hover:border-pink-300"
                 >
                 {/* Cake Image */}
                 <div className="relative bg-gradient-to-br from-pink-50 to-orange-50 aspect-square flex items-center justify-center overflow-hidden group">
                   <div className="text-6xl group-hover:scale-110 transition">{cake.image}</div>
                   {cake.discount && (
-                    <div className="absolute top-3 right-3 bg-red-500 text-white text-xs font-bold px-2 py-1 rounded">
+                    <div className="absolute top-3 right-3 bg-pink-600 text-white text-xs font-bold px-3 py-1 rounded-lg">
                       {cake.discount}% OFF
                     </div>
                   )}
-                  <button className="absolute bottom-3 right-3 bg-white rounded-full p-2 opacity-0 group-hover:opacity-100 transition shadow-md">
-                    <Heart size={18} className="text-red-600" />
+                  <button className="absolute bottom-3 right-3 bg-pink-600 text-white rounded-full p-2 opacity-0 group-hover:opacity-100 transition shadow-md hover:bg-pink-700">
+                    <Heart size={18} className="fill-white" />
                   </button>
                 </div>
 
@@ -671,14 +363,14 @@ export default function Home() {
                   <div className="flex items-center gap-2 mb-3">
                     <div className="flex items-center gap-1">
                       <Star size={14} className="fill-yellow-400 text-yellow-400" />
-                      <span className="text-sm font-semibold">{cake.rating}</span>
+                      <span className="text-sm font-semibold text-gray-900">{cake.rating}</span>
                     </div>
                     <span className="text-xs text-gray-500">({cake.reviews.toLocaleString()})</span>
                   </div>
 
                   {/* Price */}
                   <div className="flex items-center gap-2">
-                    <span className="text-lg font-bold text-gray-900">₹{cake.price}</span>
+                    <span className="text-lg font-bold text-pink-600">₹{cake.price}</span>
                     {cake.originalPrice && (
                       <span className="text-sm text-gray-400 line-through">₹{cake.originalPrice}</span>
                     )}
@@ -695,7 +387,7 @@ export default function Home() {
       <section className="py-16 px-4 bg-gray-50">
         <div className="max-w-6xl mx-auto">
           <div className="mb-12">
-            <h3 className="text-3xl font-bold text-gray-900 mb-2">📍 Available in {selectedLocation}</h3>
+            <h3 className="text-3xl font-bold text-gray-900 mb-2">📍 Trending Cakes</h3>
             <p className="text-gray-600">Fresh cakes delivered to your doorstep</p>
           </div>
 
@@ -705,18 +397,18 @@ export default function Home() {
               <div
                 key={cake.id}
                 onClick={() => handleCakeClick(cake.id, cake.vendorId || '', cake.slug || '')}
-                className="bg-white rounded-lg overflow-hidden hover:shadow-lg transition cursor-pointer border border-gray-200"
+                className="bg-white rounded-xl shadow-sm hover:shadow-md transition-all duration-300 cursor-pointer border border-gray-200 overflow-hidden"
               >
                 {/* Cake Image */}
-                <div className="relative bg-gradient-to-br from-orange-50 to-pink-50 aspect-square flex items-center justify-center overflow-hidden group">
-                  <div className="text-6xl group-hover:scale-110 transition">{cake.image}</div>
+                <div className="relative bg-gradient-to-br from-pink-50 to-orange-50 aspect-square flex items-center justify-center overflow-hidden group">
+                  <div className="text-6xl group-hover:scale-110 transition-transform duration-300">{cake.image}</div>
                   {cake.discount && (
-                    <div className="absolute top-3 right-3 bg-red-500 text-white text-xs font-bold px-2 py-1 rounded">
+                    <div className="absolute top-3 right-3 bg-pink-600 text-white text-xs font-bold px-3 py-1 rounded-lg shadow-sm">
                       {cake.discount}% OFF
                     </div>
                   )}
-                  <button className="absolute bottom-3 right-3 bg-white rounded-full p-2 opacity-0 group-hover:opacity-100 transition shadow-md">
-                    <Heart size={18} className="text-red-600" />
+                  <button className="absolute bottom-3 right-3 bg-white rounded-full p-2 opacity-0 group-hover:opacity-100 transition shadow-md hover:shadow-lg">
+                    <Heart size={18} className="text-pink-600" />
                   </button>
                 </div>
 
@@ -805,7 +497,7 @@ export default function Home() {
           <div className="text-center mt-12">
             <button
               onClick={() => router.push("/cakes")}
-              className="px-8 py-3 bg-red-600 text-white font-bold rounded-lg hover:bg-red-700 transition text-lg"
+              className="px-8 py-3 bg-pink-600 text-white font-bold rounded-lg hover:bg-pink-700 transition-all duration-300 text-lg shadow-md hover:shadow-lg"
             >
               View More Cakes
             </button>
@@ -839,18 +531,18 @@ export default function Home() {
               <div
                 key={cake.id}
                 onClick={() => handleCakeClick(cake.id, cake.vendorId || '', cake.slug || '')}
-                className="bg-white rounded-lg overflow-hidden hover:shadow-lg transition cursor-pointer"
+                className="bg-white rounded-xl overflow-hidden hover:shadow-lg transition cursor-pointer border border-gray-200 hover:border-pink-300"
               >
                 {/* Cake Image */}
                 <div className="relative bg-gray-100 aspect-square flex items-center justify-center overflow-hidden group">
                   <div className="text-6xl group-hover:scale-110 transition">{cake.image}</div>
                   {cake.discount && (
-                    <div className="absolute top-3 right-3 bg-red-500 text-white text-xs font-bold px-2 py-1 rounded">
+                    <div className="absolute top-3 right-3 bg-pink-600 text-white text-xs font-bold px-3 py-1 rounded-lg">
                       {cake.discount}% OFF
                     </div>
                   )}
-                  <button className="absolute bottom-3 right-3 bg-white rounded-full p-2 opacity-0 group-hover:opacity-100 transition">
-                    <Heart size={18} className="text-pink-600" />
+                  <button className="absolute bottom-3 right-3 bg-pink-600 text-white rounded-full p-2 opacity-0 group-hover:opacity-100 transition shadow-md hover:bg-pink-700">
+                    <Heart size={18} className="fill-white" />
                   </button>
                 </div>
 
@@ -862,14 +554,14 @@ export default function Home() {
                   <div className="flex items-center gap-2 mb-3">
                     <div className="flex items-center gap-1">
                       <Star size={14} className="fill-yellow-400 text-yellow-400" />
-                      <span className="text-sm font-semibold">{cake.rating}</span>
+                      <span className="text-sm font-semibold text-gray-900">{cake.rating}</span>
                     </div>
                     <span className="text-xs text-gray-500">({cake.reviews.toLocaleString()})</span>
                   </div>
 
                   {/* Price */}
                   <div className="flex items-center gap-2">
-                    <span className="text-lg font-bold text-gray-900">₹{cake.price}</span>
+                    <span className="text-lg font-bold text-pink-600">₹{cake.price}</span>
                     {cake.originalPrice && (
                       <span className="text-sm text-gray-400 line-through">₹{cake.originalPrice}</span>
                     )}
@@ -991,45 +683,6 @@ export default function Home() {
           </button>
         </div>
       </section>
-
-      {/* Footer */}
-      <footer className="bg-gray-900 text-gray-300 py-12 px-4">
-        <div className="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-4 gap-8">
-          <div>
-            <h4 className="font-bold text-white mb-4">PurplePalace</h4>
-            <p className="text-sm">Your trusted online bakery for fresh, delicious cakes.</p>
-          </div>
-          <div>
-            <h4 className="font-bold text-white mb-4">Quick Links</h4>
-            <ul className="space-y-2 text-sm">
-              <li><Link href="/cakes" className="hover:text-white transition">All Cakes</Link></li>
-              <li><Link href="/about" className="hover:text-white transition">About Us</Link></li>
-              <li><Link href="/contact" className="hover:text-white transition">Contact Us</Link></li>
-            </ul>
-          </div>
-          <div>
-            <h4 className="font-bold text-white mb-4">Policies</h4>
-            <ul className="space-y-2 text-sm">
-              <li><a href="#" className="hover:text-white transition">Privacy Policy</a></li>
-              <li><a href="#" className="hover:text-white transition">Terms & Conditions</a></li>
-              <li><a href="#" className="hover:text-white transition">Cancellation & Refund</a></li>
-            </ul>
-          </div>
-          <div>
-            <h4 className="font-bold text-white mb-4">Follow Us</h4>
-            <div className="flex gap-4 text-sm">
-              <a href="#" className="hover:text-white transition">Facebook</a>
-              <a href="#" className="hover:text-white transition">Instagram</a>
-              <a href="#" className="hover:text-white transition">Twitter</a>
-            </div>
-          </div>
-        </div>
-        <div className="border-t border-gray-700 mt-8 pt-8 text-center text-sm">
-          <p>&copy; 2024 PurplePalace. All rights reserved.</p>
-        </div>
-      </footer>
-
-      <AuthModal isOpen={authModalOpen} onClose={() => setAuthModalOpen(false)} />
     </main>
   );
 }

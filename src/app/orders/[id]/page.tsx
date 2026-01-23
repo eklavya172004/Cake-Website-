@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { ChevronLeft, Package, Truck, Clock, MapPin, Phone, Mail, Home } from 'lucide-react';
+import { ChevronLeft, Package, Truck, Clock, MapPin, Phone, Mail, Home, AlertCircle } from 'lucide-react';
 import OrderPreloader from '@/components/common/OrderPreloader';
 
 interface OrderStatusHistory {
@@ -108,10 +108,10 @@ export default function OrderTrackingPage() {
     return (
       <>
         <OrderPreloader onComplete={() => setLoading(false)} />
-        <div className="min-h-screen bg-[#FFF9EB] p-4 pt-24">
+        <div className="min-h-screen bg-white p-4 pt-32">
           <div className="max-w-4xl mx-auto text-center py-20">
-            <div className="inline-block animate-spin rounded-full h-12 w-12 border-4 border-[#1a1a1a] border-t-[#F7E47D]"></div>
-            <p className="mt-4 text-[#1a1a1a]">Loading order details...</p>
+            <div className="inline-block animate-spin rounded-full h-12 w-12 border-4 border-pink-600 border-t-transparent"></div>
+            <p className="mt-4 text-gray-700 font-semibold">Loading order details...</p>
           </div>
         </div>
       </>
@@ -120,20 +120,20 @@ export default function OrderTrackingPage() {
 
   if (!order) {
     return (
-      <div className="min-h-screen mt-15 bg-[#FFF9EB] p-4">
+      <div className="min-h-screen bg-white p-4 pt-32">
         <div className="max-w-4xl mx-auto">
           <button
             onClick={() => router.back()}
-            className="flex items-center gap-2 text-[#1a1a1a] hover:text-[#F7E47D] mb-8 transition-colors"
+            className="flex items-center gap-2 text-gray-700 hover:text-pink-600 mb-8 transition-colors font-semibold"
           >
             <ChevronLeft className="w-5 h-5" />
             Back
           </button>
-          <div className="bg-white rounded-lg p-8 text-center border border-[#1a1a1a]/10">
-            <p className="text-xl text-[#1a1a1a] mb-4">Order not found</p>
+          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-8 text-center">
+            <p className="text-xl text-gray-900 mb-4 font-semibold">Order not found</p>
             <button
               onClick={() => router.push('/profile')}
-              className="bg-[#1a1a1a] text-[#F7E47D] px-6 py-2 rounded font-semibold hover:shadow-lg transition-all"
+              className="bg-pink-600 text-white px-6 py-2 rounded-lg font-semibold hover:bg-pink-700 transition-all shadow-sm hover:shadow-md"
             >
               Go to Dashboard
             </button>
@@ -144,26 +144,26 @@ export default function OrderTrackingPage() {
   }
 
   return (
-    <div className="min-h-screen mt-15 bg-[#FFF9EB] py-8 px-4 text-[#1a1a1a]">
-      <div className="max-w-4xl mx-auto">
+    <div className="min-h-screen bg-white py-8 px-4 text-gray-900">
+      <div className="max-w-4xl mx-auto pt-20">
         {/* Header */}
         <div className="mb-8">
           <button
             onClick={() => router.back()}
-            className="flex items-center gap-2 text-[#1a1a1a] hover:text-[#F7E47D] mb-6 transition-colors font-semibold"
+            className="flex items-center gap-2 text-gray-700 hover:text-pink-600 mb-6 transition-colors font-semibold"
           >
             <ChevronLeft className="w-5 h-5" />
             Back
           </button>
           <div className="flex justify-between items-start gap-6">
             <div>
-              <h1 className="serif text-4xl mb-2">Order Tracking</h1>
-              <p className="text-[#1a1a1a]/60">Order #{order.orderNumber}</p>
+              <h1 className="text-4xl font-bold text-gray-900 mb-2">Order Tracking</h1>
+              <p className="text-gray-600 font-medium">Order #{order.orderNumber}</p>
             </div>
             <button
               onClick={handleRefresh}
               disabled={refreshing}
-              className="bg-[#1a1a1a] text-[#F7E47D] px-4 py-2 rounded font-semibold hover:shadow-lg transition-all disabled:opacity-50"
+              className="bg-pink-600 hover:bg-pink-700 text-white px-4 py-2 rounded-lg font-semibold transition-all duration-300 shadow-sm hover:shadow-md disabled:opacity-50"
             >
               {refreshing ? 'Refreshing...' : 'Refresh'}
             </button>
@@ -171,8 +171,8 @@ export default function OrderTrackingPage() {
         </div>
 
         {/* Timeline/Status */}
-        <div className="bg-white rounded-lg p-8 mb-8 border border-[#1a1a1a]/10">
-          <h2 className="serif text-3xl mb-8">Order Status</h2>
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-8 mb-8">
+          <h2 className="text-3xl font-bold text-gray-900 mb-8">Order Status</h2>
 
           {/* Status Timeline */}
           <div className="relative">
@@ -182,18 +182,18 @@ export default function OrderTrackingPage() {
                   {/* Timeline dot and line */}
                   <div className="flex flex-col items-center">
                     <div
-                      className={`w-12 h-12 rounded-full flex items-center justify-center font-bold text-lg ${
+                      className={`w-12 h-12 rounded-full flex items-center justify-center font-bold text-lg transition-all duration-300 ${
                         index <= (order ? getStatusIndex(order.status) : -1)
-                          ? 'bg-[#F7E47D] text-[#1a1a1a] shadow-lg'
-                          : 'bg-[#1a1a1a]/10 text-[#1a1a1a]/50'
+                          ? 'bg-pink-600 text-white shadow-md'
+                          : 'bg-gray-200 text-gray-600'
                       }`}
                     >
                       {index <= (order ? getStatusIndex(order.status) : -1) ? '✓' : index + 1}
                     </div>
                     {index < statusSteps.length - 1 && (
                       <div
-                        className={`w-1 h-16 mt-2 ${
-                          index < (order ? getStatusIndex(order.status) : -1) ? 'bg-[#F7E47D]' : 'bg-[#1a1a1a]/10'
+                        className={`w-1 h-16 mt-2 transition-colors duration-300 ${
+                          index < (order ? getStatusIndex(order.status) : -1) ? 'bg-pink-600' : 'bg-gray-300'
                         }`}
                       />
                     )}
@@ -201,23 +201,23 @@ export default function OrderTrackingPage() {
 
                   {/* Content */}
                   <div className="flex-1 pt-1">
-                    <h3 className={`text-lg font-bold ${index <= (order ? getStatusIndex(order.status) : -1) ? 'text-[#1a1a1a]' : 'text-[#1a1a1a]/50'}`}>
+                    <h3 className={`text-lg font-bold transition-colors ${index <= (order ? getStatusIndex(order.status) : -1) ? 'text-gray-900' : 'text-gray-500'}`}>
                       {step.label}
                     </h3>
                     {index === (order ? getStatusIndex(order.status) : -1) && (
-                      <p className="text-[#F7E47D] font-semibold mt-1">Currently here</p>
+                      <p className="text-pink-600 font-semibold mt-1">Currently here</p>
                     )}
                     {order.statusHistory && (
                       <>
                         {order.statusHistory
                           .filter(h => h.status === step.status)
                           .map(h => (
-                            <p key={h.id} className="text-[#1a1a1a]/70 text-sm mt-2">{h.message}</p>
+                            <p key={h.id} className="text-gray-600 text-sm mt-2">{h.message}</p>
                           ))}
                         {order.statusHistory
                           .filter(h => h.status === step.status)
                           .map(h => (
-                            <p key={`${h.id}-time`} className="text-[#1a1a1a]/50 text-xs mt-1">
+                            <p key={`${h.id}-time`} className="text-gray-500 text-xs mt-1">
                               {new Date(h.createdAt).toLocaleString()}
                             </p>
                           ))}
@@ -233,29 +233,29 @@ export default function OrderTrackingPage() {
         {/* Order Details Grid */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
           {/* Items */}
-          <div className="bg-white rounded-lg p-6 border border-[#1a1a1a]/10">
-            <h3 className="font-bold text-[#1a1a1a] mb-4 flex items-center gap-2">
-              <Package className="w-5 h-5 text-[#F7E47D]" />
+          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+            <h3 className="font-bold text-gray-900 mb-4 flex items-center gap-2">
+              <Package className="w-5 h-5 text-pink-600" />
               Items Ordered
             </h3>
             <div className="space-y-3">
               {order.items.map((item, index) => (
-                <div key={index} className="text-sm pb-3 border-b border-[#1a1a1a]/10 last:border-0 last:pb-0">
-                  <p className="font-semibold text-[#1a1a1a]">{item.name}</p>
-                  <p className="text-[#1a1a1a]/70">Qty: {item.quantity} × ₹{item.price}</p>
+                <div key={index} className="text-sm pb-3 border-b border-gray-200 last:border-0 last:pb-0">
+                  <p className="font-semibold text-gray-900">{item.name}</p>
+                  <p className="text-gray-600">Qty: {item.quantity} × ₹{item.price}</p>
                 </div>
               ))}
             </div>
           </div>
 
           {/* Vendor Info */}
-          <div className="bg-white rounded-lg p-6 border border-[#1a1a1a]/10">
-            <h3 className="font-bold text-[#1a1a1a] mb-4 flex items-center gap-2">
-              <Package className="w-5 h-5 text-[#F7E47D]" />
+          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+            <h3 className="font-bold text-gray-900 mb-4 flex items-center gap-2">
+              <Package className="w-5 h-5 text-pink-600" />
               Preparing at
             </h3>
-            <p className="text-lg font-semibold text-[#1a1a1a] mb-2">{order.vendor.name}</p>
-            <p className="text-sm text-[#1a1a1a]/70">
+            <p className="text-lg font-semibold text-gray-900 mb-2">{order.vendor.name}</p>
+            <p className="text-sm text-gray-600">
               Estimated delivery:{' '}
               {new Date(order.estimatedDelivery).toLocaleTimeString([], {
                 hour: '2-digit',
@@ -265,54 +265,54 @@ export default function OrderTrackingPage() {
           </div>
 
           {/* Total */}
-          <div className="bg-[#F7E47D]/20 rounded-lg p-6 border border-[#F7E47D]">
-            <h3 className="font-bold text-[#1a1a1a] mb-4">Order Total</h3>
+          <div className="bg-gradient-to-br from-pink-50 to-orange-50 rounded-xl shadow-sm border border-pink-200 p-6">
+            <h3 className="font-bold text-gray-900 mb-4">Order Total</h3>
             <div className="space-y-3">
               <div className="flex justify-between text-sm">
-                <span className="text-[#1a1a1a]/70">Subtotal</span>
-                <span className="font-semibold text-[#1a1a1a]">₹{(order.finalAmount - order.deliveryFee).toFixed(2)}</span>
+                <span className="text-gray-600">Subtotal</span>
+                <span className="font-semibold text-gray-900">₹{(order.finalAmount - order.deliveryFee).toFixed(2)}</span>
               </div>
-              <div className="flex justify-between text-sm border-t border-[#F7E47D] pt-3">
-                <span className="text-[#1a1a1a]/70">Delivery</span>
-                <span className="font-semibold text-[#1a1a1a]">₹{order.deliveryFee.toFixed(2)}</span>
+              <div className="flex justify-between text-sm border-t border-pink-200 pt-3">
+                <span className="text-gray-600">Delivery</span>
+                <span className="font-semibold text-gray-900">₹{order.deliveryFee.toFixed(2)}</span>
               </div>
-              <div className="flex justify-between text-lg font-bold border-t border-[#F7E47D] pt-3">
-                <span className="text-[#1a1a1a]">Total</span>
-                <span className="text-[#1a1a1a] bg-[#F7E47D] px-3 py-1 rounded">₹{order.finalAmount.toFixed(2)}</span>
+              <div className="flex justify-between text-lg font-bold border-t border-pink-200 pt-3">
+                <span className="text-gray-900">Total</span>
+                <span className="text-white bg-pink-600 px-3 py-1 rounded-lg">₹{order.finalAmount.toFixed(2)}</span>
               </div>
             </div>
           </div>
         </div>
 
         {/* Delivery Address */}
-        <div className="bg-white rounded-lg p-8 mb-8 border border-[#1a1a1a]/10">
-          <h3 className="serif text-3xl mb-6 flex items-center gap-2">
-            <Home className="w-6 h-6 text-[#F7E47D]" />
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-8 mb-8">
+          <h3 className="text-3xl font-bold text-gray-900 mb-6 flex items-center gap-2">
+            <Home className="w-6 h-6 text-pink-600" />
             Delivery Address
           </h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
             <div>
-              <p className="text-sm text-[#1a1a1a]/60 mb-1">Name</p>
-              <p className="font-semibold text-[#1a1a1a]">{order.deliveryAddress.fullName}</p>
+              <p className="text-sm text-gray-600 mb-1 font-medium">Name</p>
+              <p className="font-semibold text-gray-900">{order.deliveryAddress.fullName}</p>
             </div>
             <div>
-              <p className="text-sm text-[#1a1a1a]/60 mb-1">Phone</p>
-              <p className="font-semibold text-[#1a1a1a] flex items-center gap-2">
-                <Phone className="w-4 h-4 text-[#F7E47D]" />
+              <p className="text-sm text-gray-600 mb-1 font-medium">Phone</p>
+              <p className="font-semibold text-gray-900 flex items-center gap-2">
+                <Phone className="w-4 h-4 text-pink-600" />
                 {order.deliveryAddress.phone}
               </p>
             </div>
             <div className="md:col-span-2">
-              <p className="text-sm text-[#1a1a1a]/60 mb-1">Address</p>
-              <p className="font-semibold text-[#1a1a1a]">
+              <p className="text-sm text-gray-600 mb-1 font-medium">Address</p>
+              <p className="font-semibold text-gray-900">
                 {order.deliveryAddress.address}
                 {order.deliveryAddress.landmark && `, ${order.deliveryAddress.landmark}`}
               </p>
             </div>
             <div className="md:col-span-2">
-              <p className="text-sm text-[#1a1a1a]/60 mb-1">Email</p>
-              <p className="font-semibold text-[#1a1a1a] flex items-center gap-2">
-                <Mail className="w-4 h-4 text-[#F7E47D]" />
+              <p className="text-sm text-gray-600 mb-1 font-medium">Email</p>
+              <p className="font-semibold text-gray-900 flex items-center gap-2">
+                <Mail className="w-4 h-4 text-pink-600" />
                 {order.deliveryAddress.email}
               </p>
             </div>
@@ -320,10 +320,13 @@ export default function OrderTrackingPage() {
         </div>
 
         {/* Support */}
-        <div className="bg-[#1a1a1a] rounded-lg p-8 text-[#F7E47D] text-center border border-[#F7E47D]">
-          <h3 className="serif text-2xl font-bold mb-2">Need Help?</h3>
-          <p className="mb-4 text-[#F7E47D]/80">Contact our support team for any queries</p>
-          <button className="bg-[#F7E47D] text-[#1a1a1a] px-6 py-2 rounded font-semibold hover:shadow-lg transition-all">
+        <div className="bg-gradient-to-r from-pink-600 to-pink-700 rounded-xl shadow-md p-8 text-white text-center border border-pink-500">
+          <h3 className="text-2xl font-bold mb-2 flex items-center justify-center gap-2">
+            <AlertCircle className="w-6 h-6" />
+            Need Help?
+          </h3>
+          <p className="mb-6 text-pink-100 font-medium">Contact our support team for any queries</p>
+          <button className="bg-white text-pink-600 px-8 py-3 rounded-lg font-semibold hover:bg-gray-100 transition-all duration-300 shadow-md hover:shadow-lg">
             Contact Support
           </button>
         </div>

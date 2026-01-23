@@ -53,28 +53,28 @@ export default function VendorOrders() {
         <p className="text-gray-600 mt-1">Manage your shop orders</p>
       </div>
 
-      <div className="bg-white rounded-lg shadow overflow-hidden">
+      <div className="bg-white rounded-xl shadow-sm hover:shadow-md transition-all border border-gray-200 overflow-hidden">
         <table className="w-full">
-          <thead className="bg-gray-50 border-b border-gray-200">
+          <thead className="bg-gradient-to-r from-gray-50 to-gray-100 border-b-2 border-gray-200">
             <tr>
-              <th className="px-6 py-3 text-left text-sm font-semibold text-gray-900">Order ID</th>
-              <th className="px-6 py-3 text-left text-sm font-semibold text-gray-900">Customer</th>
-              <th className="px-6 py-3 text-left text-sm font-semibold text-gray-900">Product</th>
-              <th className="px-6 py-3 text-left text-sm font-semibold text-gray-900">Amount</th>
-              <th className="px-6 py-3 text-left text-sm font-semibold text-gray-900">Status</th>
-              <th className="px-6 py-3 text-left text-sm font-semibold text-gray-900">Date</th>
-              <th className="px-6 py-3 text-left text-sm font-semibold text-gray-900">Action</th>
+              <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900">Order ID</th>
+              <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900">Customer</th>
+              <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900">Product</th>
+              <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900">Amount</th>
+              <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900">Status</th>
+              <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900">Date</th>
+              <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900">Action</th>
             </tr>
           </thead>
           <tbody>
             {orders.map((order) => (
-              <tr key={order.id} className="border-b border-gray-200 hover:bg-gray-50">
-                <td className="px-6 py-4 text-sm font-semibold text-gray-900">{order.id}</td>
+              <tr key={order.id} className="border-b border-gray-200 hover:bg-gray-50 transition-colors">
+                <td className="px-6 py-4 text-sm font-bold text-gray-900">{order.id}</td>
                 <td className="px-6 py-4 text-sm text-gray-900">{order.customerName}</td>
                 <td className="px-6 py-4 text-sm text-gray-600">{order.productName}</td>
-                <td className="px-6 py-4 text-sm text-gray-900">₹{order.totalPrice}</td>
+                <td className="px-6 py-4 text-sm font-semibold text-gray-900">₹{order.totalPrice}</td>
                 <td className="px-6 py-4 text-sm">
-                  <span className={`px-3 py-1 rounded-full text-xs font-semibold flex items-center gap-1 w-fit ${
+                  <span className={`px-3 py-1 rounded-lg text-xs font-semibold flex items-center gap-1 w-fit ${
                     order.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
                     order.status === 'preparing' ? 'bg-blue-100 text-blue-800' :
                     order.status === 'delivered' ? 'bg-green-100 text-green-800' :
@@ -86,7 +86,7 @@ export default function VendorOrders() {
                 </td>
                 <td className="px-6 py-4 text-sm text-gray-600">{new Date(order.createdAt).toLocaleDateString()}</td>
                 <td className="px-6 py-4 text-sm">
-                  <button className="text-blue-600 hover:text-blue-800 font-semibold flex items-center gap-1">
+                  <button className="text-pink-600 hover:text-pink-800 font-semibold flex items-center gap-1 hover:underline transition-colors">
                     <Eye size={16} /> View
                   </button>
                 </td>

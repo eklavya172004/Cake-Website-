@@ -3,6 +3,90 @@
 
 @custom-variant dark (&:is(.dark *));
 
+:root {
+  /* Bakingo Theme Colors */
+  --color-bakingo-primary: #E91E63;
+  --color-bakingo-primary-dark: #C2185B;
+  --color-bakingo-primary-light: #F06292;
+  --color-bakingo-primary-bg: #FFC0CB;
+  
+  --color-bakingo-secondary: #FFC107;
+  --color-bakingo-secondary-dark: #F57F17;
+  --color-bakingo-secondary-light: #FFD54F;
+  
+  --color-success: #10B981;
+  --color-warning: #F59E0B;
+  --color-danger: #EF4444;
+  --color-info: #3B82F6;
+  
+  --radius: 12px;
+  --background: oklch(1 0 0);
+  --foreground: oklch(0.145 0 0);
+  --card: oklch(1 0 0);
+  --card-foreground: oklch(0.145 0 0);
+  --popover: oklch(1 0 0);
+  --popover-foreground: oklch(0.145 0 0);
+  --primary: #E91E63;
+  --primary-foreground: oklch(0.985 0 0);
+  --secondary: #FFC107;
+  --secondary-foreground: oklch(0.205 0 0);
+  --muted: oklch(0.97 0 0);
+  --muted-foreground: oklch(0.556 0 0);
+  --accent: #E91E63;
+  --accent-foreground: oklch(0.985 0 0);
+  --destructive: oklch(0.577 0.245 27.325);
+  --border: oklch(0.922 0 0);
+  --input: oklch(0.922 0 0);
+  --ring: oklch(0.708 0 0);
+  --chart-1: oklch(0.646 0.222 41.116);
+  --chart-2: oklch(0.6 0.118 184.704);
+  --chart-3: oklch(0.398 0.07 227.392);
+  --chart-4: oklch(0.828 0.189 84.429);
+  --chart-5: oklch(0.769 0.188 70.08);
+  --sidebar: oklch(0.985 0 0);
+  --sidebar-foreground: oklch(0.145 0 0);
+  --sidebar-primary: #E91E63;
+  --sidebar-primary-foreground: oklch(0.985 0 0);
+  --sidebar-accent: #FFC107;
+  --sidebar-accent-foreground: oklch(0.205 0 0);
+  --sidebar-border: oklch(0.922 0 0);
+  --sidebar-ring: oklch(0.708 0 0);
+}
+
+.dark {
+  --background: oklch(0.145 0 0);
+  --foreground: oklch(0.985 0 0);
+  --card: oklch(0.205 0 0);
+  --card-foreground: oklch(0.985 0 0);
+  --popover: oklch(0.205 0 0);
+  --popover-foreground: oklch(0.985 0 0);
+  --primary: #F06292;
+  --primary-foreground: oklch(0.205 0 0);
+  --secondary: #FFD54F;
+  --secondary-foreground: oklch(0.205 0 0);
+  --muted: oklch(0.269 0 0);
+  --muted-foreground: oklch(0.708 0 0);
+  --accent: #F06292;
+  --accent-foreground: oklch(0.985 0 0);
+  --destructive: oklch(0.704 0.191 22.216);
+  --border: oklch(1 0 0 / 10%);
+  --input: oklch(1 0 0 / 15%);
+  --ring: oklch(0.556 0 0);
+  --chart-1: oklch(0.488 0.243 264.376);
+  --chart-2: oklch(0.696 0.17 162.48);
+  --chart-3: oklch(0.769 0.188 70.08);
+  --chart-4: oklch(0.627 0.265 303.9);
+  --chart-5: oklch(0.645 0.246 16.439);
+  --sidebar: oklch(0.205 0 0);
+  --sidebar-foreground: oklch(0.985 0 0);
+  --sidebar-primary: #F06292;
+  --sidebar-primary-foreground: oklch(0.985 0 0);
+  --sidebar-accent: #FFD54F;
+  --sidebar-accent-foreground: oklch(0.205 0 0);
+  --sidebar-border: oklch(1 0 0 / 10%);
+  --sidebar-ring: oklch(0.556 0 0);
+}
+
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
@@ -46,92 +130,58 @@
   --radius-4xl: calc(var(--radius) + 16px);
 }
 
-/* For the large "Parisian" titles */
-h1, h2, .hero-title {
-  font-family: var(--font-dm-serif), serif;
-  font-weight: 400;
+/* Bakingo Theme Utilities */
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  background-color: var(--background);
+  color: var(--foreground);
 }
 
-/* For body text, menus, and buttons */
-body, button, .nav-item {
-  font-family: var(--font-dm-sans), sans-serif;
-  font-weight: 400; /* Use 500 or 700 for bold UI elements */
+h1, h2, h3, h4, h5, h6 {
+  font-weight: 600;
+  color: var(--foreground);
 }
 
-:root {
-  --radius: 0.625rem;
-  --background: oklch(1 0 0);
-  --foreground: oklch(0.145 0 0);
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.145 0 0);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.145 0 0);
-  --primary: oklch(0.205 0 0);
-  --primary-foreground: oklch(0.985 0 0);
-  --secondary: oklch(0.97 0 0);
-  --secondary-foreground: oklch(0.205 0 0);
-  --muted: oklch(0.97 0 0);
-  --muted-foreground: oklch(0.556 0 0);
-  --accent: oklch(0.97 0 0);
-  --accent-foreground: oklch(0.205 0 0);
-  --destructive: oklch(0.577 0.245 27.325);
-  --border: oklch(0.922 0 0);
-  --input: oklch(0.922 0 0);
-  --ring: oklch(0.708 0 0);
-  --chart-1: oklch(0.646 0.222 41.116);
-  --chart-2: oklch(0.6 0.118 184.704);
-  --chart-3: oklch(0.398 0.07 227.392);
-  --chart-4: oklch(0.828 0.189 84.429);
-  --chart-5: oklch(0.769 0.188 70.08);
-  --sidebar: oklch(0.985 0 0);
-  --sidebar-foreground: oklch(0.145 0 0);
-  --sidebar-primary: oklch(0.205 0 0);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.97 0 0);
-  --sidebar-accent-foreground: oklch(0.205 0 0);
-  --sidebar-border: oklch(0.922 0 0);
-  --sidebar-ring: oklch(0.708 0 0);
+/* Buttons */
+.btn-bakingo-primary {
+  @apply bg-pink-600 text-white px-6 py-3 rounded-lg font-semibold transition-all duration-300 hover:bg-pink-700 hover:shadow-lg hover:-translate-y-1 active:translate-y-0;
 }
 
-.dark {
-  --background: oklch(0.145 0 0);
-  --foreground: oklch(0.985 0 0);
-  --card: oklch(0.205 0 0);
-  --card-foreground: oklch(0.985 0 0);
-  --popover: oklch(0.205 0 0);
-  --popover-foreground: oklch(0.985 0 0);
-  --primary: oklch(0.922 0 0);
-  --primary-foreground: oklch(0.205 0 0);
-  --secondary: oklch(0.269 0 0);
-  --secondary-foreground: oklch(0.985 0 0);
-  --muted: oklch(0.269 0 0);
-  --muted-foreground: oklch(0.708 0 0);
-  --accent: oklch(0.269 0 0);
-  --accent-foreground: oklch(0.985 0 0);
-  --destructive: oklch(0.704 0.191 22.216);
-  --border: oklch(1 0 0 / 10%);
-  --input: oklch(1 0 0 / 15%);
-  --ring: oklch(0.556 0 0);
-  --chart-1: oklch(0.488 0.243 264.376);
-  --chart-2: oklch(0.696 0.17 162.48);
-  --chart-3: oklch(0.769 0.188 70.08);
-  --chart-4: oklch(0.627 0.265 303.9);
-  --chart-5: oklch(0.645 0.246 16.439);
-  --sidebar: oklch(0.205 0 0);
-  --sidebar-foreground: oklch(0.985 0 0);
-  --sidebar-primary: oklch(0.488 0.243 264.376);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.269 0 0);
-  --sidebar-accent-foreground: oklch(0.985 0 0);
-  --sidebar-border: oklch(1 0 0 / 10%);
-  --sidebar-ring: oklch(0.556 0 0);
+.btn-bakingo-secondary {
+  @apply bg-yellow-500 text-gray-900 px-6 py-3 rounded-lg font-semibold transition-all duration-300 hover:bg-yellow-600 hover:shadow-lg hover:-translate-y-1;
 }
 
-@layer base {
-  * {
-    @apply border-border outline-ring/50;
-  }
-  body {
-    @apply bg-background text-foreground;
-  }
+.btn-bakingo-outline {
+  @apply border-2 border-pink-600 text-pink-600 px-6 py-3 rounded-lg font-semibold transition-all duration-300 hover:bg-pink-600 hover:text-white;
+}
+
+/* Cards */
+.card-bakingo {
+  @apply bg-white rounded-xl shadow-sm border border-gray-200 transition-all duration-300 hover:shadow-md hover:border-pink-300;
+}
+
+.card-bakingo-compact {
+  @apply bg-white rounded-lg shadow-sm border border-gray-200 p-4;
+}
+
+/* Inputs */
+input, textarea, select {
+  @apply rounded-lg border border-gray-300 px-4 py-2 transition-all duration-300 focus:border-pink-600 focus:ring-2 focus:ring-pink-200 focus:outline-none;
+}
+
+/* Badges */
+.badge-pink {
+  @apply inline-block px-4 py-1 bg-pink-100 text-pink-700 rounded-full text-sm font-semibold;
+}
+
+.badge-green {
+  @apply inline-block px-4 py-1 bg-green-100 text-green-700 rounded-full text-sm font-semibold;
+}
+
+.badge-yellow {
+  @apply inline-block px-4 py-1 bg-yellow-100 text-yellow-700 rounded-full text-sm font-semibold;
+}
+
+.badge-red {
+  @apply inline-block px-4 py-1 bg-red-100 text-red-700 rounded-full text-sm font-semibold;
 }
