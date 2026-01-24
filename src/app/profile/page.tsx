@@ -3,7 +3,10 @@
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useSession, signOut } from 'next-auth/react';
-import { User, Package, Truck, CreditCard, HelpCircle, MessageSquare, LogOut, ChevronRight, Users } from 'lucide-react';
+import {
+  User, Package, Truck, CreditCard, HelpCircle, MessageSquare, LogOut,
+  ChevronRight, Users, Settings, Award, TrendingUp, Wallet, Mail, Phone
+} from 'lucide-react';
 import OrderDetailModal from '@/components/orders/OrderDetailModal';
 
 export default function UserDashboard() {
@@ -32,23 +35,20 @@ export default function UserDashboard() {
   const fetchUserProfile = async () => {
     try {
       setLoading(true);
-      // Fetch user profile
       const profileResponse = await fetch('/api/user/profile', { credentials: 'include' });
-      
+
       if (!profileResponse.ok) {
         throw new Error('Failed to fetch profile');
       }
 
       const profileData = await profileResponse.json();
       setUser(profileData.user);
-      
-      // Fetch all orders separately to get complete order data including paymentMethod and notes
+
       const ordersResponse = await fetch('/api/user/orders', { credentials: 'include' });
       let allOrders = [];
       if (ordersResponse.ok) {
         const ordersData = await ordersResponse.json();
         allOrders = ordersData.orders || [];
-        console.log('Orders fetched from /api/user/orders:', allOrders);
       }
       setOrders(allOrders);
       setError('');
@@ -81,7 +81,6 @@ export default function UserDashboard() {
 
   const splitPaymentOrders = orders.filter(order => getSplitPaymentData(order) !== null);
 
-  // FAQ and Support data
   const faqs = [
     { question: 'How do I track my order?', answer: 'Go to the Order Tracking section to see real-time updates of your order status.' },
     { question: 'Can I cancel my order?', answer: 'You can cancel orders within 1 hour of placement. Visit Orders section for more details.' },
@@ -91,20 +90,23 @@ export default function UserDashboard() {
   ];
 
   const supportChannels = [
-    { channel: 'Email', contact: 'support@cakeshop.com', icon: '📧', response: '24 hours' },
-    { channel: 'Phone', contact: '+91 1800-CAKE-123', icon: '📞', response: '2 hours' },
-    { channel: 'Live Chat', contact: 'Available 10 AM - 10 PM', icon: '💬', response: 'Instant' },
-    { channel: 'WhatsApp', contact: '+91 98765 43210', icon: '💬', response: '30 mins' },
+    { channel: 'Email', contact: 'support@cakeshop.com', icon: 'E', response: '24 hours' },
+    { channel: 'Phone', contact: '+91 1800-CAKE-123', icon: 'P', response: '2 hours' },
+    { channel: 'Live Chat', contact: 'Available 10 AM - 10 PM', icon: 'C', response: 'Instant' },
+    { channel: 'WhatsApp', contact: '+91 98765 43210', icon: 'W', response: '30 mins' },
   ];
 
   const joinDate = user?.createdAt ? new Date(user.createdAt).toLocaleDateString('en-US', { year: 'numeric', month: 'long' }) : 'N/A';
 
   if (status === 'loading' || loading) {
     return (
-      <div className="min-h-screen bg-[#FFF9EB] flex items-center justify-center">
+      <div className="min-h-screen pt-32 bg-linear-to-br from-white via-pink-50 to-orange-50 flex items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin w-12 h-12 border-4 border-[#1a1a1a] border-t-[#F7E47D] rounded-full mx-auto"></div>
-          <p className="mt-4 text-[#1a1a1a]">Loading profile...</p>
+          <div className="w-16 h-16 mx-auto mb-4 relative">
+            <div className="absolute inset-0 bg-linear-to-r from-pink-600 to-orange-500 rounded-full animate-spin"></div>
+            <div className="absolute inset-2 bg-white rounded-full"></div>
+          </div>
+          <p className="text-gray-900 font-medium">Loading your dashboard...</p>
         </div>
       </div>
     );
@@ -112,11 +114,17 @@ export default function UserDashboard() {
 
   if (error) {
     return (
-      <div className="min-h-screen bg-[#FFF9EB] flex items-center justify-center">
-        <div className="text-center">
-          <p className="text-red-600 text-lg">{error}</p>
-          <button onClick={fetchUserProfile} className="mt-4 px-6 py-2 bg-[#1a1a1a] text-[#F7E47D] rounded hover:bg-black">
-            Retry
+      <div className="min-h-screen pt-32 bg-linear-to-br from-white via-pink-50 to-orange-50 flex items-center justify-center">
+        <div className="bg-white rounded-2xl shadow-lg border border-red-200 p-8 max-w-md text-center">
+          <div className="w-12 h-12 mx-auto mb-4 bg-red-100 rounded-full flex items-center justify-center">
+            <span className="text-xl">X</span>
+          </div>
+          <p className="text-red-600 font-semibold mb-4">{error}</p>
+          <button
+            onClick={fetchUserProfile}
+            className="px-6 py-2 bg-pink-600 text-white rounded-lg hover:bg-pink-700 transition-colors font-semibold"
+          >
+            Try Again
           </button>
         </div>
       </div>
@@ -125,470 +133,540 @@ export default function UserDashboard() {
 
   if (!user) {
     return (
-      <div className="min-h-screen bg-[#FFF9EB] flex items-center justify-center">
-        <p className="text-[#1a1a1a]">No user data available</p>
+      <div className="min-h-screen pt-32 bg-linear-to-br from-white via-pink-50 to-orange-50 flex items-center justify-center">
+        <div className="text-center">
+          <p className="text-gray-900 font-semibold">No user data available</p>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen pt-32 bg-[#FFF9EB] text-[#1a1a1a]">
-      {/* Header */}
-      <div className="sticky top-0 z-30 bg-[#FFF9EB] border-b border-[#1a1a1a]/10">
-        <div className="max-w-7xl mx-auto px-4 py-6 flex items-center justify-between">
-          <h1 className="serif text-3xl">My Dashboard</h1>
-          <button onClick={handleLogout} className="flex items-center gap-2 px-4 py-2 text-red-600 hover:bg-red-50 rounded transition-colors">
+    <div className="min-h-screen pt-32 bg-linear-to-br from-white via-pink-50 to-orange-50">
+      <div className="sticky top-32 z-40 bg-white/80 backdrop-blur-md border-b border-pink-100 shadow-sm">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex items-center justify-between">
+          <h1 className="text-2xl font-bold bg-linear-to-r from-pink-600 to-orange-600 bg-clip-text text-transparent">
+            Account Dashboard
+          </h1>
+          <button
+            onClick={handleLogout}
+            className="flex items-center gap-2 px-4 py-2 text-red-600 hover:bg-red-50 rounded-lg transition-all duration-200 font-medium"
+          >
             <LogOut className="w-5 h-5" />
-            Logout
+            <span className="hidden sm:inline">Logout</span>
           </button>
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-4 py-8">
-        <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
-          {/* Sidebar */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 lg:py-12">
+        <div className="grid grid-cols-1 lg:grid-cols-5 gap-8">
           <div className="lg:col-span-1">
-            <div className="bg-white border border-[#1a1a1a]/10 rounded-lg overflow-hidden sticky top-20">
-              {/* Sidebar Header */}
-              <div className="bg-gradient-to-r from-[#1a1a1a] to-[#333333] text-[#F7E47D] p-6 text-center">
-                <div className="text-5xl mb-3">{user.avatar || '👤'}</div>
-                <h3 className="font-bold text-lg">{user.name}</h3>
-                <p className="text-sm opacity-80">{user.email}</p>
+            <div className="space-y-4">
+              <div className="bg-white rounded-2xl shadow-lg overflow-hidden border border-pink-100 sticky top-40">
+                <div className="h-24 bg-linear-to-r from-pink-600 via-pink-500 to-orange-500"></div>
+                <div className="px-6 pb-6 -mt-12 relative z-10">
+                  <div className="mb-4">
+                    <div className="w-24 h-24 rounded-full bg-linear-to-br from-pink-400 to-orange-400 flex items-center justify-center text-4xl shadow-lg border-4 border-white">
+                      {user.avatar || 'C'}
+                    </div>
+                  </div>
+                  <h3 className="font-bold text-lg text-gray-900">{user.name}</h3>
+                  <p className="text-sm text-gray-600 truncate">{user.email}</p>
+                  <div className="mt-4 pt-4 border-t border-gray-200">
+                    <p className="text-xs text-gray-500 mb-1">Member since</p>
+                    <p className="text-sm font-semibold text-gray-900">{joinDate}</p>
+                  </div>
+                </div>
               </div>
 
-              {/* Navigation Items */}
-              <nav className="p-4 space-y-2">
-                <button
-                  onClick={() => setActiveSection('profile')}
-                  className={`w-full flex items-center gap-3 px-4 py-3 rounded transition-colors ${
-                    activeSection === 'profile'
-                      ? 'bg-[#F7E47D] text-[#1a1a1a] font-semibold'
-                      : 'hover:bg-[#FFF9EB] text-[#1a1a1a]'
-                  }`}
-                >
-                  <User className="w-5 h-5" />
-                  <span>My Profile</span>
-                  {activeSection === 'profile' && <ChevronRight className="w-5 h-5 ml-auto" />}
-                </button>
-
-                <button
-                  onClick={() => setActiveSection('orders')}
-                  className={`w-full flex items-center gap-3 px-4 py-3 rounded transition-colors ${
-                    activeSection === 'orders'
-                      ? 'bg-[#F7E47D] text-[#1a1a1a] font-semibold'
-                      : 'hover:bg-[#FFF9EB] text-[#1a1a1a]'
-                  }`}
-                >
-                  <Package className="w-5 h-5" />
-                  <span>My Orders</span>
-                  <span className="ml-auto text-xs bg-[#1a1a1a] text-[#F7E47D] px-2 py-1 rounded-full">{orders.length}</span>
-                </button>
-
-                <button
-                  onClick={() => setActiveSection('tracking')}
-                  className={`w-full flex items-center gap-3 px-4 py-3 rounded transition-colors ${
-                    activeSection === 'tracking'
-                      ? 'bg-[#F7E47D] text-[#1a1a1a] font-semibold'
-                      : 'hover:bg-[#FFF9EB] text-[#1a1a1a]'
-                  }`}
-                >
-                  <Truck className="w-5 h-5" />
-                  <span>Order Tracking</span>
-                </button>
-
-                <button
-                  onClick={() => setActiveSection('payments')}
-                  className={`w-full flex items-center gap-3 px-4 py-3 rounded transition-colors ${
-                    activeSection === 'payments'
-                      ? 'bg-[#F7E47D] text-[#1a1a1a] font-semibold'
-                      : 'hover:bg-[#FFF9EB] text-[#1a1a1a]'
-                  }`}
-                >
-                  <CreditCard className="w-5 h-5" />
-                  <span>Payment Status</span>
-                </button>
-
-                <button
-                  onClick={() => setActiveSection('support')}
-                  className={`w-full flex items-center gap-3 px-4 py-3 rounded transition-colors ${
-                    activeSection === 'support'
-                      ? 'bg-[#F7E47D] text-[#1a1a1a] font-semibold'
-                      : 'hover:bg-[#FFF9EB] text-[#1a1a1a]'
-                  }`}
-                >
-                  <MessageSquare className="w-5 h-5" />
-                  <span>Support</span>
-                </button>
-
-                <button
-                  onClick={() => setActiveSection('help')}
-                  className={`w-full flex items-center gap-3 px-4 py-3 rounded transition-colors ${
-                    activeSection === 'help'
-                      ? 'bg-[#F7E47D] text-[#1a1a1a] font-semibold'
-                      : 'hover:bg-[#FFF9EB] text-[#1a1a1a]'
-                  }`}
-                >
-                  <HelpCircle className="w-5 h-5" />
-                  <span>Help & FAQ</span>
-                </button>
+              <nav className="bg-white rounded-2xl shadow-lg border border-pink-100 p-2">
+                {[
+                  { id: 'profile', label: 'My Profile', icon: User },
+                  { id: 'orders', label: 'Orders', icon: Package, badge: orders.length },
+                  { id: 'tracking', label: 'Tracking', icon: Truck },
+                  { id: 'payments', label: 'Payments', icon: Wallet },
+                  { id: 'support', label: 'Support', icon: MessageSquare },
+                  { id: 'help', label: 'Help & FAQ', icon: HelpCircle },
+                ].map((item) => {
+                  const Icon = item.icon;
+                  return (
+                    <button
+                      key={item.id}
+                      onClick={() => setActiveSection(item.id as any)}
+                      className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200 mb-1 ${
+                        activeSection === item.id
+                          ? 'bg-linear-to-r from-pink-600 to-orange-500 text-white shadow-md'
+                          : 'text-gray-700 hover:bg-gray-50'
+                      }`}
+                    >
+                      <Icon className="w-5 h-5 shrink-0" />
+                      <span className="font-medium text-sm">{item.label}</span>
+                      {item.badge !== undefined && (
+                        <span className={`ml-auto px-2.5 py-0.5 rounded-full text-xs font-bold ${
+                          activeSection === item.id
+                            ? 'bg-white/30'
+                            : 'bg-pink-100 text-pink-700'
+                        }`}>
+                          {item.badge}
+                        </span>
+                      )}
+                    </button>
+                  );
+                })}
               </nav>
+
+              <div className="bg-white rounded-2xl shadow-lg border border-pink-100 p-6 hidden lg:block">
+                <h4 className="font-bold text-gray-900 mb-4">Quick Stats</h4>
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm text-gray-600">Total Orders</span>
+                    <span className="font-bold text-lg text-pink-600">{orders.length}</span>
+                  </div>
+                  <div className="h-px bg-gray-200"></div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm text-gray-600">Spent</span>
+                    <span className="font-bold text-lg text-green-600">
+                      INR {(orders.reduce((sum, o) => sum + (o.finalAmount || o.totalAmount || 0), 0)).toFixed(0)}
+                    </span>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
 
-          {/* Main Content */}
-          <div className="lg:col-span-3">
-            {/* Profile Section */}
+          <div className="lg:col-span-4">
             {activeSection === 'profile' && (
-              <div className="bg-white border border-[#1a1a1a]/10 rounded-lg p-8 space-y-8">
-                <div>
-                  <h2 className="serif text-3xl mb-6">My Profile</h2>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div>
-                      <label className="block text-sm font-semibold text-gray-600 mb-2">Full Name</label>
-                      <input type="text" defaultValue={user.name} disabled className="w-full px-4 py-3 border border-[#1a1a1a]/20 rounded focus:outline-none focus:border-[#1a1a1a] bg-gray-100" />
+              <div className="space-y-6">
+                <div className="bg-white rounded-2xl shadow-lg border border-pink-100 overflow-hidden">
+                  <div className="h-32 bg-linear-to-r from-pink-600 via-pink-500 to-orange-500"></div>
+                  <div className="px-8 pb-8">
+                    <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4 -mt-16 relative z-10 mb-8">
+                      <div className="flex items-end gap-4">
+                        <div className="w-32 h-32 rounded-2xl bg-linear-to-br from-pink-400 to-orange-400 flex items-center justify-center text-6xl shadow-lg border-4 border-white">
+                          {user.avatar || 'C'}
+                        </div>
+                        <div className="pb-2">
+                          <h2 className="text-3xl font-bold text-gray-900">{user.name}</h2>
+                          <p className="text-gray-600">Member since {joinDate}</p>
+                        </div>
+                      </div>
+                      <button className="px-6 py-2 rounded-lg bg-pink-50 text-pink-600 hover:bg-pink-100 transition-colors font-semibold flex items-center gap-2">
+                        <Settings className="w-5 h-5" />
+                        Edit Profile
+                      </button>
                     </div>
-                    <div>
-                      <label className="block text-sm font-semibold text-gray-600 mb-2">Email</label>
-                      <input type="email" defaultValue={user.email} disabled className="w-full px-4 py-3 border border-[#1a1a1a]/20 rounded focus:outline-none focus:border-[#1a1a1a] bg-gray-100" />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-semibold text-gray-600 mb-2">Phone Number</label>
-                      <input type="tel" defaultValue={user.phone || ''} disabled className="w-full px-4 py-3 border border-[#1a1a1a]/20 rounded focus:outline-none focus:border-[#1a1a1a] bg-gray-100" />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-semibold text-gray-600 mb-2">Account ID</label>
-                      <input type="text" defaultValue={user.id} disabled className="w-full px-4 py-3 border border-[#1a1a1a]/20 rounded focus:outline-none focus:border-[#1a1a1a] bg-gray-100" />
+
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 pt-6 border-t border-gray-100">
+                      <div>
+                        <p className="text-sm text-gray-600 mb-1">Email Address</p>
+                        <p className="font-semibold text-gray-900 flex items-center gap-2">
+                          <Mail className="w-4 h-4 text-pink-600" />
+                          {user.email}
+                        </p>
+                      </div>
+                      <div>
+                        <p className="text-sm text-gray-600 mb-1">Phone Number</p>
+                        <p className="font-semibold text-gray-900 flex items-center gap-2">
+                          <Phone className="w-4 h-4 text-pink-600" />
+                          {user.phone || 'Not provided'}
+                        </p>
+                      </div>
+                      <div>
+                        <p className="text-sm text-gray-600 mb-1">Account Status</p>
+                        <p className="font-semibold text-green-600 flex items-center gap-2">
+                          <span className="w-2 h-2 bg-green-600 rounded-full"></span>
+                          Active
+                        </p>
+                      </div>
                     </div>
                   </div>
                 </div>
 
-                <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                  <div className="bg-[#FFF9EB] p-4 rounded-lg text-center">
-                    <div className="text-3xl font-bold text-[#1a1a1a]">{orders.length}</div>
-                    <p className="text-sm text-gray-600 mt-2">Total Orders</p>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                  <div className="bg-white rounded-xl shadow border border-pink-100 p-6 hover:shadow-lg transition-shadow">
+                    <div className="flex items-center justify-between mb-2">
+                      <p className="text-sm text-gray-600">Total Orders</p>
+                      <Package className="w-5 h-5 text-pink-600" />
+                    </div>
+                    <p className="text-3xl font-bold text-gray-900">{orders.length}</p>
                   </div>
-                  <div className="bg-[#FFF9EB] p-4 rounded-lg text-center">
-                    <div className="text-3xl font-bold text-green-600">✓</div>
-                    <p className="text-sm text-gray-600 mt-2">Account Verified</p>
+                  <div className="bg-white rounded-xl shadow border border-pink-100 p-6 hover:shadow-lg transition-shadow">
+                    <div className="flex items-center justify-between mb-2">
+                      <p className="text-sm text-gray-600">Total Spent</p>
+                      <TrendingUp className="w-5 h-5 text-green-600" />
+                    </div>
+                    <p className="text-3xl font-bold text-green-600">INR {(orders.reduce((sum, o) => sum + (o.finalAmount || o.totalAmount || 0), 0)).toFixed(0)}</p>
                   </div>
-                  <div className="bg-[#FFF9EB] p-4 rounded-lg text-center">
-                    <div className="text-sm text-gray-600">Joined</div>
-                    <p className="text-sm font-semibold mt-2">{joinDate}</p>
+                  <div className="bg-white rounded-xl shadow border border-pink-100 p-6 hover:shadow-lg transition-shadow">
+                    <div className="flex items-center justify-between mb-2">
+                      <p className="text-sm text-gray-600">Deliveries</p>
+                      <Truck className="w-5 h-5 text-blue-600" />
+                    </div>
+                    <p className="text-3xl font-bold text-blue-600">{orders.filter(o => o.status === 'delivered').length}</p>
+                  </div>
+                  <div className="bg-white rounded-xl shadow border border-pink-100 p-6 hover:shadow-lg transition-shadow">
+                    <div className="flex items-center justify-between mb-2">
+                      <p className="text-sm text-gray-600">Customer Rating</p>
+                      <Award className="w-5 h-5 text-orange-600" />
+                    </div>
+                    <p className="text-3xl font-bold text-orange-600">4.8 Stars</p>
                   </div>
                 </div>
-
-                <button className="w-full bg-[#1a1a1a] text-[#F7E47D] py-3 font-bold uppercase tracking-widest rounded hover:bg-black transition-colors" disabled>
-                  Profile information is read-only
-                </button>
               </div>
             )}
 
-            {/* Orders Section */}
             {activeSection === 'orders' && (
-              <div className="bg-white border border-[#1a1a1a]/10 rounded-lg p-8 space-y-6">
-                <h2 className="serif text-3xl">My Orders</h2>
+              <div className="space-y-6">
+                <div className="flex items-center justify-between">
+                  <h2 className="text-3xl font-bold text-gray-900">Your Orders</h2>
+                  <span className="text-sm text-gray-600 bg-pink-50 px-4 py-2 rounded-lg font-medium">{orders.length} total</span>
+                </div>
+
                 {orders.length === 0 ? (
-                  <div className="text-center py-12">
-                    <Package className="w-16 h-16 mx-auto text-gray-300 mb-4" />
-                    <p className="text-gray-600 mb-6">No orders yet. Start shopping!</p>
+                  <div className="bg-white rounded-2xl shadow-lg border border-pink-100 p-16 text-center">
+                    <div className="w-24 h-24 mx-auto mb-6 bg-gray-100 rounded-full flex items-center justify-center">
+                      <Package className="w-12 h-12 text-gray-400" />
+                    </div>
+                    <h3 className="text-xl font-bold text-gray-900 mb-2">No orders yet</h3>
+                    <p className="text-gray-600 mb-8">Start your cake shopping journey today!</p>
                     {process.env.NODE_ENV === 'development' && (
-                      <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 inline-block">
-                        <p className="text-sm text-yellow-800 mb-3">
-                          👨‍💻 For testing: Create a test order
-                        </p>
-                        <a
-                          href="/dev/create-test-order"
-                          className="inline-block px-4 py-2 bg-yellow-600 text-white rounded hover:bg-yellow-700 transition-colors text-sm font-semibold"
-                        >
-                          Create Test Order
-                        </a>
-                      </div>
+                      <a
+                        href="/dev/create-test-order"
+                        className="inline-block px-6 py-3 bg-pink-600 text-white rounded-lg hover:bg-pink-700 transition-colors font-semibold"
+                      >
+                        Create Test Order
+                      </a>
                     )}
                   </div>
                 ) : (
-                  <div className="space-y-4">
+                  <div className="grid gap-4">
                     {orders.map((order) => (
-                      <button
+                      <div
                         key={order.id}
+                        className="bg-white rounded-xl shadow border border-pink-100 p-6 hover:shadow-lg transition-all duration-200 cursor-pointer group"
                         onClick={() => handleOrderClick(order.id)}
-                        className="w-full text-left border border-[#1a1a1a]/10 rounded-lg p-6 hover:shadow-lg hover:border-[#F7E47D] transition-all hover:bg-[#FFF9EB]/50 cursor-pointer"
                       >
-                        <div className="flex justify-between items-start mb-4">
-                          <div>
-                            <h3 className="font-bold text-lg text-[#1a1a1a]">{order.orderNumber || 'Order'}</h3>
-                            <p className="text-sm text-gray-600">{order.vendor?.name || 'N/A'}</p>
+                        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                          <div className="flex-1">
+                            <div className="flex items-center gap-3 mb-2">
+                              <h3 className="font-bold text-lg text-gray-900">{order.orderNumber || order.id.slice(0, 8)}</h3>
+                              <span className={`px-3 py-1 rounded-full text-xs font-bold ${
+                                order.status === 'delivered' ? 'bg-green-100 text-green-700' :
+                                order.status === 'cancelled' ? 'bg-red-100 text-red-700' :
+                                order.status === 'pending' ? 'bg-yellow-100 text-yellow-700' :
+                                order.status === 'confirmed' ? 'bg-blue-100 text-blue-700' :
+                                order.status === 'preparing' ? 'bg-purple-100 text-purple-700' :
+                                order.status === 'ready' ? 'bg-indigo-100 text-indigo-700' :
+                                order.status === 'out_for_delivery' ? 'bg-cyan-100 text-cyan-700' :
+                                'bg-gray-100 text-gray-700'
+                              }`}>
+                                {order.status?.replace(/_/g, ' ').toUpperCase() || 'PENDING'}
+                              </span>
+                            </div>
+                            <p className="text-sm text-gray-600 mb-2">{order.vendor?.name || 'Unknown Vendor'}</p>
+                            <p className="text-xs text-gray-500">Order date: {new Date(order.createdAt).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })}</p>
                           </div>
-                          <span className={`px-3 py-1 rounded text-sm font-semibold ${
-                            order.status === 'delivered' ? 'bg-green-100 text-green-700' :
-                            order.status === 'cancelled' ? 'bg-red-100 text-red-700' :
-                            order.status === 'pending' ? 'bg-yellow-100 text-yellow-700' :
-                            order.status === 'confirmed' ? 'bg-blue-100 text-blue-700' :
-                            order.status === 'preparing' ? 'bg-purple-100 text-purple-700' :
-                            order.status === 'ready' ? 'bg-indigo-100 text-indigo-700' :
-                            order.status === 'out_for_delivery' ? 'bg-cyan-100 text-cyan-700' :
-                            'bg-gray-100 text-gray-700'
-                          }`}>
-                            {order.status?.replace(/_/g, ' ').toUpperCase() || 'Pending'}
-                          </span>
-                        </div>
-                        <div className="flex justify-between items-center">
-                          <span className="text-sm text-gray-600">{new Date(order.createdAt).toLocaleDateString()}</span>
-                          <div className="flex items-center gap-3">
-                            <span className="font-bold text-lg text-[#F7E47D]">₹{order.finalAmount || order.totalAmount || 0}</span>
-                            <ChevronRight className="w-5 h-5 text-[#1a1a1a]" />
+                          <div className="text-right">
+                            <p className="text-2xl font-bold text-pink-600 mb-2">INR {order.finalAmount || order.totalAmount || 0}</p>
+                            <button className="inline-flex items-center gap-2 text-pink-600 font-semibold hover:text-pink-700">
+                              View Details
+                              <ChevronRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                            </button>
                           </div>
                         </div>
-                      </button>
+                      </div>
                     ))}
                   </div>
                 )}
               </div>
             )}
 
-            {/* Tracking Section */}
             {activeSection === 'tracking' && (
-              <div className="bg-white border border-[#1a1a1a]/10 rounded-lg p-8 space-y-6">
-                <h2 className="serif text-3xl">Order Tracking</h2>
+              <div className="space-y-6">
+                <h2 className="text-3xl font-bold text-gray-900">Order Tracking</h2>
+
                 {orders.length === 0 ? (
-                  <div className="text-center py-12">
-                    <Truck className="w-16 h-16 mx-auto text-gray-300 mb-4" />
-                    <p className="text-gray-600">No active orders to track.</p>
+                  <div className="bg-white rounded-2xl shadow-lg border border-pink-100 p-16 text-center">
+                    <div className="w-24 h-24 mx-auto mb-6 bg-gray-100 rounded-full flex items-center justify-center">
+                      <Truck className="w-12 h-12 text-gray-400" />
+                    </div>
+                    <h3 className="text-xl font-bold text-gray-900 mb-2">No active orders</h3>
+                    <p className="text-gray-600">Your tracked orders will appear here</p>
                   </div>
                 ) : (
-                  <div className="space-y-4">
-                    {orders.filter(o => o.status !== 'Cancelled').map((order) => (
-                      <button
-                        key={order.id}
-                        onClick={() => router.push(`/orders/${order.id}`)}
-                        className="w-full border border-[#1a1a1a]/10 rounded-lg p-6 hover:shadow-lg hover:border-[#F7E47D] transition-all text-left"
-                      >
-                        <div className="flex justify-between items-start">
-                          <div>
-                            <h3 className="font-bold text-lg mb-2">{order.id}</h3>
-                            <p className="text-gray-600 text-sm">Order Status: <span className="font-bold capitalize">{order.status || 'Processing'}</span></p>
-                            <p className="text-xs text-gray-500 mt-2">Last updated: {new Date(order.updatedAt).toLocaleString()}</p>
+                  <div className="grid gap-4">
+                    {orders.filter(o => !['cancelled', 'delivered'].includes(o.status)).length === 0 ? (
+                      <div className="bg-white rounded-2xl shadow-lg border border-pink-100 p-12 text-center">
+                        <p className="text-gray-600">All your orders have been delivered or cancelled</p>
+                      </div>
+                    ) : (
+                      orders.filter(o => !['cancelled', 'delivered'].includes(o.status)).map((order) => (
+                        <div
+                          key={order.id}
+                          onClick={() => router.push(`/orders/${order.id}`)}
+                          className="bg-white rounded-xl shadow border border-pink-100 p-6 hover:shadow-lg transition-all duration-200 cursor-pointer group"
+                        >
+                          <div className="flex items-center justify-between mb-4">
+                            <div>
+                              <h3 className="font-bold text-lg text-gray-900 mb-1">{order.orderNumber || order.id.slice(0, 8)}</h3>
+                              <p className="text-sm text-gray-600">Estimated delivery: Soon</p>
+                            </div>
+                            <span className="px-4 py-2 bg-blue-100 text-blue-700 rounded-lg font-semibold text-sm capitalize">
+                              {order.status?.replace(/_/g, ' ')}
+                            </span>
                           </div>
-                          <ChevronRight className="w-5 h-5 text-[#F7E47D] flex-shrink-0" />
+
+                          <div className="mb-4">
+                            <div className="w-full bg-gray-200 rounded-full h-2 mb-2">
+                              <div
+                                className="bg-linear-to-r from-pink-600 to-orange-500 h-2 rounded-full transition-all"
+                                style={{
+                                  width: order.status === 'pending' ? '25%' :
+                                         order.status === 'confirmed' ? '50%' :
+                                         order.status === 'preparing' ? '60%' :
+                                         order.status === 'ready' ? '75%' :
+                                         order.status === 'out_for_delivery' ? '90%' : '100%'
+                                }}
+                              ></div>
+                            </div>
+                            <p className="text-xs text-gray-600">Last updated: {new Date(order.updatedAt).toLocaleString('en-US', { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}</p>
+                          </div>
+
+                          <button className="w-full py-2 text-pink-600 font-semibold hover:bg-pink-50 rounded-lg transition-colors flex items-center justify-center gap-2">
+                            View Full Tracking
+                            <ChevronRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                          </button>
                         </div>
-                      </button>
-                    ))}
+                      ))
+                    )}
                   </div>
                 )}
               </div>
             )}
 
-            {/* Payments Section */}
             {activeSection === 'payments' && (
-              <div className="bg-white border border-[#1a1a1a]/10 rounded-lg p-8 space-y-6">
-                <h2 className="serif text-3xl">Payment Status</h2>
-                
-                {/* Payment Subsection Tabs */}
-                <div className="flex gap-4 border-b border-[#1a1a1a]/10">
+              <div className="space-y-6">
+                <h2 className="text-3xl font-bold text-gray-900">Payment Status</h2>
+
+                <div className="bg-white rounded-xl border border-pink-100 p-1 flex gap-2 w-fit">
                   <button
                     onClick={() => setPaymentSubSection('all')}
-                    className={`px-4 py-3 font-semibold border-b-2 transition-colors ${
+                    className={`px-6 py-2 rounded-lg font-semibold transition-all ${
                       paymentSubSection === 'all'
-                        ? 'border-[#F7E47D] text-[#F7E47D]'
-                        : 'border-transparent text-gray-600 hover:text-[#1a1a1a]'
+                        ? 'bg-linear-to-r from-pink-600 to-orange-500 text-white shadow-md'
+                        : 'text-gray-600 hover:text-gray-900'
                     }`}
                   >
                     All Payments
                   </button>
                   <button
                     onClick={() => setPaymentSubSection('split')}
-                    className={`px-4 py-3 font-semibold border-b-2 transition-colors flex items-center gap-2 ${
+                    className={`px-6 py-2 rounded-lg font-semibold transition-all flex items-center gap-2 ${
                       paymentSubSection === 'split'
-                        ? 'border-[#F7E47D] text-[#F7E47D]'
-                        : 'border-transparent text-gray-600 hover:text-[#1a1a1a]'
+                        ? 'bg-linear-to-r from-pink-600 to-orange-500 text-white shadow-md'
+                        : 'text-gray-600 hover:text-gray-900'
                     }`}
                   >
                     Split Payments
                     {splitPaymentOrders.length > 0 && (
-                      <span className="bg-[#F7E47D] text-[#1a1a1a] text-xs px-2 py-1 rounded-full font-bold">
+                      <span className="text-xs px-2 py-0.5 rounded-full bg-white/30 font-bold">
                         {splitPaymentOrders.length}
                       </span>
                     )}
                   </button>
                 </div>
 
-                {/* All Payments Tab */}
                 {paymentSubSection === 'all' && (
-                  <>
+                  <div className="grid gap-4">
                     {orders.length === 0 ? (
-                      <div className="text-center py-12">
-                        <CreditCard className="w-16 h-16 mx-auto text-gray-300 mb-4" />
-                        <p className="text-gray-600">No payment records found.</p>
+                      <div className="bg-white rounded-2xl shadow-lg border border-pink-100 p-16 text-center">
+                        <CreditCard className="w-12 h-12 mx-auto text-gray-400 mb-4" />
+                        <p className="text-gray-600">No payment records yet</p>
                       </div>
                     ) : (
-                      <div className="space-y-4">
-                        {orders.map((order) => {
-                          const splitData = getSplitPaymentData(order);
-                          return (
-                            <div key={order.id} className="border border-[#1a1a1a]/10 rounded-lg p-6">
-                              <div className="flex justify-between items-start">
-                                <div>
-                                  <h3 className="font-bold text-lg">{order.orderNumber || order.id}</h3>
-                                  <p className="text-sm text-gray-600">
-                                    Payment Method: {order.paymentMethod === 'split' ? 'Split Payment' : order.paymentMethod || 'Razorpay'}
-                                  </p>
-                                  <p className="text-xs text-gray-500 mt-2">{new Date(order.createdAt).toLocaleDateString()}</p>
-                                  {splitData && (
-                                    <button
-                                      onClick={() => router.push(`/split-payment-status/${order.id}`)}
-                                      className="mt-3 px-3 py-1 bg-blue-100 text-blue-700 rounded text-xs font-semibold hover:bg-blue-200 transition-colors"
-                                    >
-                                      View Split Payment Details →
-                                    </button>
-                                  )}
-                                </div>
-                                <div className="text-right">
-                                  <p className="text-2xl font-bold">₹{order.finalAmount || order.totalAmount || 0}</p>
-                                  <span className="inline-block mt-2 px-3 py-1 bg-green-100 text-green-700 rounded text-sm font-semibold">
-                                    {order.paymentStatus === 'pending' ? 'Pending' : 'Paid'}
-                                  </span>
-                                </div>
-                              </div>
+                      orders.map((order) => (
+                        <div key={order.id} className="bg-white rounded-xl shadow border border-pink-100 p-6 hover:shadow-lg transition-all">
+                          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                            <div>
+                              <h3 className="font-bold text-lg text-gray-900 mb-1">{order.orderNumber || order.id.slice(0, 8)}</h3>
+                              <p className="text-sm text-gray-600 mb-2">
+                                {order.paymentMethod === 'split' ? 'Split Payment' : order.paymentMethod || 'Razorpay'}
+                              </p>
+                              <p className="text-xs text-gray-500">{new Date(order.createdAt).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })}</p>
                             </div>
-                          );
-                        })}
-                      </div>
+                            <div className="text-right">
+                              <p className="text-2xl font-bold text-gray-900 mb-2">INR {order.finalAmount || order.totalAmount || 0}</p>
+                              <span className={`inline-block px-3 py-1 rounded-lg text-xs font-bold ${
+                                order.paymentStatus === 'paid' || order.status === 'delivered'
+                                  ? 'bg-green-100 text-green-700'
+                                  : 'bg-yellow-100 text-yellow-700'
+                              }`}>
+                                {order.paymentStatus === 'paid' || order.status === 'delivered' ? 'Paid' : 'Pending'}
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+                      ))
                     )}
-                  </>
+                  </div>
                 )}
 
-                {/* Split Payments Tab */}
                 {paymentSubSection === 'split' && (
-                  <>
+                  <div className="grid gap-4">
                     {splitPaymentOrders.length === 0 ? (
-                      <div className="text-center py-12">
-                        <Users className="w-16 h-16 mx-auto text-gray-300 mb-4" />
-                        <p className="text-gray-600">No split payment orders found.</p>
+                      <div className="bg-white rounded-2xl shadow-lg border border-pink-100 p-16 text-center">
+                        <Users className="w-12 h-12 mx-auto text-gray-400 mb-4" />
+                        <p className="text-gray-600">No split payments found</p>
                       </div>
                     ) : (
-                      <div className="space-y-4">
-                        {splitPaymentOrders.map((order) => {
-                          const splitData = getSplitPaymentData(order);
-                          const coPayers = splitData?.coPayers || [];
-                          const paidCount = coPayers.filter((p: any) => p.status === 'paid').length;
-                          const totalCount = coPayers.length;
-                          const paidAmount = coPayers
-                            .filter((p: any) => p.status === 'paid')
-                            .reduce((sum: number, p: any) => sum + (p.amount || 0), 0);
-                          const totalAmount = coPayers.reduce((sum: number, p: any) => sum + (p.amount || 0), 0);
+                      splitPaymentOrders.map((order) => {
+                        const splitData = getSplitPaymentData(order);
+                        const coPayers = splitData?.coPayers || [];
+                        const paidCount = coPayers.filter((p: any) => p.status === 'paid').length;
+                        const totalCount = coPayers.length;
+                        const paidAmount = coPayers.filter((p: any) => p.status === 'paid').reduce((sum: number, p: any) => sum + (p.amount || 0), 0);
+                        const totalAmount = coPayers.reduce((sum: number, p: any) => sum + (p.amount || 0), 0);
 
-                          return (
-                            <div 
-                              key={order.id} 
-                              onClick={() => router.push(`/split-payment-status/${order.id}`)}
-                              className="border border-[#1a1a1a]/10 rounded-lg p-6 hover:shadow-lg hover:border-[#F7E47D] transition-all cursor-pointer"
-                            >
-                              <div className="flex justify-between items-start mb-4">
-                                <div>
-                                  <h3 className="font-bold text-lg text-[#1a1a1a]">{order.orderNumber || order.id}</h3>
-                                  <p className="text-sm text-gray-600">Split Payment • {new Date(order.createdAt).toLocaleDateString()}</p>
-                                </div>
-                                <span className={`px-3 py-1 rounded text-sm font-semibold ${
-                                  paidCount === totalCount 
-                                    ? 'bg-green-100 text-green-700' 
-                                    : paidCount > 0 
-                                    ? 'bg-blue-100 text-blue-700' 
-                                    : 'bg-yellow-100 text-yellow-700'
-                                }`}>
-                                  {paidCount === totalCount ? 'Completed' : `${paidCount}/${totalCount} Paid`}
-                                </span>
+                        return (
+                          <div
+                            key={order.id}
+                            onClick={() => router.push(`/split-payment-status/${order.id}`)}
+                            className="bg-white rounded-xl shadow border border-pink-100 p-6 hover:shadow-lg transition-all cursor-pointer group"
+                          >
+                            <div className="flex items-center justify-between mb-4">
+                              <div>
+                                <h3 className="font-bold text-lg text-gray-900">{order.orderNumber || order.id.slice(0, 8)}</h3>
+                                <p className="text-sm text-gray-600">{new Date(order.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</p>
                               </div>
-
-                              {/* Progress Bar */}
-                              <div className="mb-4">
-                                <div className="w-full bg-gray-200 rounded-full h-2">
-                                  <div
-                                    className="bg-gradient-to-r from-[#F7E47D] to-[#F7D547] h-2 rounded-full transition-all"
-                                    style={{ width: `${totalCount > 0 ? (paidCount / totalCount) * 100 : 0}%` }}
-                                  />
-                                </div>
-                                <p className="text-xs text-gray-600 mt-2">₹{paidAmount.toFixed(2)} / ₹{totalAmount.toFixed(2)}</p>
-                              </div>
-
-                              {/* Co-payers Summary */}
-                              <div className="space-y-2">
-                                {coPayers.slice(0, 2).map((payer: any, idx: number) => (
-                                  <div key={idx} className="flex justify-between items-center text-sm">
-                                    <div className="flex items-center gap-2">
-                                      <span className={`w-2 h-2 rounded-full ${payer.status === 'paid' ? 'bg-green-500' : 'bg-gray-300'}`}></span>
-                                      <span className="text-gray-600">{payer.email}</span>
-                                    </div>
-                                    <div className="flex items-center gap-3">
-                                      <span className="font-semibold">₹{payer.amount}</span>
-                                      <span className={`text-xs px-2 py-0.5 rounded ${
-                                        payer.status === 'paid' 
-                                          ? 'bg-green-100 text-green-700' 
-                                          : 'bg-gray-100 text-gray-700'
-                                      }`}>
-                                        {payer.status === 'paid' ? '✓ Paid' : 'Pending'}
-                                      </span>
-                                    </div>
-                                  </div>
-                                ))}
-                                {totalCount > 2 && (
-                                  <p className="text-xs text-gray-600 pt-2">+{totalCount - 2} more co-payer(s)</p>
-                                )}
-                              </div>
-
-                              <div className="mt-4 flex items-center gap-2 text-[#F7E47D] font-semibold">
-                                View Details <ChevronRight className="w-4 h-4" />
-                              </div>
+                              <span className={`px-4 py-2 rounded-lg text-sm font-bold ${
+                                paidCount === totalCount
+                                  ? 'bg-green-100 text-green-700'
+                                  : paidCount > 0
+                                  ? 'bg-blue-100 text-blue-700'
+                                  : 'bg-yellow-100 text-yellow-700'
+                              }`}>
+                                {paidCount === totalCount ? 'Complete' : `${paidCount}/${totalCount} Paid`}
+                              </span>
                             </div>
-                          );
-                        })}
-                      </div>
+
+                            <div className="mb-4">
+                              <div className="w-full bg-gray-200 rounded-full h-2.5 mb-2">
+                                <div
+                                  className="bg-linear-to-r from-pink-600 to-orange-500 h-2.5 rounded-full transition-all"
+                                  style={{ width: `${totalCount > 0 ? (paidCount / totalCount) * 100 : 0}%` }}
+                                ></div>
+                              </div>
+                              <p className="text-xs text-gray-600">INR {paidAmount.toFixed(0)} / INR {totalAmount.toFixed(0)}</p>
+                            </div>
+
+                            <div className="space-y-2">
+                              {coPayers.slice(0, 2).map((payer: any, idx: number) => (
+                                <div key={idx} className="flex items-center justify-between text-sm">
+                                  <div className="flex items-center gap-2">
+                                    <span className={`w-2.5 h-2.5 rounded-full ${payer.status === 'paid' ? 'bg-green-500' : 'bg-gray-300'}`}></span>
+                                    <span className="text-gray-700 font-medium">{payer.email}</span>
+                                  </div>
+                                  <div className="flex items-center gap-3">
+                                    <span className="font-bold">INR {payer.amount}</span>
+                                    <span className={`text-xs px-2 py-0.5 rounded font-bold ${
+                                      payer.status === 'paid'
+                                        ? 'bg-green-100 text-green-700'
+                                        : 'bg-gray-100 text-gray-700'
+                                    }`}>
+                                      {payer.status === 'paid' ? 'Paid' : 'Pending'}
+                                    </span>
+                                  </div>
+                                </div>
+                              ))}
+                              {totalCount > 2 && (
+                                <p className="text-xs text-gray-600 pt-2">+{totalCount - 2} more</p>
+                              )}
+                            </div>
+
+                            <button className="mt-4 w-full flex items-center justify-center gap-2 text-pink-600 font-semibold hover:text-pink-700">
+                              View Details
+                              <ChevronRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                            </button>
+                          </div>
+                        );
+                      })
                     )}
-                  </>
+                  </div>
                 )}
               </div>
             )}
 
-            {/* Support Section */}
             {activeSection === 'support' && (
-              <div className="bg-white border border-[#1a1a1a]/10 rounded-lg p-8 space-y-6">
-                <h2 className="serif text-3xl">Customer Support</h2>
-                <p className="text-gray-600">Get in touch with us through any of these channels</p>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="space-y-8">
+                <h2 className="text-3xl font-bold text-gray-900">Customer Support</h2>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   {supportChannels.map((support, idx) => (
-                    <div key={idx} className="border border-[#1a1a1a]/10 rounded-lg p-6 hover:shadow-md transition-shadow">
-                      <div className="text-4xl mb-3">{support.icon}</div>
-                      <h3 className="font-bold text-lg mb-2">{support.channel}</h3>
-                      <p className="text-gray-600 mb-3">{support.contact}</p>
-                      <p className="text-xs text-gray-500">Response time: {support.response}</p>
+                    <div key={idx} className="bg-white rounded-xl shadow border border-pink-100 p-6 hover:shadow-lg transition-all group">
+                      <div className="text-4xl mb-4 group-hover:scale-110 transition-transform">{support.icon}</div>
+                      <h3 className="font-bold text-lg text-gray-900 mb-2">{support.channel}</h3>
+                      <p className="text-gray-600 mb-3 text-sm font-medium">{support.contact}</p>
+                      <p className="text-xs text-gray-500">Response: {support.response}</p>
                     </div>
                   ))}
                 </div>
 
-                <div className="bg-[#FFF9EB] border-2 border-[#F7E47D] rounded-lg p-6 mt-8">
-                  <h3 className="font-bold text-lg mb-3">Send us a Message</h3>
-                  <textarea
-                    placeholder="Describe your issue or question..."
-                    className="w-full px-4 py-3 border border-[#1a1a1a]/20 rounded mb-4 focus:outline-none focus:border-[#1a1a1a]"
-                    rows={4}
-                  />
-                  <button className="w-full bg-[#1a1a1a] text-[#F7E47D] py-3 font-bold uppercase tracking-widest rounded hover:bg-black transition-colors">
-                    Submit Message
-                  </button>
+                <div className="bg-white rounded-2xl shadow-lg border border-pink-100 p-8">
+                  <h3 className="text-2xl font-bold text-gray-900 mb-6">Send us a Message</h3>
+                  <form className="space-y-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <input
+                        type="text"
+                        placeholder="Your Name"
+                        className="px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-600 focus:border-transparent"
+                      />
+                      <input
+                        type="email"
+                        placeholder="Your Email"
+                        className="px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-600 focus:border-transparent"
+                      />
+                    </div>
+                    <input
+                      type="text"
+                      placeholder="Subject"
+                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-600 focus:border-transparent"
+                    />
+                    <textarea
+                      placeholder="Tell us how we can help..."
+                      rows={5}
+                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-600 focus:border-transparent resize-none"
+                    ></textarea>
+                    <button
+                      type="button"
+                      className="w-full bg-linear-to-r from-pink-600 to-orange-500 text-white py-3 rounded-lg font-bold hover:shadow-lg transition-all duration-200"
+                    >
+                      Send Message
+                    </button>
+                  </form>
                 </div>
               </div>
             )}
 
-            {/* Help Section */}
             {activeSection === 'help' && (
-              <div className="bg-white border border-[#1a1a1a]/10 rounded-lg p-8 space-y-6">
-                <h2 className="serif text-3xl">Help & FAQ</h2>
-                <div className="space-y-4">
+              <div className="space-y-6">
+                <h2 className="text-3xl font-bold text-gray-900">Help & FAQ</h2>
+
+                <div className="space-y-3">
                   {faqs.map((faq, idx) => (
-                    <details key={idx} className="border border-[#1a1a1a]/10 rounded-lg p-6 cursor-pointer hover:bg-[#FFF9EB] transition-colors">
-                      <summary className="font-bold text-lg flex justify-between items-center">
-                        {faq.question}
-                        <span className="text-2xl">+</span>
+                    <details
+                      key={idx}
+                      className="bg-white rounded-xl border border-pink-100 shadow hover:shadow-md transition-all cursor-pointer overflow-hidden group"
+                    >
+                      <summary className="p-6 font-bold text-lg text-gray-900 flex justify-between items-center hover:bg-pink-50 transition-colors">
+                        <span className="flex items-center gap-3">
+                          <span className="w-6 h-6 flex items-center justify-center bg-pink-100 text-pink-600 rounded-full text-sm font-bold group-open:bg-pink-600 group-open:text-white transition-all">?</span>
+                          {faq.question}
+                        </span>
+                        <span className="text-2xl text-pink-600 group-open:rotate-45 transition-transform">+</span>
                       </summary>
-                      <p className="mt-4 text-gray-600">{faq.answer}</p>
+                      <div className="px-6 pb-6 pt-2 bg-linear-to-br from-pink-50/50 to-orange-50/50 border-t border-pink-100">
+                        <p className="text-gray-700 leading-relaxed">{faq.answer}</p>
+                      </div>
                     </details>
                   ))}
                 </div>
@@ -598,7 +676,6 @@ export default function UserDashboard() {
         </div>
       </div>
 
-      {/* Order Detail Modal */}
       {selectedOrderId && (
         <OrderDetailModal
           isOpen={showOrderDetail}
