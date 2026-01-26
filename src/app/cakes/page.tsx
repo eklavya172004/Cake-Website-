@@ -62,7 +62,7 @@ export default function AllCakesPage() {
     });
 
   return (
-    <div className="min-h-screen bg-white text-gray-900 font-sans">
+    <div className="min-h-screen bg-white text-gray-900 font-sans pt-32">
       <div className="pt-40 px-4 container mx-auto max-w-6xl">
         {/* Header Section */}
         <div className="text-center mb-16">

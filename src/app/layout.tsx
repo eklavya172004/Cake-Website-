@@ -36,9 +36,11 @@ export default function RootLayout({
         className={`${dmSans.variable} ${dmSerif.variable} antialiased`}
       >
         <AuthSessionProvider>
-          <MainNavbar />
           <CartProvider>
-            {children}
+            <MainNavbar />
+            <main>
+              {children}
+            </main>
             <CartButton />
             <CartSidebar />
           </CartProvider>

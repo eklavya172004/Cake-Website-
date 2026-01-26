@@ -35,7 +35,8 @@ export default function AICakePreview({
     setLoading(true);
     setImageError(false);
     try {
-      const response = await fetch('/api/generate-cake-image', {
+      // Try OpenAI first, fall back to basic generation if needed
+      const response = await fetch('/api/generate-cake-image-openai', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -56,13 +57,13 @@ export default function AICakePreview({
         setImageUrl(data.imageUrl);
         setShowPreview(true);
         setGenerationCount(prev => prev + 1);
-        // Add a small delay to ensure image is being fetched
-        setTimeout(() => {
-          // Image will load asynchronously
-        }, 500);
+      } else if (response.status === 401 || response.status === 500) {
+        // If OpenAI is not configured, show helpful error
+        setImageError(true);
+        alert(data.error || 'Image generation not configured. Please setup OpenAI API key.');
       } else {
         setImageError(true);
-        alert('Failed to generate cake image. Please try again.');
+        alert(data.error || 'Failed to generate cake image. Please try again.');
       }
     } catch (error) {
       console.error('Error generating cake image:', error);

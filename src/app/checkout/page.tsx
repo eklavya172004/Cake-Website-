@@ -7,6 +7,18 @@ import { ArrowLeft, ShieldCheck } from 'lucide-react';
 import Link from 'next/link';
 import { signIn } from 'next-auth/react';
 import SplitPaymentUI from '@/components/checkout/SplitPaymentUI';
+import AddressSelection from '@/components/checkout/AddressSelection';
+
+interface Address {
+  id?: string;
+  label: string;
+  street: string;
+  city: string;
+  state: string;
+  pincode: string;
+  phone: string;
+  isDefault?: boolean;
+}
 
 export default function CheckoutPage() {
   const { items, getTotal, clearCart } = useCart();
@@ -15,6 +27,7 @@ export default function CheckoutPage() {
   const [loading, setLoading] = useState(false);
   const [paymentMethod, setPaymentMethod] = useState('cod');
   const [splitPaymentLinks, setSplitPaymentLinks] = useState<any[]>([]);
+  const [selectedAddress, setSelectedAddress] = useState<Address | null>(null);
 
   const [formData, setFormData] = useState({
     firstName: '',
@@ -24,6 +37,7 @@ export default function CheckoutPage() {
     address: '',
     city: '',
     pincode: '',
+    state: '',
     instructions: ''
   });
 
@@ -284,7 +298,7 @@ export default function CheckoutPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 py-12 pt-32">
+    <div className="min-h-screen mt-20 bg-gray-50 py-12 pt-32">
       <div className="container mx-auto px-4 max-w-6xl">
         <Link href="/" className="inline-flex items-center gap-2 text-gray-600 hover:text-pink-600 mb-8 transition-colors font-medium">
           <ArrowLeft className="w-4 h-4" /> Back to Shop
@@ -361,43 +375,98 @@ export default function CheckoutPage() {
                 </div>
               </div>
 
+              {/* Address Selection Component */}
               <div className="space-y-2 mb-6">
-                <label className="text-xs uppercase tracking-widest font-bold text-gray-600">Address</label>
-                <textarea
-                  required
-                  name="address"
-                  placeholder="Street address, building, apartment"
-                  value={formData.address}
-                  onChange={handleInputChange}
-                  rows={3}
-                  className="w-full p-3 bg-gray-50 border border-gray-300 rounded-lg focus:border-pink-600 focus:ring-2 focus:ring-pink-100 outline-none transition-all resize-none"
+                <label className="text-xs uppercase tracking-widest font-bold text-gray-600">Delivery Address</label>
+                <AddressSelection 
+                  onAddressSelect={(address) => {
+                    setSelectedAddress(address);
+                    setFormData(prev => ({
+                      ...prev,
+                      address: address.street,
+                      city: address.city,
+                      pincode: address.pincode,
+                      phone: address.phone,
+                      state: address.state
+                    }));
+                  }}
+                  onAddNewAddress={() => {
+                    setSelectedAddress(null);
+                    setFormData(prev => ({
+                      ...prev,
+                      address: '',
+                      city: '',
+                      pincode: '',
+                      state: ''
+                    }));
+                  }}
+                  selectedAddress={selectedAddress}
                 />
               </div>
 
-              <div className="grid grid-cols-2 gap-6 mb-8">
-                <div className="space-y-2">
-                  <label className="text-xs uppercase tracking-widest font-bold text-gray-600">City</label>
-                  <input
-                    required
-                    name="city"
-                    placeholder="Your city"
-                    value={formData.city}
-                    onChange={handleInputChange}
-                    className="w-full p-3 bg-gray-50 border border-gray-300 rounded-lg focus:border-pink-600 focus:ring-2 focus:ring-pink-100 outline-none transition-all"
-                  />
+              {/* Show address fields only if no saved address is selected */}
+              {!selectedAddress?.id && (
+                <>
+                  <div className="space-y-2 mb-6">
+                    <label className="text-xs uppercase tracking-widest font-bold text-gray-600">Address</label>
+                    <textarea
+                      required
+                      name="address"
+                      placeholder="Street address, building, apartment"
+                      value={formData.address}
+                      onChange={handleInputChange}
+                      rows={3}
+                      className="w-full p-3 bg-gray-50 border border-gray-300 rounded-lg focus:border-pink-600 focus:ring-2 focus:ring-pink-100 outline-none transition-all resize-none"
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-6 mb-8">
+                    <div className="space-y-2">
+                      <label className="text-xs uppercase tracking-widest font-bold text-gray-600">City</label>
+                      <input
+                        required
+                        name="city"
+                        placeholder="Your city"
+                        value={formData.city}
+                        onChange={handleInputChange}
+                        className="w-full p-3 bg-gray-50 border border-gray-300 rounded-lg focus:border-pink-600 focus:ring-2 focus:ring-pink-100 outline-none transition-all"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-xs uppercase tracking-widest font-bold text-gray-600">State</label>
+                      <input
+                        required
+                        name="state"
+                        placeholder="Your state"
+                        value={formData.state}
+                        onChange={handleInputChange}
+                        className="w-full p-3 bg-gray-50 border border-gray-300 rounded-lg focus:border-pink-600 focus:ring-2 focus:ring-pink-100 outline-none transition-all"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="space-y-2 mb-8">
+                    <label className="text-xs uppercase tracking-widest font-bold text-gray-600">Pincode</label>
+                    <input
+                      required
+                      name="pincode"
+                      placeholder="6-digit postal code"
+                      value={formData.pincode}
+                      onChange={handleInputChange}
+                      className="w-full p-3 bg-gray-50 border border-gray-300 rounded-lg focus:border-pink-600 focus:ring-2 focus:ring-pink-100 outline-none transition-all"
+                    />
+                  </div>
+                </>
+              )}
+
+              {/* Show confirmation when saved address is selected */}
+              {selectedAddress?.id && (
+                <div className="p-4 bg-green-50 border border-green-200 rounded-lg mb-8">
+                  <p className="text-sm text-green-800">
+                    ✓ Address <strong>{selectedAddress.label}</strong> selected. Order will be delivered to this address.
+                  </p>
                 </div>
-                <div className="space-y-2">
-                  <label className="text-xs uppercase tracking-widest font-bold text-gray-600">Pincode</label>
-                  <input
-                    required
-                    name="pincode"
-                    placeholder="6-digit postal code"
-                    value={formData.pincode}
-                    onChange={handleInputChange}
-                    className="w-full p-3 bg-gray-50 border border-gray-300 rounded-lg focus:border-pink-600 focus:ring-2 focus:ring-pink-100 outline-none transition-all"
-                  />
-                </div>
-              </div>
+              )}
 
               <button
                 type="submit"

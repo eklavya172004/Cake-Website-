@@ -8,6 +8,8 @@ import {
   ChevronRight, Users, Settings, Award, TrendingUp, Wallet, Mail, Phone
 } from 'lucide-react';
 import OrderDetailModal from '@/components/orders/OrderDetailModal';
+import EditProfileModal from '@/components/profile/EditProfileModal';
+import AddressManager from '@/components/profile/AddressManager';
 
 export default function UserDashboard() {
   const router = useRouter();
@@ -20,6 +22,7 @@ export default function UserDashboard() {
   const [error, setError] = useState('');
   const [selectedOrderId, setSelectedOrderId] = useState<string | null>(null);
   const [showOrderDetail, setShowOrderDetail] = useState(false);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
 
   useEffect(() => {
     if (status === 'unauthenticated') {
@@ -142,7 +145,7 @@ export default function UserDashboard() {
   }
 
   return (
-    <div className="min-h-screen pt-32 bg-linear-to-br from-white via-pink-50 to-orange-50">
+    <div className="min-h-screen mt-10 pt-32 bg-linear-to-br from-white via-pink-50 to-orange-50">
       <div className="sticky top-32 z-40 bg-white/80 backdrop-blur-md border-b border-pink-100 shadow-sm">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex items-center justify-between">
           <h1 className="text-2xl font-bold bg-linear-to-r from-pink-600 to-orange-600 bg-clip-text text-transparent">
@@ -250,7 +253,10 @@ export default function UserDashboard() {
                           <p className="text-gray-600">Member since {joinDate}</p>
                         </div>
                       </div>
-                      <button className="px-6 py-2 rounded-lg bg-pink-50 text-pink-600 hover:bg-pink-100 transition-colors font-semibold flex items-center gap-2">
+                      <button 
+                        onClick={() => setIsEditModalOpen(true)}
+                        className="px-6 py-2 rounded-lg bg-pink-50 text-pink-600 hover:bg-pink-100 transition-colors font-semibold flex items-center gap-2"
+                      >
                         <Settings className="w-5 h-5" />
                         Edit Profile
                       </button>
@@ -311,6 +317,15 @@ export default function UserDashboard() {
                     </div>
                     <p className="text-3xl font-bold text-orange-600">4.8 Stars</p>
                   </div>
+                </div>
+
+                {/* Delivery Addresses Section */}
+                <div className="bg-white rounded-2xl shadow-lg border border-pink-100 p-8">
+                  <h3 className="text-2xl font-bold text-gray-900 mb-6 flex items-center gap-2">
+                    <Truck className="w-6 h-6 text-pink-600" />
+                    Delivery Addresses
+                  </h3>
+                  <AddressManager user={user} onAddressUpdate={fetchUserProfile} />
                 </div>
               </div>
             )}
@@ -390,55 +405,71 @@ export default function UserDashboard() {
                     <div className="w-24 h-24 mx-auto mb-6 bg-gray-100 rounded-full flex items-center justify-center">
                       <Truck className="w-12 h-12 text-gray-400" />
                     </div>
-                    <h3 className="text-xl font-bold text-gray-900 mb-2">No active orders</h3>
-                    <p className="text-gray-600">Your tracked orders will appear here</p>
+                    <h3 className="text-xl font-bold text-gray-900 mb-2">No orders yet</h3>
+                    <p className="text-gray-600">Your orders will appear here once you place one</p>
                   </div>
                 ) : (
-                  <div className="grid gap-4">
-                    {orders.filter(o => !['cancelled', 'delivered'].includes(o.status)).length === 0 ? (
-                      <div className="bg-white rounded-2xl shadow-lg border border-pink-100 p-12 text-center">
-                        <p className="text-gray-600">All your orders have been delivered or cancelled</p>
-                      </div>
-                    ) : (
-                      orders.filter(o => !['cancelled', 'delivered'].includes(o.status)).map((order) => (
-                        <div
-                          key={order.id}
-                          onClick={() => router.push(`/orders/${order.id}`)}
-                          className="bg-white rounded-xl shadow border border-pink-100 p-6 hover:shadow-lg transition-all duration-200 cursor-pointer group"
-                        >
-                          <div className="flex items-center justify-between mb-4">
-                            <div>
-                              <h3 className="font-bold text-lg text-gray-900 mb-1">{order.orderNumber || order.id.slice(0, 8)}</h3>
-                              <p className="text-sm text-gray-600">Estimated delivery: Soon</p>
-                            </div>
-                            <span className="px-4 py-2 bg-blue-100 text-blue-700 rounded-lg font-semibold text-sm capitalize">
+                  <div className="space-y-4">
+                    {orders.map((order) => (
+                      <div
+                        key={order.id}
+                        onClick={() => router.push(`/orders/${order.id}`)}
+                        className="bg-white rounded-2xl shadow-lg border border-pink-100 p-6 hover:shadow-xl transition-shadow cursor-pointer"
+                      >
+                        <div className="flex items-center justify-between mb-4">
+                          <div className="flex-1">
+                            <h3 className="text-lg font-bold text-gray-900 mb-1">Order #{order.orderNumber || order.id.slice(0, 8)}</h3>
+                            <p className="text-sm text-gray-600">Vendor: {order.vendor?.name}</p>
+                          </div>
+                          <div className="text-right">
+                            <p className="text-lg font-bold text-pink-600">₹{order.finalAmount || order.totalAmount}</p>
+                            <span className={`inline-block mt-2 px-4 py-1.5 rounded-lg font-semibold text-sm capitalize ${
+                              order.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
+                              order.status === 'confirmed' ? 'bg-blue-100 text-blue-800' :
+                              order.status === 'preparing' ? 'bg-purple-100 text-purple-800' :
+                              order.status === 'ready' ? 'bg-indigo-100 text-indigo-800' :
+                              order.status === 'picked_up' ? 'bg-cyan-100 text-cyan-800' :
+                              order.status === 'out_for_delivery' ? 'bg-orange-100 text-orange-800' :
+                              order.status === 'delivered' ? 'bg-green-100 text-green-800' :
+                              order.status === 'cancelled' ? 'bg-red-100 text-red-800' :
+                              'bg-gray-100 text-gray-800'
+                            }`}>
                               {order.status?.replace(/_/g, ' ')}
                             </span>
                           </div>
-
-                          <div className="mb-4">
-                            <div className="w-full bg-gray-200 rounded-full h-2 mb-2">
-                              <div
-                                className="bg-linear-to-r from-pink-600 to-orange-500 h-2 rounded-full transition-all"
-                                style={{
-                                  width: order.status === 'pending' ? '25%' :
-                                         order.status === 'confirmed' ? '50%' :
-                                         order.status === 'preparing' ? '60%' :
-                                         order.status === 'ready' ? '75%' :
-                                         order.status === 'out_for_delivery' ? '90%' : '100%'
-                                }}
-                              ></div>
-                            </div>
-                            <p className="text-xs text-gray-600">Last updated: {new Date(order.updatedAt).toLocaleString('en-US', { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}</p>
-                          </div>
-
-                          <button className="w-full py-2 text-pink-600 font-semibold hover:bg-pink-50 rounded-lg transition-colors flex items-center justify-center gap-2">
-                            View Full Tracking
-                            <ChevronRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-                          </button>
                         </div>
-                      ))
-                    )}
+
+                        <div className="grid grid-cols-2 gap-4 mb-4 py-4 border-y border-gray-100">
+                          <div>
+                            <p className="text-xs text-gray-600 mb-1">Order Date</p>
+                            <p className="text-sm font-semibold text-gray-900">{new Date(order.createdAt).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })}</p>
+                          </div>
+                          <div>
+                            <p className="text-xs text-gray-600 mb-1">Delivery Location</p>
+                            <p className="text-sm font-semibold text-gray-900">{order.deliveryAddress?.city}</p>
+                          </div>
+                        </div>
+
+                        <div className="mb-4">
+                          <p className="text-xs text-gray-600 mb-2 font-semibold">Items</p>
+                          <div className="space-y-1">
+                            {order.items?.slice(0, 2).map((item, idx) => (
+                              <p key={idx} className="text-sm text-gray-700">
+                                • {item.name} x{item.quantity}
+                              </p>
+                            ))}
+                            {order.items?.length > 2 && (
+                              <p className="text-sm text-gray-600">+ {order.items.length - 2} more items</p>
+                            )}
+                          </div>
+                        </div>
+
+                        <button className="w-full py-2 px-4 bg-pink-50 text-pink-600 font-semibold hover:bg-pink-100 transition-colors rounded-lg flex items-center justify-center gap-2">
+                          View Full Tracking
+                          <ChevronRight className="w-4 h-4" />
+                        </button>
+                      </div>
+                    ))}
                   </div>
                 )}
               </div>
@@ -686,6 +717,13 @@ export default function UserDashboard() {
           }}
         />
       )}
+
+      <EditProfileModal 
+        isOpen={isEditModalOpen}
+        onClose={() => setIsEditModalOpen(false)}
+        user={user}
+        onSuccess={fetchUserProfile}
+      />
     </div>
   );
 }

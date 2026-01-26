@@ -18,11 +18,12 @@ export async function GET(request: NextRequest) {
       where: { email: session.user.email! },
     });
 
+    // If user not found in database, return empty orders (for demo/signup users)
     if (!user) {
-      return NextResponse.json(
-        { error: 'User not found' },
-        { status: 404 }
-      );
+      return NextResponse.json({
+        success: true,
+        orders: [],
+      });
     }
 
     // Get all orders for the user

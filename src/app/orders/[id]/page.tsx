@@ -108,7 +108,7 @@ export default function OrderTrackingPage() {
     return (
       <>
         <OrderPreloader onComplete={() => setLoading(false)} />
-        <div className="min-h-screen bg-white p-4 pt-32">
+        <div className="min-h-screen mt-20 bg-white p-4 pt-32">
           <div className="max-w-4xl mx-auto text-center py-20">
             <div className="inline-block animate-spin rounded-full h-12 w-12 border-4 border-pink-600 border-t-transparent"></div>
             <p className="mt-4 text-gray-700 font-semibold">Loading order details...</p>
@@ -120,7 +120,7 @@ export default function OrderTrackingPage() {
 
   if (!order) {
     return (
-      <div className="min-h-screen bg-white p-4 pt-32">
+      <div className="min-h-screen mt-20 bg-white p-4 pt-32">
         <div className="max-w-4xl mx-auto">
           <button
             onClick={() => router.back()}
@@ -144,7 +144,7 @@ export default function OrderTrackingPage() {
   }
 
   return (
-    <div className="min-h-screen bg-white py-8 px-4 text-gray-900">
+    <div className="min-h-screen mt-20 bg-white py-8 px-4 text-gray-900">
       <div className="max-w-4xl mx-auto pt-20">
         {/* Header */}
         <div className="mb-8">

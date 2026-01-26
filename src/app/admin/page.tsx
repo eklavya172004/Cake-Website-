@@ -67,7 +67,7 @@ export default function AdminDashboard() {
   ];
 
   return (
-    <div className="space-y-6 bg-gradient-to-br from-gray-50 to-white p-6 rounded-lg">
+    <div className="space-y-6 bg-gradient-to-br from-gray-50 to-white p-6 rounded-lg pt-32">
       <div className="mb-8">
         <h1 className="text-4xl font-bold text-gray-900">Dashboard</h1>
         <p className="text-gray-600 mt-2">Welcome back! Here&apos;s your platform overview</p>

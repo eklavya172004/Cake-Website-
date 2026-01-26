@@ -5,6 +5,7 @@ import { useState, useEffect, useRef } from 'react';
 import { ChevronDown, Home, User, Search, ShoppingCart, MapPin, Package, X } from 'lucide-react';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
+import { useCart } from '@/components/cart/CartProvider';
 
 interface CakeSuggestion {
   id: string;
@@ -74,6 +75,8 @@ const categories = [
 export default function MainNavbar() {
   const { data: session } = useSession();
   const router = useRouter();
+  const { getItemCount } = useCart();
+  const itemCount = getItemCount();
   const [activeDropdown, setActiveDropdown] = useState<string | null>(null);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
@@ -237,7 +240,7 @@ export default function MainNavbar() {
             <div className="flex items-center gap-3 flex-shrink-0">
               {/* Track Order Button */}
               <button
-                onClick={() => router.push('/order-confirmation')}
+                onClick={() => router.push('/orders')}
                 className="hidden sm:flex items-center gap-2 px-3 py-2 bg-white text-pink-600 rounded-lg hover:bg-pink-50 transition-all font-medium text-sm whitespace-nowrap border border-white hover:border-pink-600"
                 title="Track your order"
               >
@@ -253,7 +256,11 @@ export default function MainNavbar() {
               >
                 <ShoppingCart className="w-4 h-4" />
                 <span className="hidden md:inline">Cart</span>
-                <span className="absolute -top-2 -right-2 bg-orange-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center font-bold">0</span>
+                {itemCount > 0 && (
+                  <span className="absolute -top-2 -right-2 bg-orange-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center font-bold animate-pulse">
+                    {itemCount > 99 ? '99+' : itemCount}
+                  </span>
+                )}
               </button>
 
               {/* Auth/Profile Button */}
@@ -292,7 +299,7 @@ export default function MainNavbar() {
             </div>
             <div className="flex items-center gap-4 text-gray-700">
               <button
-                onClick={() => router.push('/order-confirmation')}
+                onClick={() => router.push('/orders')}
                 className="flex items-center gap-1 hover:text-pink-600 transition-colors font-medium"
               >
                 <Package className="w-4 h-4" />
@@ -383,14 +390,19 @@ export default function MainNavbar() {
                     router.push('/checkout');
                     setMobileMenuOpen(false);
                   }}
-                  className="flex-1 flex items-center justify-center gap-2 px-3 py-2 bg-white border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-100 font-medium text-sm"
+                  className="flex-1 flex items-center justify-center gap-2 px-3 py-2 bg-white border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-100 font-medium text-sm relative"
                 >
                   <ShoppingCart className="w-4 h-4" />
                   Cart
+                  {itemCount > 0 && (
+                    <span className="absolute -top-2 -right-2 bg-orange-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center font-bold">
+                      {itemCount > 99 ? '99+' : itemCount}
+                    </span>
+                  )}
                 </button>
                 <button
                   onClick={() => {
-                    router.push('/order-confirmation');
+                    router.push('/orders');
                     setMobileMenuOpen(false);
                   }}
                   className="flex-1 flex items-center justify-center gap-2 px-3 py-2 bg-white border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-100 font-medium text-sm"
