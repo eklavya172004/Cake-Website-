@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db/client';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
+import { sendVendorOrderNotification, sendCustomerOrderConfirmation } from '@/lib/email';
 
 export async function POST(req: NextRequest) {
   try {
@@ -124,6 +125,56 @@ export async function POST(req: NextRequest) {
         createdBy: 'system',
       },
     });
+
+    // Send vendor notification email
+    const vendorAccount = await prisma.account.findUnique({
+      where: { vendorId: cake.vendorId },
+    });
+
+    if (vendorAccount?.email && order.estimatedDelivery) {
+      await sendVendorOrderNotification(
+        vendorAccount.email,
+        cake.vendor?.name || 'Vendor',
+        order.orderNumber,
+        deliveryDetails.fullName,
+        deliveryDetails.email,
+        deliveryDetails.phone,
+        items.map((item: any) => ({
+          name: item.name,
+          quantity: item.quantity,
+          price: item.price,
+          customization: item.customization || null,
+        })),
+        {
+          fullName: deliveryDetails.fullName,
+          email: deliveryDetails.email,
+          phone: deliveryDetails.phone,
+          address: deliveryDetails.address,
+          city: deliveryDetails.city,
+          landmark: deliveryDetails.landmark,
+        },
+        order.estimatedDelivery,
+        total
+      );
+    }
+
+    // Send customer confirmation email
+    if (order.estimatedDelivery) {
+      await sendCustomerOrderConfirmation(
+        deliveryDetails.email,
+        deliveryDetails.fullName,
+        order.orderNumber,
+        items.map((item: any) => ({
+          name: item.name,
+          quantity: item.quantity,
+          price: item.price,
+          customization: item.customization || null,
+        })),
+        total,
+        order.estimatedDelivery,
+        cake.vendor?.name || 'Our Shop'
+      );
+    }
 
     return NextResponse.json({
       success: true,

@@ -18,9 +18,10 @@ interface Address {
 
 export async function PUT(
   req: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
     const session = await getServerSession(authOptions);
     const sessionUser = session?.user as { email?: string } | undefined;
 
@@ -69,7 +70,7 @@ export async function PUT(
     }
 
     const currentAddresses = (user.savedAddresses as unknown as Address[]) || [];
-    const addressIndex = currentAddresses.findIndex(addr => addr.id === params.id);
+    const addressIndex = currentAddresses.findIndex(addr => addr.id === id);
 
     if (addressIndex === -1) {
       return NextResponse.json(
@@ -79,7 +80,7 @@ export async function PUT(
     }
 
     const updatedAddress: Address = {
-      id: params.id,
+      id: id,
       label,
       street,
       city,
@@ -96,7 +97,7 @@ export async function PUT(
     if (isDefault) {
       updatedAddresses = updatedAddresses.map(addr => ({
         ...addr,
-        isDefault: addr.id === params.id
+        isDefault: addr.id === id
       }));
     }
 
@@ -126,9 +127,10 @@ export async function PUT(
 
 export async function DELETE(
   req: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
     const session = await getServerSession(authOptions);
     const sessionUser = session?.user as { email?: string } | undefined;
 
@@ -151,7 +153,7 @@ export async function DELETE(
     }
 
     const currentAddresses = (user.savedAddresses as unknown as Address[]) || [];
-    const filteredAddresses = currentAddresses.filter(addr => addr.id !== params.id);
+    const filteredAddresses = currentAddresses.filter(addr => addr.id !== id);
 
     if (filteredAddresses.length === currentAddresses.length) {
       return NextResponse.json(
@@ -161,7 +163,7 @@ export async function DELETE(
     }
 
     // If deleted address was default and there are remaining addresses, set first as default
-    const deletedWasDefault = currentAddresses.find(addr => addr.id === params.id)?.isDefault;
+    const deletedWasDefault = currentAddresses.find(addr => addr.id === id)?.isDefault;
     if (deletedWasDefault && filteredAddresses.length > 0) {
       filteredAddresses[0].isDefault = true;
     }

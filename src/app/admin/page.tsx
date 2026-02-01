@@ -14,6 +14,20 @@ interface DashboardData {
   activeVendors: number;
   disputes: number;
   ordersByStatus: OrdersByStatus;
+  topVendors: TopVendor[];
+  revenueData: RevenueDataPoint[];
+}
+
+interface TopVendor {
+  name: string;
+  orders: number;
+  revenue: number;
+}
+
+interface RevenueDataPoint {
+  date: string;
+  revenue: number;
+  orders: number;
 }
 
 export default function AdminDashboard() {
@@ -41,7 +55,7 @@ export default function AdminDashboard() {
   if (error) return <div className="p-6 text-red-600">Error: {error}</div>;
   if (!dashboardData) return <div className="p-6 text-red-600">No data available</div>;
 
-  const revenueData = [
+  const revenueData = dashboardData.revenueData || [
     { date: 'Jan 1', revenue: 12000, orders: 45 },
     { date: 'Jan 2', revenue: 15000, orders: 52 },
     { date: 'Jan 3', revenue: 18000, orders: 61 },
@@ -59,11 +73,8 @@ export default function AdminDashboard() {
     };
   });
 
-  const topVendors = [
-    { name: 'Sweet Dreams Bakery', orders: 250, revenue: 125000 },
-    { name: 'Sugar Rush', orders: 180, revenue: 95000 },
-    { name: 'Cake Paradise', orders: 150, revenue: 78000 },
-    { name: 'The Cake House', orders: 120, revenue: 65000 },
+  const topVendors = dashboardData.topVendors || [
+    { name: 'No vendors', orders: 0, revenue: 0 },
   ];
 
   return (

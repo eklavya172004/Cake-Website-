@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { signOut, useSession } from 'next-auth/react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
@@ -9,20 +9,21 @@ import {
   Package,
   ShoppingCart,
   BarChart3,
-  Settings,
+  User,
   LogOut,
   Menu,
   X,
-  CheckCircle,
   Clock,
 } from 'lucide-react';
 
 const vendorMenuItems = [
   { href: '/vendor', label: 'Dashboard', icon: LayoutDashboard },
-  { href: '/vendor/products', label: 'Products', icon: Package },
+  { href: '/vendor/onboarding', label: 'Onboarding', icon: Clock, showIf: 'onboarding' },
+  { href: '/vendor/cakes/upload', label: 'Upload Cake', icon: Package },
+  { href: '/vendor/products', label: 'Manage Cakes', icon: Package },
   { href: '/vendor/orders', label: 'Orders', icon: ShoppingCart },
   { href: '/vendor/analytics', label: 'Analytics', icon: BarChart3 },
-  { href: '/vendor/profile', label: 'Profile', icon: Settings },
+  { href: '/vendor/profile', label: 'Vendor Profile', icon: User },
 ];
 
 export default function VendorLayout({
@@ -33,6 +34,29 @@ export default function VendorLayout({
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const pathname = usePathname();
   const { data: session } = useSession();
+  const [vendorProfile, setVendorProfile] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    // Fetch vendor dashboard data to check onboarding status
+    const fetchVendorData = async () => {
+      try {
+        const response = await fetch(`/api/vendor/dashboard`);
+        if (response.ok) {
+          const data = await response.json();
+          setVendorProfile(data);
+        }
+      } catch (error) {
+        console.error('Error fetching vendor data:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    if (session?.user) {
+      fetchVendorData();
+    }
+  }, [session]);
 
   return (
     <div className="flex h-screen bg-gray-100">
@@ -40,7 +64,7 @@ export default function VendorLayout({
       <div
         className={`${
           sidebarOpen ? 'w-64' : 'w-20'
-        } bg-gradient-to-b from-gray-900 to-gray-800 text-white transition-all duration-300 flex flex-col fixed h-full z-40`}
+        } bg-linear-to-b from-gray-900 to-gray-800 text-white transition-all duration-300 flex flex-col fixed h-full z-40`}
       >
         {/* Logo */}
         <div className="p-4 border-b border-gray-700 flex items-center justify-between">
@@ -63,6 +87,12 @@ export default function VendorLayout({
           {vendorMenuItems.map((item) => {
             const Icon = item.icon;
             const isActive = pathname === item.href;
+            
+            // Hide onboarding if approved
+            if (item.showIf === 'onboarding' && vendorProfile?.approvalStatus === 'approved') {
+              return null;
+            }
+            
             return (
               <Link
                 key={item.href}
@@ -104,6 +134,13 @@ export default function VendorLayout({
           <h1 className="text-2xl font-bold text-gray-900">Vendor Dashboard</h1>
           <div className="flex items-center gap-4">
             <span className="text-gray-600 text-sm">{session?.user?.email}</span>
+            <button
+              onClick={() => signOut({ callbackUrl: '/auth/login' })}
+              className="flex items-center gap-2 px-4 py-2 bg-red-600 hover:bg-red-700 text-white font-semibold rounded-lg transition"
+            >
+              <LogOut size={18} />
+              Logout
+            </button>
           </div>
         </div>
 

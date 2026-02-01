@@ -7,6 +7,8 @@ import { CartSidebar } from "@/components/cart/CartSidebar";
 import { AuthSessionProvider } from "@/components/auth/AuthSessionProvider";
 import MainNavbar from "@/components/common/MainNavbar";
 import FooterWrapper from "@/components/common/FooterWrapper";
+import { HideNavbarProvider } from "@/components/HideNavbarProvider";
+import { CartWrapper } from "@/components/cart/CartWrapper";
 
 const dmSans = DM_Sans({
   variable: "--font-dm-sans",
@@ -35,17 +37,21 @@ export default function RootLayout({
       <body
         className={`${dmSans.variable} ${dmSerif.variable} antialiased`}
       >
-        <AuthSessionProvider>
-          <CartProvider>
-            <MainNavbar />
-            <main>
-              {children}
-            </main>
-            <CartButton />
-            <CartSidebar />
-          </CartProvider>
-          <FooterWrapper />
-        </AuthSessionProvider>
+        <HideNavbarProvider>
+          <AuthSessionProvider>
+            <CartProvider>
+              <MainNavbar />
+              <main>
+                {children}
+              </main>
+              <CartWrapper>
+                <CartButton />
+                <CartSidebar />
+              </CartWrapper>
+            </CartProvider>
+            <FooterWrapper />
+          </AuthSessionProvider>
+        </HideNavbarProvider>
       </body>
     </html>
   );

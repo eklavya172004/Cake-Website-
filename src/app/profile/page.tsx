@@ -453,13 +453,13 @@ export default function UserDashboard() {
                         <div className="mb-4">
                           <p className="text-xs text-gray-600 mb-2 font-semibold">Items</p>
                           <div className="space-y-1">
-                            {order.items?.slice(0, 2).map((item, idx) => (
+                            {(order.items as any[])?.slice(0, 2).map((item: any, idx: number) => (
                               <p key={idx} className="text-sm text-gray-700">
                                 • {item.name} x{item.quantity}
                               </p>
                             ))}
-                            {order.items?.length > 2 && (
-                              <p className="text-sm text-gray-600">+ {order.items.length - 2} more items</p>
+                            {(order.items as any[])?.length > 2 && (
+                              <p className="text-sm text-gray-600">+ {(order.items as any[]).length - 2} more items</p>
                             )}
                           </div>
                         </div>

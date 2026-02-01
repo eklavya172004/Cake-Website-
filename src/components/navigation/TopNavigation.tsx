@@ -55,7 +55,7 @@ export default function TopNavigation() {
 
   return (
     <nav className="fixed top-0 left-0 right-0 z-50 bg-white border-b border-gray-200 shadow-sm">
-      <div className="max-w-7xl mx-auto px-4 py-4 relative">
+      <div className="max-w-7xl mx-auto px-4 py-8 relative">
         {/* Top Bar */}
         <div className="flex items-center justify-between mb-3">
           {/* Logo/Home */}
@@ -65,7 +65,14 @@ export default function TopNavigation() {
           </Link>
 
           {/* Right Section */}
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-3">
+            <Link
+              href="/auth/login?role=vendor"
+              className="hidden sm:flex items-center gap-2 px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-all duration-300 text-sm font-semibold shadow-sm hover:shadow-md"
+            >
+              <span>Become a Vendor</span>
+            </Link>
+
             <Link
               href="/profile"
               className="hidden sm:flex items-center gap-2 px-4 py-2 bg-pink-600 text-white rounded-lg hover:bg-pink-700 transition-all duration-300 text-sm font-semibold shadow-sm hover:shadow-md"
@@ -189,8 +196,18 @@ export default function TopNavigation() {
             
             {/* Mobile Profile Button */}
             <Link
+              href="/auth/login?role=vendor"
+              className="flex items-center justify-center gap-2 px-4 py-3 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-all duration-300 mt-4 font-semibold"
+              onClick={() => setIsMobileMenuOpen(false)}
+            >
+              <span>Become a Vendor</span>
+            </Link>
+
+            {/* Mobile Profile Button */}
+            <Link
               href="/profile"
-              className="flex items-center justify-center gap-2 px-4 py-3 bg-pink-600 text-white rounded-lg hover:bg-pink-700 transition-all duration-300 mt-4 font-semibold"
+              className="flex items-center justify-center gap-2 px-4 py-3 bg-pink-600 text-white rounded-lg hover:bg-pink-700 transition-all duration-300 mt-2 font-semibold"
+              onClick={() => setIsMobileMenuOpen(false)}
             >
               <User className="w-4 h-4" />
               <span>My Profile</span>

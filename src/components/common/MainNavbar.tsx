@@ -4,8 +4,9 @@ import Link from 'next/link';
 import { useState, useEffect, useRef } from 'react';
 import { ChevronDown, Home, User, Search, ShoppingCart, MapPin, Package, X } from 'lucide-react';
 import { useSession } from 'next-auth/react';
-import { useRouter } from 'next/navigation';
+import { useRouter, usePathname } from 'next/navigation';
 import { useCart } from '@/components/cart/CartProvider';
+import { useHideNavbar } from '@/components/HideNavbarProvider';
 
 interface CakeSuggestion {
   id: string;
@@ -13,6 +14,14 @@ interface CakeSuggestion {
   slug: string;
   vendorId: string;
   basePrice?: number;
+}
+
+interface SessionUser {
+  name?: string | null;
+  email?: string | null;
+  image?: string | null;
+  role?: string;
+  vendorId?: string;
 }
 
 const categories = [
@@ -73,8 +82,10 @@ const categories = [
 ];
 
 export default function MainNavbar() {
-  const { data: session } = useSession();
+  const { data: session, status } = useSession();
   const router = useRouter();
+  const pathname = usePathname();
+  const hideNavbar = useHideNavbar();
   const { getItemCount } = useCart();
   const itemCount = getItemCount();
   const [activeDropdown, setActiveDropdown] = useState<string | null>(null);
@@ -139,6 +150,26 @@ export default function MainNavbar() {
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
+
+  // Hide navbar on vendor and admin dashboard routes
+  const isVendorDashboard = pathname === '/vendor' || pathname.startsWith('/vendor/');
+  const isAdminDashboard = pathname === '/admin' || pathname.startsWith('/admin/');
+  
+  if (isVendorDashboard || isAdminDashboard || hideNavbar) {
+    return null;
+  }
+  
+  // Show loading state navbar while session is loading
+  if (status === 'loading') {
+    // Return loading state navbar
+    return (
+      <nav className="fixed top-0 left-0 right-0 z-50 bg-white shadow-sm animate-pulse">
+        <div className="bg-gradient-to-r from-pink-600 to-pink-700 border-b border-pink-800 h-20" />
+        <div className="bg-gradient-to-r from-pink-50 to-pink-100 border-b border-pink-200 h-10" />
+        <div className="border-b border-gray-200 h-16" />
+      </nav>
+    );
+  }
 
   return (
     <nav className="fixed top-0 left-0 right-0 z-50 bg-white shadow-sm">
@@ -262,6 +293,15 @@ export default function MainNavbar() {
                   </span>
                 )}
               </button>
+
+              {/* Become a Vendor Button */}
+              <Link
+                href="/auth/login?role=vendor"
+                className="hidden md:flex items-center gap-2 px-3 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-all font-medium text-sm whitespace-nowrap border border-orange-600 hover:border-orange-700"
+                title="Become a vendor"
+              >
+                <span>Become Vendor</span>
+              </Link>
 
               {/* Auth/Profile Button */}
               {session ? (
@@ -459,8 +499,18 @@ export default function MainNavbar() {
                   </div>
                 ))}
 
-                {/* Mobile Profile Button */}
-                <div className="border-t border-gray-200 mt-4 pt-4">
+                {/* Mobile Buttons */}
+                <div className="border-t border-gray-200 mt-4 pt-4 space-y-2">
+                  {/* Become a Vendor Button */}
+                  <Link
+                    href="/auth/login?role=vendor"
+                    onClick={() => setMobileMenuOpen(false)}
+                    className="flex items-center justify-center gap-2 px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-all font-semibold w-full"
+                  >
+                    Become Vendor
+                  </Link>
+
+                  {/* Profile Button */}
                   {session ? (
                     <Link
                       href="/profile"

@@ -1,10 +1,17 @@
 import { NextResponse } from 'next/server';
 import { OpenAI } from 'openai';
 
-// Initialize OpenAI client
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-});
+// Initialize OpenAI client lazily to avoid errors during build
+let openai: OpenAI | null = null;
+
+function getOpenAIClient() {
+  if (!openai) {
+    openai = new OpenAI({
+      apiKey: process.env.OPENAI_API_KEY,
+    });
+  }
+  return openai;
+}
 
 export async function POST(req: Request) {
   try {
@@ -45,7 +52,8 @@ export async function POST(req: Request) {
     });
 
     // Call DALL-E 3 API
-    const response = await openai.images.generate({
+    const client = getOpenAIClient();
+    const response = await client.images.generate({
       model: 'dall-e-3',
       prompt: prompt,
       n: 1,
@@ -54,7 +62,7 @@ export async function POST(req: Request) {
       style: 'vivid',
     });
 
-    const imageUrl = response.data[0].url;
+    const imageUrl = response.data?.[0]?.url;
 
     if (!imageUrl) {
       return NextResponse.json(
@@ -70,7 +78,7 @@ export async function POST(req: Request) {
       imageUrl,
       success: true,
       method: 'openai-dall-e-3',
-      revisedPrompt: response.data[0].revised_prompt,
+      revisedPrompt: response.data?.[0]?.revised_prompt,
     });
   } catch (error: any) {
     console.error('Error generating cake image:', error);
