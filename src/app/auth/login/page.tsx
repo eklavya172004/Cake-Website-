@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { signIn } from 'next-auth/react';
 import Link from 'next/link';
 import { Cake, X } from 'lucide-react';
+import toast from 'react-hot-toast';
 
 export default function LoginPage() {
   const router = useRouter();
@@ -38,7 +39,7 @@ export default function LoginPage() {
 
     try {
       if (!forgotPasswordEmail) {
-        setForgotPasswordError('Email is required');
+        toast.error('Email is required');
         setForgotPasswordLoading(false);
         return;
       }
@@ -52,12 +53,13 @@ export default function LoginPage() {
       const data = await response.json();
 
       if (!response.ok) {
-        setForgotPasswordError(data.error || 'Failed to send reset email');
+        toast.error(data.error || 'Failed to send reset email');
         setForgotPasswordLoading(false);
         return;
       }
 
       setForgotPasswordSuccess(true);
+      toast.success('Reset link sent! Check your email.');
       // Close modal after 3 seconds
       setTimeout(() => {
         setShowForgotPasswordModal(false);
@@ -65,25 +67,31 @@ export default function LoginPage() {
         setForgotPasswordSuccess(false);
       }, 3000);
     } catch (err: any) {
-      setForgotPasswordError(err.message || 'An error occurred');
+      toast.error(err.message || 'An error occurred');
       setForgotPasswordLoading(false);
     }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError('');
     setLoading(true);
 
     try {
       if (!formData.email || !formData.password) {
-        setError('Email and password are required');
+        toast.error('Email and password are required');
         setLoading(false);
         return;
       }
 
       if (isSignUp && (!formData.firstName || !formData.phone)) {
-        setError('All fields are required for signup');
+        toast.error('All fields are required for signup');
+        setLoading(false);
+        return;
+      }
+
+      // Don't allow admin signup
+      if (isSignUp && role === 'admin') {
+        toast.error('Admin accounts cannot be created. Please contact administrator.');
         setLoading(false);
         return;
       }
@@ -99,24 +107,30 @@ export default function LoginPage() {
       });
 
       if (result?.error) {
-        setError(result.error);
+        toast.error(result.error);
         setLoading(false);
         return;
       }
 
-      // For signup, store password in sessionStorage to be used during onboarding
-      if (isSignUp) {
-        sessionStorage.setItem('signupPassword', formData.password);
-      }
-
-      // Redirect based on role
-      if (role === 'vendor') {
-        router.push('/vendor');
-      } else if (role === 'admin') {
-        router.push('/admin');
+      // For vendor signup, redirect to email verification
+      if (isSignUp && role === 'vendor') {
+        toast.success('Vendor account created! Check your email to verify.');
+        setTimeout(() => {
+          router.push('/auth/verify-email?role=vendor');
+        }, 1000);
+      } else {
+        // For login, redirect to dashboard
+        toast.success(`Welcome back! Redirecting to ${role} dashboard...`);
+        setTimeout(() => {
+          if (role === 'vendor') {
+            router.push('/vendor');
+          } else if (role === 'admin') {
+            router.push('/admin');
+          }
+        }, 1000);
       }
     } catch (err: any) {
-      setError(err.message || 'An error occurred');
+      toast.error(err.message || 'An error occurred');
       setLoading(false);
     }
   };
@@ -143,15 +157,11 @@ export default function LoginPage() {
               Select your role
             </label>
             <div className="grid grid-cols-2 gap-3">
-              {[
-                { id: 'vendor', label: 'Vendor', icon: '🏪' },
-                { id: 'admin', label: 'Admin', icon: '⚙️' },
-              ].map((r) => (
+              {[{ id: 'vendor', label: 'Vendor', icon: '🏪' }].map((r) => (
                 <button
                   key={r.id}
                   onClick={() => {
-                    setRole(r.id as 'vendor' | 'admin');
-                    setError('');
+                    setRole(r.id as 'vendor');
                   }}
                   className={`py-2 px-3 rounded-lg border-2 transition text-center font-medium text-sm ${
                     role === r.id
@@ -163,7 +173,37 @@ export default function LoginPage() {
                   {r.label}
                 </button>
               ))}
+              <div
+                className="py-2 px-3 rounded-lg border-2 border-gray-200 bg-gray-50 text-center"
+                title={isSignUp ? 'Admin signup is disabled. Contact administrator.' : ''}
+              >
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (!isSignUp) {
+                      setRole('admin');
+                      setError('');
+                    }
+                  }}
+                  disabled={isSignUp}
+                  className={`py-1 px-3 font-medium text-sm w-full ${
+                    isSignUp
+                      ? 'opacity-50 cursor-not-allowed'
+                      : role === 'admin'
+                      ? 'text-orange-600'
+                      : 'text-gray-600 hover:text-orange-700'
+                  }`}
+                >
+                  <div className="text-xl mb-1">⚙️</div>
+                  Admin {isSignUp && '(Disabled)'}
+                </button>
+              </div>
             </div>
+            {isSignUp && (
+              <p className="text-xs text-gray-500 mt-2">
+                💡 Admin accounts are created by administrators only.
+              </p>
+            )}
           </div>
 
           {/* Form */}
@@ -228,12 +268,6 @@ export default function LoginPage() {
               />
             </div>
 
-            {error && (
-              <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm">
-                {error}
-              </div>
-            )}
-
             {!isSignUp && (
               <div className="text-right">
                 <button
@@ -260,7 +294,6 @@ export default function LoginPage() {
             <button
               onClick={() => {
                 setIsSignUp(!isSignUp);
-                setError('');
                 setFormData({ email: '', password: '', firstName: '', phone: '' });
               }}
               className="text-pink-600 hover:text-pink-700 font-medium text-sm"
@@ -329,12 +362,6 @@ export default function LoginPage() {
                     className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500"
                   />
                 </div>
-
-                {forgotPasswordError && (
-                  <div className="bg-red-50 border border-red-200 text-red-700 px-3 py-2 rounded text-sm">
-                    {forgotPasswordError}
-                  </div>
-                )}
 
                 <button
                   type="submit"

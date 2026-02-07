@@ -65,6 +65,7 @@ export async function POST(request: NextRequest) {
         success: true,
         message: 'Email verified successfully',
         email: account.email,
+        role: account.role,
       },
       { status: 200 }
     );

@@ -168,8 +168,8 @@ model VendorProfile {
   businessName          String
   businessType          String   // "Sole Proprietor", "Partnership", "Company"
   businessRegistration  String?
-  gstNumber             String?  @unique
-  panNumber             String?  @unique
+  gstNumber             String   @unique
+  panNumber             String   @unique
   
   // Owner Information
   ownerName             String

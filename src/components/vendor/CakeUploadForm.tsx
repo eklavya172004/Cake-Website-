@@ -2,7 +2,7 @@
 
 import { useState, useRef, useMemo } from 'react';
 import { X, Upload, Loader } from 'lucide-react';
-import { getAllCategoryOptions } from '@/lib/categories';
+import { getAllCategoryOptions, getMainCategories, getSubcategoriesForMain } from '@/lib/categories';
 
 interface CakeUploadFormProps {
   onSuccess?: () => void;
@@ -17,12 +17,17 @@ export default function CakeUploadForm({ onSuccess, onError }: CakeUploadFormPro
 
   // Get categories dynamically from centralized list
   const categoryOptions = useMemo(() => getAllCategoryOptions(), []);
+  const mainCategories = useMemo(() => getMainCategories(), []);
+  
+  const [mainCategory, setMainCategory] = useState('');
+  const [availableSubcategories, setAvailableSubcategories] = useState<string[]>([]);
 
   // Form state
   const [formData, setFormData] = useState({
     name: '',
     description: '',
     category: '',
+    cakeType: '',
     basePrice: '',
     flavors: [] as string[],
     flavorInput: '',
@@ -154,6 +159,30 @@ export default function CakeUploadForm({ onSuccess, onError }: CakeUploadFormPro
     }));
   };
 
+  const handleMainCategoryChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const selected = e.target.value;
+    setMainCategory(selected);
+    
+    // Get subcategories for the selected main category
+    const subs = selected ? getSubcategoriesForMain(selected) : [];
+    setAvailableSubcategories(subs);
+    
+    // Reset category and cakeType selections when main category changes
+    setFormData((prev) => ({
+      ...prev,
+      category: selected || '', // Set category to selected main category
+      cakeType: '', // Clear cakeType
+    }));
+  };
+
+  const handleSubcategoryChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const selected = e.target.value;
+    setFormData((prev) => ({
+      ...prev,
+      cakeType: selected, // Save subcategory to cakeType
+    }));
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
@@ -197,6 +226,7 @@ export default function CakeUploadForm({ onSuccess, onError }: CakeUploadFormPro
       form.append('name', formData.name.trim());
       form.append('description', formData.description.trim());
       form.append('category', formData.category);
+      form.append('cakeType', formData.cakeType);
       form.append('basePrice', formData.basePrice);
       form.append('flavors', JSON.stringify(formData.flavors));
       form.append('toppings', JSON.stringify(formData.toppings));
@@ -236,6 +266,7 @@ export default function CakeUploadForm({ onSuccess, onError }: CakeUploadFormPro
         name: '',
         description: '',
         category: '',
+        cakeType: '',
         basePrice: '',
         flavors: [],
         flavorInput: '',
@@ -323,15 +354,40 @@ export default function CakeUploadForm({ onSuccess, onError }: CakeUploadFormPro
         <div className="grid grid-cols-2 gap-4">
           <div>
             <label className="block text-sm font-semibold text-gray-700 mb-2">
-              Category *
+              Main Category *
             </label>
             <select
-              value={formData.category}
-              onChange={(e) => setFormData({ ...formData, category: e.target.value })}
+              value={mainCategory}
+              onChange={handleMainCategoryChange}
               className="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-pink-600 transition"
+              title="Select a main category"
+              required
             >
-              <option value="">Select Category</option>
-              {categoryOptions.map((cat) => (
+              <option value="">Select Main Category</option>
+              {mainCategories.map((cat) => (
+                <option key={cat} value={cat}>
+                  {cat}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div>
+            <label className="block text-sm font-semibold text-gray-700 mb-2">
+              Sub Category {mainCategory === 'Cakes' && '*'}
+            </label>
+            <select
+              value={formData.cakeType}
+              onChange={handleSubcategoryChange}
+              className="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-pink-600 transition disabled:opacity-50 disabled:cursor-not-allowed"
+              title="Select a sub category"
+              disabled={!mainCategory || availableSubcategories.length === 0}
+              required={mainCategory === 'Cakes'}
+            >
+              <option value="">
+                {!mainCategory ? 'Select a main category first' : 'Select Sub Category'}
+              </option>
+              {availableSubcategories.map((cat) => (
                 <option key={cat} value={cat}>
                   {cat}
                 </option>

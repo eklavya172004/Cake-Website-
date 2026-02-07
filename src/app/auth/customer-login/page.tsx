@@ -87,7 +87,7 @@ export default function CustomerLoginPage() {
 
       if (isSignUp) {
         // Redirect to email verification page for new signups
-        router.push('/auth/verify-email');
+        router.push('/auth/verify-email?role=customer');
       } else {
         // Redirect to home page for existing users
         router.push('/');

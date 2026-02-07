@@ -136,18 +136,21 @@ export function CartSidebar() {
               {/* Items Subtotal */}
               <div className="flex justify-between items-center text-gray-600">
                 <span>Items Subtotal</span>
-                <span className="font-medium">₹{items.reduce((sum, item) => sum + (item.price * item.quantity), 0).toFixed(0)}</span>
+                <span className="font-medium">₹{items.reduce((sum, item) => sum + (parseFloat(String(item.price)) || 0) * (parseInt(String(item.quantity)) || 0), 0).toFixed(0)}</span>
               </div>
               
               {/* Delivery Charges - Show once per vendor */}
-              {Array.from(new Map(items.map(item => [item.vendorId, item.deliveryFee])).entries()).map(([vendorId, fee]) => (
-                fee !== undefined && fee > 0 && (
-                  <div key={vendorId} className="flex justify-between items-center text-gray-600">
-                    <span>Delivery Charge</span>
-                    <span className="font-medium">₹{fee.toFixed(0)}</span>
-                  </div>
-                )
-              ))}
+              {Array.from(new Map(items.map(item => [item.vendorId, item.deliveryFee])).entries()).map(([vendorId, fee]) => {
+                const deliveryFee = parseFloat(String(fee)) || 0;
+                return (
+                  deliveryFee > 0 && (
+                    <div key={vendorId} className="flex justify-between items-center text-gray-600">
+                      <span>Delivery Charge</span>
+                      <span className="font-medium">₹{deliveryFee.toFixed(0)}</span>
+                    </div>
+                  )
+                );
+              })}
               
               {/* Total */}
               <div className="border-t pt-3 flex justify-between items-center">

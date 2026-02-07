@@ -10,6 +10,7 @@ function VerifyEmailContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const token = searchParams.get('token');
+  const queryRole = searchParams.get('role') as 'vendor' | 'customer' | null;
   
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -20,6 +21,7 @@ function VerifyEmailContent() {
   const [resendAttempts, setResendAttempts] = useState(4); // Start with full attempts
   const [isLockedOut, setIsLockedOut] = useState(false);
   const [lockoutMinutes, setLockoutMinutes] = useState(0);
+  const [userRole, setUserRole] = useState<string>(queryRole || 'customer'); // Use query param if available, default to customer
 
   // Verify email with token
   const handleVerifyEmail = async () => {
@@ -46,10 +48,12 @@ function VerifyEmailContent() {
 
       setSuccess(true);
       setEmail(data.email);
+      setUserRole(data.role || 'customer');
       
-      // Redirect to login after 3 seconds
+      // Redirect to appropriate login based on role
       setTimeout(() => {
-        router.push('/auth/customer-login');
+        const loginUrl = data.role === 'vendor' ? '/auth/login' : '/auth/customer-login';
+        router.push(loginUrl);
       }, 3000);
     } catch (err: any) {
       setError(err.message || 'Verification failed. Token may have expired.');
@@ -162,10 +166,10 @@ function VerifyEmailContent() {
                 Your email has been successfully verified. You can now login with your credentials.
               </p>
               <p className="text-sm text-gray-600 mb-4">
-                Redirecting to login page in 3 seconds...
+                Redirecting to {userRole === 'vendor' ? 'vendor' : 'customer'} login page in 3 seconds...
               </p>
               <Link
-                href="/auth/customer-login"
+                href={userRole === 'vendor' ? '/auth/login' : '/auth/customer-login'}
                 className="inline-block text-pink-600 hover:text-pink-700 font-medium"
               >
                 Go to Login Now
@@ -250,7 +254,7 @@ function VerifyEmailContent() {
           {!success && !token && (
             <div className="mt-4 text-center">
               <Link
-                href="/auth/customer-login"
+                href={userRole === 'vendor' ? '/auth/login' : '/auth/customer-login'}
                 className="text-pink-600 hover:text-pink-700 font-medium text-sm"
               >
                 Back to Login

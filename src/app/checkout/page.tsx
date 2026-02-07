@@ -99,7 +99,11 @@ export default function CheckoutPage() {
 
   // Calculate items-only subtotal (without delivery fees)
   const getItemsOnlySubtotal = () => {
-    return items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+    return items.reduce((sum, item) => {
+      const itemPrice = parseFloat(String(item.price)) || 0;
+      const itemQty = parseInt(String(item.quantity)) || 0;
+      return sum + (itemPrice * itemQty);
+    }, 0);
   };
 
   const handleDetailsSubmit = (e: React.FormEvent) => {
@@ -611,7 +615,7 @@ export default function CheckoutPage() {
                 {paymentMethod === 'split' && (
                   <div className="mb-8">
                     <SplitPaymentUI 
-                      totalAmount={getItemsOnlySubtotal() + deliveryFee}
+                      totalAmount={getItemsOnlySubtotal() + (parseFloat(String(deliveryFee)) || 0)}
                       cakeName={items.map(i => i.name).join(', ')}
                       onPaymentLinksGenerated={(links) => {
                         setSplitPaymentLinks(links);
@@ -634,7 +638,7 @@ export default function CheckoutPage() {
                     disabled={loading || (paymentMethod === 'split' && splitPaymentLinks.length === 0)}
                     className="flex-1 py-3 md:py-4 bg-pink-600 text-white uppercase tracking-widest font-bold text-xs md:text-sm hover:bg-pink-700 transition-all duration-300 rounded-lg shadow-sm hover:shadow-md disabled:opacity-50"
                   >
-                    {loading ? 'Processing...' : `Pay ₹${(getItemsOnlySubtotal() + deliveryFee).toFixed(0)}`}
+                    {loading ? 'Processing...' : `Pay ₹${(getItemsOnlySubtotal() + (parseFloat(String(deliveryFee)) || 0)).toFixed(0)}`}
                   </button>
                 </div>
               </form>
@@ -672,7 +676,7 @@ export default function CheckoutPage() {
                     <div className="flex-1">
                       <div className="flex justify-between mb-1">
                         <span className="font-medium text-gray-900">{item.name}</span>
-                        <span className="font-semibold text-gray-900">₹{item.price * item.quantity}</span>
+                        <span className="font-semibold text-gray-900">₹{(parseFloat(String(item.price)) || 0) * (parseInt(String(item.quantity)) || 0)}</span>
                       </div>
                       <p className="text-gray-500 text-xs mb-1">Qty: {item.quantity}</p>
                       {item.customization?.message && (
@@ -690,11 +694,11 @@ export default function CheckoutPage() {
                 </div>
                 <div className="flex justify-between text-sm text-gray-600">
                   <span>Delivery</span>
-                  <span>₹{deliveryFee}</span>
+                  <span>₹{(parseFloat(String(deliveryFee)) || 0).toFixed(0)}</span>
                 </div>
                 <div className="flex justify-between text-lg font-medium pt-2 border-t border-gray-100">
                   <span>Total</span>
-                  <span>₹{(getItemsOnlySubtotal() + deliveryFee).toFixed(0)}</span>
+                  <span>₹{(getItemsOnlySubtotal() + (parseFloat(String(deliveryFee)) || 0)).toFixed(0)}</span>
                 </div>
               </div>
 

@@ -24,8 +24,8 @@ export async function GET(request: NextRequest) {
     const dbReady = await waitForDb();
     if (!dbReady) {
       return NextResponse.json(
-        { message: 'Database connection unavailable' },
-        { status: 503 }
+        { submittedStatus: false, message: 'Database connection unavailable' },
+        { status: 200 }
       );
     }
 
@@ -33,17 +33,18 @@ export async function GET(request: NextRequest) {
 
     if (!session || !session.user) {
       return NextResponse.json(
-        { message: 'Unauthorized' },
+        { submittedStatus: false, message: 'Unauthorized' },
         { status: 401 }
       );
     }
 
     const vendorId = (session.user as any).vendorId;
 
+    // If vendor doesn't have a vendorId yet, they haven't started onboarding
     if (!vendorId) {
       return NextResponse.json(
-        { message: 'No vendor found in session' },
-        { status: 404 }
+        { submittedStatus: false, message: 'Onboarding not started' },
+        { status: 200 }
       );
     }
 
@@ -59,8 +60,8 @@ export async function GET(request: NextRequest) {
 
     if (!vendor) {
       return NextResponse.json(
-        { message: 'Vendor not found' },
-        { status: 404 }
+        { submittedStatus: false, message: 'Vendor onboarding not found' },
+        { status: 200 }
       );
     }
 
@@ -85,6 +86,7 @@ export async function GET(request: NextRequest) {
     }));
 
     return NextResponse.json({
+      submittedStatus: true,
       status: vendor.approvalStatus || 'pending',
       submittedAt: vendor.createdAt || new Date(),
       businessName: vendorProfile?.businessName || '',
@@ -106,12 +108,10 @@ export async function GET(request: NextRequest) {
     // These are logged internally by Prisma and don't need console output
     const errorMessage = error instanceof Error ? error.message : 'An error occurred';
     
-    // Return 503 for connection errors, 500 for other errors
-    const status = errorMessage.includes('not yet connected') ? 503 : 500;
-    
+    // Return 200 with clear status indicating onboarding hasn't been submitted
     return NextResponse.json(
-      { message: 'Service temporarily unavailable' },
-      { status }
+      { submittedStatus: false, message: 'Service temporarily unavailable' },
+      { status: 200 }
     );
   }
 }

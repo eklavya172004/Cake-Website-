@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { db as prisma } from '@/lib/db/client';
+import { sendOrderStatusNotification } from '@/lib/notifications/order-status-notifications';
 
 export async function GET(
   request: NextRequest,
@@ -93,6 +94,10 @@ export async function PATCH(
 
     const order = await prisma.order.findUnique({
       where: { orderNumber: id },
+      include: {
+        user: { select: { id: true, name: true, email: true } },
+        vendor: { select: { id: true, name: true } },
+      },
     });
 
     if (!order) {
@@ -107,6 +112,33 @@ export async function PATCH(
         vendor: { select: { id: true, name: true } },
       },
     });
+
+    // Create status history record
+    await prisma.orderStatusHistory.create({
+      data: {
+        orderId: order.id,
+        status,
+        message: `Order status updated to ${status} by admin`,
+        createdBy: 'admin',
+      },
+    });
+
+    // Send email notification to customer for confirmed and delivered statuses
+    if (updatedOrder.user?.email && (status === 'confirmed' || status === 'delivered')) {
+      sendOrderStatusNotification({
+        orderId: order.id,
+        orderNumber: order.orderNumber,
+        customerEmail: updatedOrder.user.email,
+        customerName: updatedOrder.user.name || 'Valued Customer',
+        vendorName: updatedOrder.vendor?.name || 'Vendor',
+        oldStatus: order.status,
+        newStatus: status,
+        estimatedDelivery: order.estimatedDelivery || new Date(),
+        trackingUrl: `${process.env.NEXT_PUBLIC_APP_URL || process.env.NEXTAUTH_URL || 'http://localhost:3000'}/orders/${order.id}`,
+      }).catch((err) => {
+        console.error('Failed to send status notification:', err);
+      });
+    }
 
     return NextResponse.json(updatedOrder);
   } catch (error) {

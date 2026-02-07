@@ -42,7 +42,7 @@ interface OnboardingData {
 }
 
 export default function VendorOnboarding() {
-  const { data: session } = useSession();
+  const { data: session, update } = useSession();
   const router = useRouter();
   const [step, setStep] = useState<number>(1);
   const [loading, setLoading] = useState(false);
@@ -84,11 +84,17 @@ export default function VendorOnboarding() {
           credentials: 'include',
         });
 
-        if (response.ok) {
+        const data = await response.json();
+        
+        // Check if the vendor has completed onboarding
+        if (data.submittedStatus === true) {
           setHasSubmittedOnboarding(true);
+        } else {
+          setHasSubmittedOnboarding(false);
         }
-      } catch {
+      } catch (error) {
         // If error, vendor hasn't submitted yet
+        console.error('Error checking onboarding status:', error);
         setHasSubmittedOnboarding(false);
       } finally {
         setCheckingStatus(false);
@@ -170,8 +176,12 @@ export default function VendorOnboarding() {
         setError('Business name and registration number are required');
         return false;
       }
-      if (formData.gstNumber && formData.gstNumber.length !== 15) {
-        setError('GST number must be 15 characters');
+      if (!formData.gstNumber || formData.gstNumber.length !== 15) {
+        setError('GST number is required and must be 15 characters');
+        return false;
+      }
+      if (!formData.panNumber || formData.panNumber.length !== 10) {
+        setError('PAN number is required and must be 10 characters');
         return false;
       }
     }
@@ -275,6 +285,10 @@ export default function VendorOnboarding() {
         const error = await response.json();
         throw new Error(error.message || 'Failed to submit onboarding');
       }
+
+      // Refresh session to pick up the updated vendorId from database
+      console.log('Refreshing session after onboarding submission...');
+      await update();
 
       setSuccess(true);
       setTimeout(() => {
@@ -413,7 +427,7 @@ export default function VendorOnboarding() {
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-semibold text-gray-700 mb-2">
-                    GST Number
+                    GST Number <span className="text-red-500">*</span>
                   </label>
                   <input
                     type="text"
@@ -422,13 +436,14 @@ export default function VendorOnboarding() {
                     onChange={handleInputChange}
                     placeholder="15-digit GST"
                     className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-transparent outline-none transition"
+                    required
                   />
-                  <p className="text-xs text-gray-500 mt-1">Optional</p>
+                  <p className="text-xs text-gray-500 mt-1">Required • Must be 15 characters</p>
                 </div>
 
                 <div>
                   <label className="block text-sm font-semibold text-gray-700 mb-2">
-                    PAN Number
+                    PAN Number <span className="text-red-500">*</span>
                   </label>
                   <input
                     type="text"
@@ -437,8 +452,9 @@ export default function VendorOnboarding() {
                     onChange={handleInputChange}
                     placeholder="10-digit PAN"
                     className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-transparent outline-none transition"
+                    required
                   />
-                  <p className="text-xs text-gray-500 mt-1">Optional</p>
+                  <p className="text-xs text-gray-500 mt-1">Required • Must be 10 characters</p>
                 </div>
               </div>
             </div>

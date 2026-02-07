@@ -153,11 +153,13 @@ export async function POST(request: NextRequest) {
       });
     }
 
-    // Update vendor status to pending approval
+    // Update vendor status to pending approval and set delivery fee from first service area
+    const firstServiceAreaFee = data.serviceAreas?.[0]?.deliveryFee || 50;
     await prisma.vendor.update({
       where: { id: vendorId },
       data: {
         approvalStatus: 'pending',
+        deliveryFee: firstServiceAreaFee, // Use first service area's delivery fee as default
       },
     });
 

@@ -116,13 +116,18 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   };
 
   const getTotal = () => {
-    const itemsTotal = items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+    const itemsTotal = items.reduce((sum, item) => {
+      const itemPrice = parseFloat(String(item.price)) || 0;
+      const itemQty = parseInt(String(item.quantity)) || 0;
+      return sum + (itemPrice * itemQty);
+    }, 0);
     
     // Get unique vendors and sum their delivery fees (once per vendor)
     const uniqueVendors = new Map<string, number>();
     items.forEach(item => {
       if (item.vendorId && item.deliveryFee && !uniqueVendors.has(item.vendorId)) {
-        uniqueVendors.set(item.vendorId, item.deliveryFee);
+        const deliveryFee = parseFloat(String(item.deliveryFee)) || 0;
+        uniqueVendors.set(item.vendorId, deliveryFee);
       }
     });
     

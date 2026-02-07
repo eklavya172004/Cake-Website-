@@ -56,18 +56,31 @@ export default function CakeDetailClient({ cake }: CakeDetailClientProps) {
 
   const calculatePerItemPrice = () => {
     // Use the selected size price as the base (not the cake basePrice)
-    let price = selectedSize?.price || cake.basePrice || 0;
+    // Ensure all values are converted to numbers (parseFloat)
+    let price = parseFloat(selectedSize?.price) || parseFloat(cake.basePrice) || 0;
+    
+    // Ensure price is a number
+    price = parseFloat(String(price)) || 0;
+    
     // Add frosting cost if selected and has a price
-    if (selectedFrosting && selectedFrosting.price > 0) {
-      price += selectedFrosting.price;
+    if (selectedFrosting && selectedFrosting.price) {
+      const frostingPrice = parseFloat(String(selectedFrosting.price)) || 0;
+      price = price + frostingPrice;
     }
+    
     // Add toppings cost
-    selectedToppings.forEach(t => price += t.price || 0);
+    selectedToppings.forEach(t => {
+      const toppingPrice = parseFloat(String(t.price)) || 0;
+      price = price + toppingPrice;
+    });
+    
     return price;
   };
 
   const calculateTotal = () => {
-    return calculatePerItemPrice() * quantity;
+    const perItemPrice = calculatePerItemPrice();
+    const qty = parseInt(String(quantity)) || 1;
+    return perItemPrice * qty;
   };
 
   const handleAddToCart = () => {
@@ -281,9 +294,8 @@ export default function CakeDetailClient({ cake }: CakeDetailClientProps) {
                 {selectedToppings.length > 0 && (
                   <div className="space-y-2 border-t border-white/20 pt-2">
                     {selectedToppings.map(topping => (
-                      <div key={topping.name} className="flex justify-between items-center text-xs md:text-sm">
+                      <div key={topping.name} className="flex items-center text-xs md:text-sm">
                         <span className="opacity-90">+ {topping.name}</span>
-                        <span className="font-semibold">₹{topping.price || 0}</span>
                       </div>
                     ))}
                   </div>
@@ -373,7 +385,6 @@ export default function CakeDetailClient({ cake }: CakeDetailClientProps) {
                       }`}
                     >
                       <div className="font-medium text-gray-900">{frosting.name}</div>
-                      <div className="text-xs md:text-sm text-red-600 font-semibold mt-1">+₹{frosting.price || 0}</div>
                     </button>
                   ))}
                 </div>
@@ -403,7 +414,6 @@ export default function CakeDetailClient({ cake }: CakeDetailClientProps) {
                         }`}
                       >
                         <div className="font-medium text-gray-900 text-sm">{toppingObj.name}</div>
-                        <div className="text-xs md:text-sm text-red-600 font-semibold mt-1">+₹{toppingObj.price || 0}</div>
                       </button>
                     );
                   })}

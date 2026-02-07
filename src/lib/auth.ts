@@ -47,9 +47,9 @@ export const authOptions: NextAuthOptions = {
 
           const hashedPassword = await bcrypt.hash(credentials.password, 10);
           const newAccountId = `${role}-${Date.now()}`;
-          const newVendorId = role === "vendor" ? `vendor-${Date.now()}` : undefined;
 
           // Create account in database immediately for customers and vendors
+          // Note: vendorId will be set during vendor onboarding when they create their shop profile
           const createdAccount = await prisma.account.create({
             data: {
               id: newAccountId,
@@ -58,12 +58,11 @@ export const authOptions: NextAuthOptions = {
               name: credentials.firstName,
               phone: credentials.phone,
               role: role as any,
-              vendorId: newVendorId,
               isVerified: false, // Account starts unverified
             },
           });
 
-          console.log(`✅ Account created on signup: ${credentials.email}, role: ${role}, vendorId: ${newVendorId}`);
+          console.log(`✅ Account created on signup: ${credentials.email}, role: ${role}`);
 
           // Generate verification token
           const verificationToken = crypto.randomBytes(32).toString('hex');
@@ -118,8 +117,8 @@ export const authOptions: NextAuthOptions = {
             throw new Error("Account not found");
           }
 
-          // Check if account is verified
-          if (!account.isVerified) {
+          // Check if account is verified (skip for admin - they're manually created)
+          if (!account.isVerified && account.role !== "admin") {
             throw new Error("Please verify your email before logging in. Check your inbox for a verification link.");
           }
 
@@ -167,6 +166,20 @@ export const authOptions: NextAuthOptions = {
         token.phone = user.phone;
         token.role = user.role;
         token.vendorId = user.vendorId;
+      } else if (token.email) {
+        // If no user object but we have token.email, fetch the latest Account record
+        // This happens when session.update() is called from the client
+        try {
+          const latestAccount = await prisma.account.findUnique({
+            where: { email: token.email },
+            select: { id: true, vendorId: true, role: true, phone: true, name: true },
+          });
+          if (latestAccount) {
+            token.vendorId = latestAccount.vendorId;
+          }
+        } catch (error) {
+          // Silently fail and keep existing token values
+        }
       }
       return token;
     },
