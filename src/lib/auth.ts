@@ -1,9 +1,9 @@
 import { NextAuthOptions } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 import bcrypt from "bcryptjs";
-import { PrismaClient } from "@prisma/client";
-
-const prisma = new PrismaClient();
+import { prisma } from "@/lib/db/client";
+import crypto from "crypto";
+import { sendVerificationEmail } from "./email";
 
 export const authOptions: NextAuthOptions = {
   providers: [
@@ -18,6 +18,12 @@ export const authOptions: NextAuthOptions = {
         phone: { label: "Phone", type: "text" },
       },
       async authorize(credentials) {
+        console.log('🔍 Auth authorize called with:', {
+          email: credentials?.email,
+          isSignUp: credentials?.isSignUp,
+          role: credentials?.role,
+        });
+
         if (!credentials?.email || !credentials?.password) {
           throw new Error("Email and password are required");
         }
@@ -43,19 +49,65 @@ export const authOptions: NextAuthOptions = {
           const newAccountId = `${role}-${Date.now()}`;
           const newVendorId = role === "vendor" ? `vendor-${Date.now()}` : undefined;
 
-          // Account will be created in the database during onboarding submission
-          const newAccount = {
-            id: newAccountId,
-            email: credentials.email,
-            password: hashedPassword,
-            name: credentials.firstName,
-            role: role as any,
-            phone: credentials.phone,
-            vendorId: newVendorId,
-          };
+          // Create account in database immediately for customers and vendors
+          const createdAccount = await prisma.account.create({
+            data: {
+              id: newAccountId,
+              email: credentials.email,
+              password: hashedPassword,
+              name: credentials.firstName,
+              phone: credentials.phone,
+              role: role as any,
+              vendorId: newVendorId,
+              isVerified: false, // Account starts unverified
+            },
+          });
 
-          console.log(`✅ Vendor signup (session only): ${credentials.email}, vendorId: ${newVendorId}`);
-          return newAccount as any;
+          console.log(`✅ Account created on signup: ${credentials.email}, role: ${role}, vendorId: ${newVendorId}`);
+
+          // Generate verification token
+          const verificationToken = crypto.randomBytes(32).toString('hex');
+          const tokenExpiryTime = new Date(Date.now() + 5 * 60 * 1000); // 5 minutes
+
+          console.log('📧 About to create verification token for:', credentials.email);
+          console.log('   Token model available:', prisma.emailVerificationToken !== undefined);
+
+          try {
+            const tokenRecord = await prisma.emailVerificationToken.create({
+              data: {
+                accountEmail: credentials.email,
+                token: verificationToken,
+                expiresAt: tokenExpiryTime,
+              },
+            });
+            console.log('✅ Verification token created successfully');
+
+            // Send verification email
+            try {
+              const emailResult = await sendVerificationEmail(credentials.email, verificationToken);
+              console.log(`✅ Verification email sent to ${credentials.email}:`, emailResult);
+            } catch (emailError) {
+              console.error(`❌ Failed to send verification email to ${credentials.email}:`, emailError);
+              // Still allow signup to continue, user can resend
+            }
+          } catch (tokenError) {
+            console.error(`❌ Failed to create verification token for ${credentials.email}:`, tokenError);
+            console.error('   Error details:', {
+              message: tokenError instanceof Error ? tokenError.message : String(tokenError),
+              stack: tokenError instanceof Error ? tokenError.stack : undefined,
+            });
+            // Still allow signup to succeed, user can use resend option
+          }
+
+          console.log('✅ Signup complete, returning user object');
+          return {
+            id: createdAccount.id,
+            email: createdAccount.email,
+            name: createdAccount.name,
+            phone: createdAccount.phone,
+            role: createdAccount.role,
+            vendorId: createdAccount.vendorId || undefined,
+          } as any;
         } else {
           // Login - check database for registered accounts
           const account = await prisma.account.findUnique({
@@ -64,6 +116,11 @@ export const authOptions: NextAuthOptions = {
 
           if (!account) {
             throw new Error("Account not found");
+          }
+
+          // Check if account is verified
+          if (!account.isVerified) {
+            throw new Error("Please verify your email before logging in. Check your inbox for a verification link.");
           }
 
           if (!account.password) {
@@ -89,6 +146,7 @@ export const authOptions: NextAuthOptions = {
             id: account.id,
             email: account.email,
             name: account.name,
+            phone: account.phone,
             role: account.role,
             vendorId: account.vendorId || undefined,
           };
@@ -106,6 +164,7 @@ export const authOptions: NextAuthOptions = {
         token.id = user.id;
         token.email = user.email;
         token.name = user.name;
+        token.phone = user.phone;
         token.role = user.role;
         token.vendorId = user.vendorId;
       }
@@ -116,6 +175,7 @@ export const authOptions: NextAuthOptions = {
         session.user.id = token.id;
         session.user.email = token.email;
         session.user.name = token.name;
+        session.user.phone = token.phone;
         session.user.role = token.role;
         session.user.vendorId = token.vendorId;
       }

@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { signIn } from 'next-auth/react';
 import Link from 'next/link';
 import { Cake, ArrowLeft } from 'lucide-react';
+import toast from 'react-hot-toast';
 
 export default function CustomerLoginPage() {
   const router = useRouter();
@@ -37,26 +38,26 @@ export default function CustomerLoginPage() {
       const trimmedPhone = formData.phone.trim();
 
       if (!trimmedEmail || !trimmedPassword) {
-        setError('Email and password are required');
+        toast.error('Email and password are required');
         setLoading(false);
         return;
       }
 
       if (isSignUp) {
         if (!trimmedName) {
-          setError('First name is required');
+          toast.error('First name is required');
           setLoading(false);
           return;
         }
         if (!trimmedPhone) {
-          setError('Phone number is required');
+          toast.error('Phone number is required');
           setLoading(false);
           return;
         }
         // Validate phone number format (10 digits)
         const phoneRegex = /^\d{10}$/;
         if (!phoneRegex.test(trimmedPhone)) {
-          setError('Please enter a valid 10-digit phone number');
+          toast.error('Please enter a valid 10-digit phone number');
           setLoading(false);
           return;
         }
@@ -73,13 +74,24 @@ export default function CustomerLoginPage() {
       });
 
       if (result?.error) {
-        setError(result.error);
+        toast.error(result.error);
         setLoading(false);
         return;
       }
 
-      // Redirect to home page
-      router.push('/');
+      if (isSignUp) {
+        toast.success('Account created! Check your email to verify.');
+      } else {
+        toast.success('Welcome back! Redirecting...');
+      }
+
+      if (isSignUp) {
+        // Redirect to email verification page for new signups
+        router.push('/auth/verify-email');
+      } else {
+        // Redirect to home page for existing users
+        router.push('/');
+      }
     } catch (err: any) {
       setError(err.message || 'An error occurred');
       setLoading(false);
@@ -162,9 +174,19 @@ export default function CustomerLoginPage() {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Password
-              </label>
+              <div className="flex items-center justify-between mb-1">
+                <label className="block text-sm font-medium text-gray-700">
+                  Password
+                </label>
+                {!isSignUp && (
+                  <Link
+                    href="/auth/forgot-password"
+                    className="text-xs text-pink-600 hover:text-pink-700 font-medium"
+                  >
+                    Forgot Password?
+                  </Link>
+                )}
+              </div>
               <input
                 type="password"
                 name="password"

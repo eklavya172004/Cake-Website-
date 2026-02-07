@@ -41,7 +41,11 @@ export async function POST(req: NextRequest) {
         id: firstItem.cakeId,
       },
       include: {
-        vendor: true,
+        vendor: {
+          include: {
+            profile: true,
+          },
+        },
       },
     });
 
@@ -172,7 +176,10 @@ export async function POST(req: NextRequest) {
         })),
         total,
         order.estimatedDelivery,
-        cake.vendor?.name || 'Our Shop'
+        cake.vendor?.name || 'Our Shop',
+        cake.vendor?.profile?.shopPhone,
+        cake.vendor?.profile?.shopEmail,
+        cake.vendor?.profile?.shopAddress
       );
     }
 

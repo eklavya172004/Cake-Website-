@@ -117,7 +117,7 @@ export async function PUT(
           oldStatus: order.status,
           newStatus: status,
           estimatedDelivery: order.estimatedDelivery || new Date(),
-          trackingUrl: `${process.env.NEXT_PUBLIC_APP_URL || ''}/orders/${order.id}`,
+          trackingUrl: `${process.env.NEXT_PUBLIC_APP_URL || process.env.NEXTAUTH_URL || 'http://localhost:3000'}/orders/${order.id}`,
         }).catch((err) => {
           console.error('Failed to send status notification:', err);
         });

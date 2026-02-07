@@ -90,6 +90,28 @@ model PasswordResetToken {
   @@index([token])
 }
 
+model EmailVerificationToken {
+  id              String   @id @default(cuid())
+  accountEmail    String
+  token           String   @unique
+  expiresAt       DateTime
+  createdAt       DateTime @default(now())
+  
+  @@index([accountEmail])
+  @@index([token])
+}
+
+model ResendAttempt {
+  id              String   @id @default(cuid())
+  accountEmail    String
+  attemptCount    Int      @default(1)
+  lastAttemptAt   DateTime @default(now())
+  lockedUntil     DateTime? // Lock user for 15 mins after 4 attempts
+  
+  @@unique([accountEmail])
+  @@index([accountEmail])
+}
+
 // ============================================
 // VENDORS & CAKES
 // ============================================

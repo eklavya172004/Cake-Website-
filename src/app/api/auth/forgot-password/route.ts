@@ -73,6 +73,10 @@ export async function POST(request: NextRequest) {
 
     // Send email via Resend
     try {
+      console.log(`📧 Attempting to send password reset email to: ${email}`);
+      console.log(`🔗 Reset link: ${resetLink}`);
+      console.log(`📤 Resend API Key present: ${!!process.env.RESEND_API_KEY}`);
+
       const emailResponse = await resend.emails.send({
         from: 'noreply@purblepalace.in',
         to: email,
@@ -114,16 +118,25 @@ export async function POST(request: NextRequest) {
       `,
       });
 
-      console.log('Email sent successfully:', emailResponse);
-    } catch (emailError) {
-      console.error('Email sending error:', emailError);
-      // Still return success response for security, but log the error
+      console.log('✅ Email sent successfully:', emailResponse);
+      return NextResponse.json(
+        { message: 'Password reset link sent to your email.', success: true },
+        { status: 200 }
+      );
+    } catch (emailError: any) {
+      console.error('❌ Email sending error:', emailError);
+      console.error('Error details:', {
+        message: emailError?.message,
+        statusCode: emailError?.statusCode,
+        name: emailError?.name,
+      });
+      
+      // Return error response to help debug
+      return NextResponse.json(
+        { error: `Email error: ${emailError?.message || 'Unknown error'}` },
+        { status: 500 }
+      );
     }
-
-    return NextResponse.json(
-      { message: 'If an account exists with this email, a password reset link has been sent.' },
-      { status: 200 }
-    );
   } catch (error) {
     console.error('Forgot password error:', error);
     return NextResponse.json(

@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Cake, ArrowLeft } from 'lucide-react';
+import toast from 'react-hot-toast';
 
 export default function ResetPasswordPage() {
   const router = useRouter();
@@ -31,19 +32,19 @@ export default function ResetPasswordPage() {
     try {
       // Validate
       if (!formData.password || !formData.confirmPassword) {
-        setError('Both password fields are required');
+        toast.error('Both password fields are required');
         setLoading(false);
         return;
       }
 
       if (formData.password.length < 8) {
-        setError('Password must be at least 8 characters');
+        toast.error('Password must be at least 8 characters');
         setLoading(false);
         return;
       }
 
       if (formData.password !== formData.confirmPassword) {
-        setError('Passwords do not match');
+        toast.error('Passwords do not match');
         setLoading(false);
         return;
       }
@@ -62,18 +63,17 @@ export default function ResetPasswordPage() {
       const data = await response.json();
 
       if (!response.ok) {
-        setError(data.error || 'Failed to reset password');
-        setLoading(false);
-        return;
+        throw new Error(data.error || 'Failed to reset password');
       }
 
       setSuccess(true);
-      // Redirect to login after 2 seconds
+      toast.success('Password reset successful! Redirecting to login...');
+      // Redirect to customer-login after 2 seconds
       setTimeout(() => {
-        router.push('/auth/login');
+        router.push('/auth/customer-login');
       }, 2000);
     } catch (err: any) {
-      setError(err.message || 'An error occurred');
+      toast.error(err.message || 'An error occurred');
       setLoading(false);
     }
   };
@@ -165,7 +165,7 @@ export default function ResetPasswordPage() {
           {/* Back to login */}
           <div className="mt-6 text-center">
             <Link
-              href="/auth/login"
+              href="/auth/customer-login"
               className="inline-flex items-center gap-2 text-pink-600 hover:text-pink-700 font-medium text-sm"
             >
               <ArrowLeft className="w-4 h-4" />
