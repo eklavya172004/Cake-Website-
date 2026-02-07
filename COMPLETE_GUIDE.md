@@ -1,4 +1,4 @@
-# 🎂 CakeShop Platform - Admin & Vendor Dashboard Complete Guide
+# 🎂 PurblePalace Platform - Admin & Vendor Dashboard Complete Guide
 
 ## 📋 Table of Contents
 1. [Overview](#overview)
@@ -14,7 +14,7 @@
 
 ## 🎯 Overview
 
-A complete role-based admin and vendor management system for CakeShop built with Next.js, featuring:
+A complete role-based admin and vendor management system for PurblePalace built with Next.js, featuring:
 
 - **Three-tier authentication**: Customer, Vendor, Admin
 - **Complete vendor onboarding workflow**

@@ -11,6 +11,7 @@ export interface CartItem {
   price: number;
   quantity: number;
   image?: string;
+  deliveryFee?: number; // Add delivery fee from vendor
   customization?: {
     size?: string;
     flavor?: string;
@@ -115,7 +116,18 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   };
 
   const getTotal = () => {
-    return items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+    const itemsTotal = items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+    
+    // Get unique vendors and sum their delivery fees (once per vendor)
+    const uniqueVendors = new Map<string, number>();
+    items.forEach(item => {
+      if (item.vendorId && item.deliveryFee && !uniqueVendors.has(item.vendorId)) {
+        uniqueVendors.set(item.vendorId, item.deliveryFee);
+      }
+    });
+    
+    const deliveryTotal = Array.from(uniqueVendors.values()).reduce((sum, fee) => sum + fee, 0);
+    return itemsTotal + deliveryTotal;
   };
 
   const getItemCount = () => {

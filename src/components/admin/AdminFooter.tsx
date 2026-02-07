@@ -12,9 +12,9 @@ export default function AdminFooter() {
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8 mb-8">
           {/* About */}
           <div>
-            <h3 className="text-white font-semibold mb-4">CakeShop Admin</h3>
+            <h3 className="text-white font-semibold mb-4">PurblePalace Admin</h3>
             <p className="text-gray-400 text-sm leading-relaxed">
-              Manage your entire cake shop ecosystem with powerful analytics, vendor management, and order processing tools.
+              Manage your entire Purble Palace ecosystem with powerful analytics, vendor management, and order processing tools.
             </p>
           </div>
 
@@ -35,7 +35,7 @@ export default function AdminFooter() {
             <ul className="space-y-2">
               <li className="flex items-center gap-2 text-gray-400 text-sm">
                 <Mail size={16} className="text-pink-500" />
-                <a href="mailto:admin@cakeshop.com" className="hover:text-pink-500 transition">admin@cakeshop.com</a>
+                <a href="mailto:admin@purblepalace.in" className="hover:text-pink-500 transition">admin@purblepalace.in</a>
               </li>
               <li className="flex items-center gap-2 text-gray-400 text-sm">
                 <Phone size={16} className="text-pink-500" />
@@ -73,7 +73,7 @@ export default function AdminFooter() {
           {/* Bottom Footer */}
           <div className="flex flex-col md:flex-row justify-between items-center gap-4">
             <div className="text-gray-400 text-sm">
-              <p>&copy; {currentYear} CakeShop. All rights reserved.</p>
+              <p>&copy; {currentYear} PurblePalace. All rights reserved.</p>
             </div>
             
             <div className="flex gap-6 text-sm">

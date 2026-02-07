@@ -46,7 +46,7 @@ export default function VendorFooter() {
             <ul className="space-y-3">
               <li className="flex items-center gap-2 text-gray-400 text-sm">
                 <Mail size={16} className="text-blue-400" />
-                <a href="mailto:vendor@cakeshop.com" className="hover:text-blue-400 transition">vendor@cakeshop.com</a>
+                <a href="mailto:vendor@purblepalace.in" className="hover:text-blue-400 transition">vendor@purblepalace.in</a>
               </li>
               <li className="flex items-center gap-2 text-gray-400 text-sm">
                 <Phone size={16} className="text-blue-400" />
@@ -65,7 +65,7 @@ export default function VendorFooter() {
           {/* Bottom Footer */}
           <div className="flex flex-col md:flex-row justify-between items-center gap-4">
             <div className="text-gray-400 text-sm">
-              <p>&copy; {currentYear} CakeShop Vendor Dashboard. All rights reserved.</p>
+              <p>&copy; {currentYear} PurblePalace Vendor Dashboard. All rights reserved.</p>
             </div>
             
             <div className="flex gap-6 text-sm">

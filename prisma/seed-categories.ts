@@ -375,7 +375,6 @@ async function seedVendors() {
         isActive: true,
         rating: 4.8,
         totalReviews: 245,
-        verificationStatus: 'verified',
       },
     }),
     prisma.vendor.upsert({
@@ -390,7 +389,6 @@ async function seedVendors() {
         isActive: true,
         rating: 4.7,
         totalReviews: 189,
-        verificationStatus: 'verified',
       },
     }),
     prisma.vendor.upsert({
@@ -405,7 +403,6 @@ async function seedVendors() {
         isActive: true,
         rating: 4.9,
         totalReviews: 312,
-        verificationStatus: 'verified',
       },
     }),
     prisma.vendor.upsert({
@@ -420,7 +417,6 @@ async function seedVendors() {
         isActive: true,
         rating: 4.6,
         totalReviews: 156,
-        verificationStatus: 'verified',
       },
     }),
     prisma.vendor.upsert({
@@ -435,7 +431,6 @@ async function seedVendors() {
         isActive: true,
         rating: 4.7,
         totalReviews: 203,
-        verificationStatus: 'verified',
       },
     }),
   ]);

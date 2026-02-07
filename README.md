@@ -1,4 +1,4 @@
-# 🎂 CakeShop - Multi-Vendor Cake Management Platform
+# 🎂 PurblePalace - Multi-Vendor Cake Management Platform
 
 A comprehensive, full-featured e-commerce platform for cake shops with role-based access for customers, vendors, and admins. Built with Next.js 16, TypeScript, Prisma ORM, and PostgreSQL.
 

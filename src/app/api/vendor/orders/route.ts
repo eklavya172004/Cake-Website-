@@ -1,9 +1,7 @@
 import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
-import { PrismaClient } from '@prisma/client';
-
-const prisma = new PrismaClient();
+import { db as prisma } from '@/lib/db/client';
 
 export async function GET() {
   try {
@@ -35,6 +33,7 @@ export async function GET() {
       customer: order.user?.name || 'Unknown',
       email: order.user?.email,
       totalAmount: order.finalAmount,
+      deliveryFee: order.deliveryFee,
       status: order.status,
       itemsCount: Array.isArray(order.items) ? order.items.length : 0,
       items: Array.isArray(order.items)
@@ -42,6 +41,7 @@ export async function GET() {
             cakeName: item.name,
             quantity: item.quantity,
             price: item.price,
+            customization: item.customization,
           }))
         : [],
       deliveryAddress: order.deliveryAddress,

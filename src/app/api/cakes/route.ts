@@ -156,7 +156,9 @@ export async function GET(request: Request) {
           select: {
             id: true,
             name: true,
-            slug: true
+            slug: true,
+            deliveryFee: true,
+            rating: true
           }
         }
       },
@@ -166,7 +168,12 @@ export async function GET(request: Request) {
         { popularity: 'desc' }
     });
     
-    return NextResponse.json(cakes);
+    return NextResponse.json(
+      cakes.map(cake => ({
+        ...cake,
+        basePrice: parseFloat(cake.basePrice.toString()),
+      }))
+    );
   } catch (error) {
     console.error('Error fetching cakes from database:', error);
     

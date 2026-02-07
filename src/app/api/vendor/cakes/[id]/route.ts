@@ -1,16 +1,74 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
-import { PrismaClient } from '@prisma/client';
+import { db as prisma } from '@/lib/db/client';
 import { v2 as cloudinary } from 'cloudinary';
-
-const prisma = new PrismaClient();
 
 cloudinary.config({
   cloud_name: process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME,
   api_key: process.env.CLOUDINARY_API_KEY,
   api_secret: process.env.CLOUDINARY_API_SECRET,
 });
+
+export async function GET(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    const { id } = await params;
+    const session = await getServerSession(authOptions);
+    
+    if (!session?.user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    const cakeId = id;
+
+    // Get account and vendor info
+    const account = await prisma.account.findUnique({
+      where: { email: session.user.email! },
+    });
+
+    if (!account || account.role !== 'vendor' || !account.vendorId) {
+      return NextResponse.json(
+        { error: 'Vendor not found' },
+        { status: 401 }
+      );
+    }
+
+    // Get the cake and verify ownership
+    const cake = await prisma.cake.findUnique({
+      where: { id: cakeId },
+    });
+
+    if (!cake) {
+      return NextResponse.json(
+        { error: 'Cake not found' },
+        { status: 404 }
+      );
+    }
+
+    if (cake.vendorId !== account.vendorId) {
+      return NextResponse.json(
+        { error: 'You can only view your own cakes' },
+        { status: 403 }
+      );
+    }
+
+    return NextResponse.json({
+      ...cake,
+      basePrice: parseFloat(cake.basePrice.toString()),
+    });
+  } catch (error) {
+    console.error('Cake fetch error:', error);
+    return NextResponse.json(
+      { error: 'Failed to fetch cake', details: error instanceof Error ? error.message : 'Unknown error' },
+      { status: 500 }
+    );
+  } finally {
+    await prisma.$disconnect();
+  }
+}
 
 export async function PUT(
   request: NextRequest,
@@ -62,9 +120,11 @@ export async function PUT(
     const name = formData.get('name') as string;
     const description = formData.get('description') as string;
     const category = formData.get('category') as string;
+    const cakeType = formData.get('cakeType') as string | null;
     const basePrice = formData.get('basePrice') as string;
     const flavorsStr = formData.get('flavors') as string;
     const toppingsStr = formData.get('toppings') as string;
+    const tagsStr = formData.get('tags') as string;
     const availableSizesStr = formData.get('availableSizes') as string;
     const isCustomizable = formData.get('isCustomizable') === 'true';
 
@@ -107,21 +167,37 @@ export async function PUT(
           uploadStream.end(buffer);
         });
 
-        const cloudinaryResult = result as any;
+        const cloudinaryResult = result as { secure_url: string };
         uploadedImages.push(cloudinaryResult.secure_url);
       }
     }
 
     // Prepare update data
-    const updateData: any = {};
+    interface UpdateData {
+      name?: string;
+      description?: string;
+      category?: string;
+      cakeType?: string | null;
+      basePrice?: number;
+      flavors?: string[];
+      tags?: string[];
+      customOptions?: Record<string, string[]>;
+      availableSizes?: { size: string; price: number }[];
+      isCustomizable?: boolean;
+      images?: string[];
+    }
+    
+    const updateData: UpdateData = {};
 
     if (name) updateData.name = name;
     if (description) updateData.description = description;
     if (category) updateData.category = category;
+    if (cakeType !== null) updateData.cakeType = cakeType || null;
     if (basePrice) updateData.basePrice = parseFloat(basePrice);
     if (flavorsStr) updateData.flavors = JSON.parse(flavorsStr);
+    if (tagsStr) updateData.tags = JSON.parse(tagsStr);
     if (toppingsStr) {
-      const customOptions = (cake.customOptions as Record<string, any>) || {};
+      const customOptions = (cake.customOptions as Record<string, unknown>) || {};
       updateData.customOptions = {
         ...customOptions,
         toppings: JSON.parse(toppingsStr),
@@ -147,7 +223,7 @@ export async function PUT(
         id: updatedCake.id,
         name: updatedCake.name,
         category: updatedCake.category,
-        basePrice: updatedCake.basePrice,
+        basePrice: parseFloat(updatedCake.basePrice.toString()),
         images: updatedCake.images,
       },
     });

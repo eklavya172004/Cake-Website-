@@ -91,7 +91,7 @@ export default function UserDashboard() {
   ];
 
   const supportChannels = [
-    { channel: 'Email', contact: 'support@cakeshop.com', icon: '📧', response: '24 hours' },
+    { channel: 'Email', contact: 'support@purblepalace.in', icon: '📧', response: '24 hours' },
     { channel: 'Phone', contact: '+91 1800-CAKE-123', icon: '📞', response: '2 hours' },
     { channel: 'Live Chat', contact: 'Available 10 AM - 10 PM', icon: '💬', response: 'Instant' },
     { channel: 'WhatsApp', contact: '+91 98765 43210', icon: '💬', response: '30 mins' },

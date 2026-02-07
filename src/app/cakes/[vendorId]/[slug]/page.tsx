@@ -15,7 +15,20 @@ export default async function CakePage({
   const cake = await prisma.cake.findUnique({
     where: { vendorId_slug: { vendorId, slug } },
     include: {
-      vendor: true
+      vendor: {
+        select: {
+          id: true,
+          name: true,
+          slug: true,
+          logo: true,
+          rating: true,
+          totalReviews: true,
+          deliveryFee: true, // Explicitly include delivery fee
+          preparationTime: true,
+          description: true,
+          profile: true
+        }
+      }
     }
   });
 

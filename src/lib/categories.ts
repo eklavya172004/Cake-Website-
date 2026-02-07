@@ -37,11 +37,11 @@ export const CAKE_CATEGORIES = [
       {
         title: 'Delivery Cities',
         items: [
-          { label: 'Bangalore', param: 'deliveryCity=Bangalore' },
+          { label: 'Gurgaon', param: 'deliveryCity=Gurgaon' },
+          { label: 'Faridabad', param: 'deliveryCity=Faridabad' },
+          { label: 'Ghaziabad', param: 'deliveryCity=Ghaziabad' },
+          { label: 'Noida', param: 'deliveryCity=Noida' },
           { label: 'Delhi', param: 'deliveryCity=Delhi' },
-          { label: 'Mumbai', param: 'deliveryCity=Mumbai' },
-          { label: 'Hyderabad', param: 'deliveryCity=Hyderabad' },
-          { label: 'Pune', param: 'deliveryCity=Pune' },
         ]
       }
     ]
@@ -56,16 +56,19 @@ export const CAKE_CATEGORIES = [
   { name: 'Customized Cakes', href: '/cakes/search?category=Customized Cakes' },
 ];
 
-// Get flattened list of all categories for dropdown menus
+// Get flattened list of all categories and subcategories for vendor dropdown menus
 export function getAllCategoryOptions() {
   const options: string[] = [];
 
   CAKE_CATEGORIES.forEach((category) => {
     if (typeof category === 'object' && 'name' in category) {
-      if ('submenu' in category && category.submenu) {
-        // Add main category
+      // Add main category
+      if (!options.includes(category.name)) {
         options.push(category.name);
-        // Add all submenu items
+      }
+      
+      // Add all submenu items (subcategories)
+      if ('submenu' in category && category.submenu) {
         category.submenu.forEach((section) => {
           section.items.forEach((item) => {
             if (!options.includes(item.label)) {
@@ -73,15 +76,44 @@ export function getAllCategoryOptions() {
             }
           });
         });
-      } else {
-        // Just a simple category
-        if (!options.includes(category.name)) {
-          options.push(category.name);
-        }
       }
     }
   });
 
   // Remove duplicates and sort
   return Array.from(new Set(options)).sort();
+}
+
+// Get only main categories
+export function getMainCategories() {
+  const mainCategories: string[] = [];
+  
+  CAKE_CATEGORIES.forEach((category) => {
+    if (typeof category === 'object' && 'name' in category) {
+      mainCategories.push(category.name);
+    }
+  });
+  
+  return mainCategories;
+}
+
+// Get subcategories for a specific main category
+export function getSubcategoriesForMain(mainCategory: string) {
+  const subcategories: string[] = [];
+  
+  const category = CAKE_CATEGORIES.find(
+    (cat) => typeof cat === 'object' && 'name' in cat && cat.name === mainCategory
+  ) as any;
+  
+  if (category && 'submenu' in category && category.submenu) {
+    category.submenu.forEach((section: any) => {
+      section.items.forEach((item: any) => {
+        if (!subcategories.includes(item.label)) {
+          subcategories.push(item.label);
+        }
+      });
+    });
+  }
+  
+  return subcategories;
 }

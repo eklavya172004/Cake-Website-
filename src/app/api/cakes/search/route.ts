@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { prisma } from '@/lib/prisma';
+import { db as prisma } from '@/lib/db/client';
 
 export async function GET(request: NextRequest) {
   try {
@@ -55,7 +55,12 @@ export async function GET(request: NextRequest) {
       },
     });
 
-    return NextResponse.json({ cakes });
+    return NextResponse.json({
+      cakes: cakes.map(cake => ({
+        ...cake,
+        basePrice: parseFloat(cake.basePrice.toString()),
+      })),
+    });
   } catch (error) {
     console.error('Search error:', error);
     return NextResponse.json(

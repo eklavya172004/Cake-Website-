@@ -1,12 +1,14 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { Eye, Check, X, Clock, Loader, ChevronDown, ChevronUp } from 'lucide-react';
+import { Eye, Check, X, Clock, Loader, ChevronDown, ChevronUp, Save } from 'lucide-react';
+import toast from 'react-hot-toast';
 
 interface OrderItem {
   cakeName: string;
   quantity: number;
   price: number;
+  customization?: string;
 }
 
 interface Order {
@@ -15,6 +17,7 @@ interface Order {
   customer: string;
   email: string;
   totalAmount: number;
+  deliveryFee: number;
   status: 'pending' | 'confirmed' | 'preparing' | 'ready' | 'delivering' | 'delivered' | 'cancelled';
   itemsCount: number;
   items: OrderItem[];
@@ -41,6 +44,8 @@ export default function VendorOrders() {
   const [error, setError] = useState<string | null>(null);
   const [expandedOrder, setExpandedOrder] = useState<string | null>(null);
   const [updatingOrderId, setUpdatingOrderId] = useState<string | null>(null);
+  const [editingDeliveryFee, setEditingDeliveryFee] = useState<Record<string, number>>({});
+  const [savingDeliveryFee, setSavingDeliveryFee] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchOrders = async () => {
@@ -81,10 +86,56 @@ export default function VendorOrders() {
       
       setOrders(orders.map(o => o.id === orderId ? updatedOrder : o));
       setExpandedOrder(null);
+      toast.success('Order status updated successfully!');
     } catch (err) {
-      alert(err instanceof Error ? err.message : 'Failed to update status');
+      const errorMsg = err instanceof Error ? err.message : 'Failed to update status';
+      toast.error(errorMsg);
     } finally {
       setUpdatingOrderId(null);
+    }
+  };
+
+  const handleDeliveryFeeChange = (orderId: string, value: string) => {
+    const numValue = parseFloat(value) || 0;
+    setEditingDeliveryFee(prev => ({
+      ...prev,
+      [orderId]: numValue,
+    }));
+  };
+
+  const handleSaveDeliveryFee = async (orderId: string) => {
+    setSavingDeliveryFee(orderId);
+    try {
+      const newDeliveryFee = editingDeliveryFee[orderId];
+      if (newDeliveryFee === undefined) {
+        toast.error('Please enter a delivery fee');
+        return;
+      }
+
+      const response = await fetch(`/api/vendor/orders/${orderId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ deliveryFee: newDeliveryFee }),
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Failed to update delivery fee');
+      }
+
+      const updatedOrder = await response.json();
+      setOrders(orders.map(o => o.id === orderId ? updatedOrder : o));
+      setEditingDeliveryFee(prev => {
+        const newState = { ...prev };
+        delete newState[orderId];
+        return newState;
+      });
+      toast.success('Delivery fee updated successfully!');
+    } catch (err) {
+      const errorMsg = err instanceof Error ? err.message : 'Failed to save delivery fee';
+      toast.error(errorMsg);
+    } finally {
+      setSavingDeliveryFee(null);
     }
   };
 
@@ -138,12 +189,30 @@ export default function VendorOrders() {
                   {/* Order Items */}
                   <div>
                     <h4 className="font-semibold text-gray-900 mb-2">Items</h4>
-                    <div className="space-y-2">
+                    <div className="space-y-3">
                       {order.items && order.items.length > 0 ? (
                         order.items.map((item, idx) => (
-                          <div key={idx} className="flex justify-between text-sm text-gray-600">
-                            <span>{item.cakeName} × {item.quantity}</span>
-                            <span>₹{item.price}</span>
+                          <div key={idx} className="bg-white p-3 rounded border border-gray-200">
+                            <div className="flex justify-between text-sm mb-2">
+                              <span className="font-semibold text-gray-900">{item.cakeName} × {item.quantity}</span>
+                              <span className="font-semibold text-gray-900">₹{item.price}</span>
+                            </div>
+                            {item.customization && (
+                              <div className="text-xs text-gray-600 bg-blue-50 p-2 rounded border-l-2 border-blue-300">
+                                <p className="font-semibold text-blue-900 mb-1">Customization:</p>
+                                <div className="text-gray-700 space-y-1">
+                                  {typeof item.customization === 'string' ? (
+                                    <p>{item.customization}</p>
+                                  ) : typeof item.customization === 'object' ? (
+                                    Object.entries(item.customization).map(([key, value]) => (
+                                      <p key={key}>
+                                        <span className="font-medium capitalize">{key}:</span> {String(value)}
+                                      </p>
+                                    ))
+                                  ) : null}
+                                </div>
+                              </div>
+                            )}
                           </div>
                         ))
                       ) : (
@@ -164,15 +233,71 @@ export default function VendorOrders() {
                     </div>
                   </div>
 
+                  {/* Delivery Fee Editor */}
+                  <div className="bg-white p-4 rounded-lg border border-blue-200">
+                    <div className="flex items-center justify-between gap-4">
+                      <div className="flex-1">
+                        <p className="text-xs text-gray-600 uppercase tracking-wide mb-2">Delivery Fee</p>
+                        <input
+                          type="number"
+                          min="0"
+                          step="0.01"
+                          value={editingDeliveryFee[order.id] ?? order.deliveryFee}
+                          onChange={(e) => handleDeliveryFeeChange(order.id, e.target.value)}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          placeholder="0.00"
+                        />
+                      </div>
+                      <button
+                        onClick={() => handleSaveDeliveryFee(order.id)}
+                        disabled={savingDeliveryFee === order.id}
+                        className="px-4 py-2 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white rounded-lg text-sm font-semibold transition-colors flex items-center gap-2 h-10"
+                      >
+                        {savingDeliveryFee === order.id ? (
+                          <Loader size={16} className="animate-spin" />
+                        ) : (
+                          <Save size={16} />
+                        )}
+                        Save
+                      </button>
+                    </div>
+                  </div>
+
                   {/* Delivery Address */}
                   {order.deliveryAddress && (
                     <div>
                       <p className="text-xs text-gray-600 uppercase tracking-wide mb-1">Delivery Address</p>
-                      <p className="text-sm text-gray-700 bg-white p-2 rounded border border-gray-200">
-                        {typeof order.deliveryAddress === 'string' 
-                          ? order.deliveryAddress 
-                          : `${order.deliveryAddress.street}, ${order.deliveryAddress.city} ${order.deliveryAddress.zipCode}`}
-                      </p>
+                      <div className="bg-white p-3 rounded border border-gray-200 space-y-2">
+                        {typeof order.deliveryAddress === 'string' ? (
+                          <p className="text-sm text-gray-700">{order.deliveryAddress}</p>
+                        ) : (
+                          <>
+                            {order.deliveryAddress.fullName && (
+                              <p className="text-sm font-semibold text-gray-900">{order.deliveryAddress.fullName}</p>
+                            )}
+                            {order.deliveryAddress.address && (
+                              <p className="text-sm text-gray-700">{order.deliveryAddress.address}</p>
+                            )}
+                            <div className="flex flex-col gap-1">
+                              {order.deliveryAddress.city && (
+                                <p className="text-sm text-gray-700">
+                                  <span className="font-medium">City:</span> {order.deliveryAddress.city}
+                                </p>
+                              )}
+                              {order.deliveryAddress.phone && (
+                                <p className="text-sm text-gray-700">
+                                  <span className="font-medium">Phone:</span> {order.deliveryAddress.phone}
+                                </p>
+                              )}
+                              {order.deliveryAddress.landmark && (
+                                <p className="text-sm text-gray-700">
+                                  <span className="font-medium">Landmark:</span> {order.deliveryAddress.landmark}
+                                </p>
+                              )}
+                            </div>
+                          </>
+                        )}
+                      </div>
                     </div>
                   )}
 

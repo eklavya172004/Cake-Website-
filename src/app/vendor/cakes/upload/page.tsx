@@ -18,18 +18,26 @@ export default function UploadCakePage() {
   useEffect(() => {
     const fetchVerificationStatus = async () => {
       try {
-        const response = await fetch('/api/vendor/onboarding/status', {
+        const response = await fetch('/api/vendor/approval-status', {
           credentials: 'include',
+          cache: 'no-store',
         });
 
         if (response.ok) {
           const data = await response.json();
-          setVerificationStatus(data.status || 'pending');
+          console.log('Upload page - Approval status response:', data);
+          const status = data.status || 'pending';
+          console.log('Upload page - Setting status to:', status);
+          setVerificationStatus(status);
+        } else {
+          console.warn('Failed to fetch approval status:', response.status);
+          setVerificationStatus('pending');
         }
 
         // Get cake count
         const cakesResponse = await fetch('/api/vendor/products', {
           credentials: 'include',
+          cache: 'no-store',
         });
 
         if (cakesResponse.ok) {
@@ -38,6 +46,7 @@ export default function UploadCakePage() {
         }
       } catch (err) {
         console.error('Error fetching status:', err);
+        setVerificationStatus('pending');
       } finally {
         setCheckingStatus(false);
       }
@@ -73,7 +82,7 @@ export default function UploadCakePage() {
           <div className="flex items-center gap-2 mt-2">
             <CheckCircle className="w-5 h-5 text-green-600" />
             <span className="text-sm text-green-700 font-semibold">
-              Your profile is verified. You can upload up to 4 cakes. ({cakeCount}/4 uploaded)
+              Your profile is verified. You can upload cakes anytime!
             </span>
           </div>
         )}
@@ -91,12 +100,28 @@ export default function UploadCakePage() {
                 {verificationStatus.toLowerCase() === 'pending' && ' Your application is currently under review.'}
                 {verificationStatus.toLowerCase() === 'rejected' && ' Your application was rejected. Please update your profile and resubmit.'}
               </p>
-              <div className="flex gap-3 mt-4">
+              <div className="flex gap-3 mt-4 flex-wrap">
                 <button
                   onClick={() => router.push('/vendor/onboarding')}
                   className="px-6 py-2 bg-yellow-600 text-white font-semibold rounded-lg hover:bg-yellow-700 transition"
                 >
                   Complete Onboarding
+                </button>
+                <button
+                  onClick={() => {
+                    setCheckingStatus(true);
+                    fetch('/api/vendor/approval-status', {
+                      credentials: 'include',
+                      cache: 'no-store',
+                    })
+                      .then((res) => res.json())
+                      .then((data) => setVerificationStatus(data.status || 'pending'))
+                      .finally(() => setCheckingStatus(false));
+                  }}
+                  disabled={checkingStatus}
+                  className="px-6 py-2 bg-gray-600 text-white font-semibold rounded-lg hover:bg-gray-700 transition disabled:opacity-50"
+                >
+                  {checkingStatus ? 'Checking...' : 'Refresh Status'}
                 </button>
               </div>
             </div>
@@ -104,23 +129,8 @@ export default function UploadCakePage() {
         </div>
       )}
 
-      {/* Max Cakes Alert */}
-      {isApproved && cakeCount >= 4 && (
-        <div className="bg-blue-50 border-2 border-blue-200 rounded-xl p-6">
-          <div className="flex items-start gap-4">
-            <AlertCircle className="w-8 h-8 text-blue-600 shrink-0 mt-1" />
-            <div className="flex-1">
-              <h3 className="text-lg font-bold text-blue-900">Maximum Cakes Reached</h3>
-              <p className="text-blue-800 mt-2">
-                You have uploaded the maximum number of cakes (4). To upload more cakes, delete some existing ones or contact support.
-              </p>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Upload Form - Only show if approved and hasn't reached max */}
-      {isApproved && cakeCount < 4 && (
+      {/* Upload Form - Always show if approved */}
+      {isApproved && (
         <CakeUploadForm
           onSuccess={() => {
             // Refresh cake count

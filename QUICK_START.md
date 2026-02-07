@@ -1,4 +1,4 @@
-# 🚀 Quick Start Guide - CakeShop Dashboard
+# 🚀 Quick Start Guide - PurblePalace Dashboard
 
 ## ⚡ 5-Minute Setup
 

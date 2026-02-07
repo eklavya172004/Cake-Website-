@@ -28,6 +28,8 @@ export default function CakeUploadForm({ onSuccess, onError }: CakeUploadFormPro
     flavorInput: '',
     toppings: [] as string[],
     toppingInput: '',
+    tags: [] as string[],
+    tagInput: '',
     isCustomizable: true,
     availableSizes: [] as { size: string; price: string }[],
     sizeInput: '',
@@ -102,6 +104,31 @@ export default function CakeUploadForm({ onSuccess, onError }: CakeUploadFormPro
     }));
   };
 
+  const addTag = () => {
+    if (!formData.tagInput.trim()) return;
+
+    const tagValue = formData.tagInput.trim().toLowerCase();
+
+    if (formData.tags.includes(tagValue)) {
+      setError('This tag is already added');
+      return;
+    }
+
+    setFormData((prev) => ({
+      ...prev,
+      tags: [...prev.tags, tagValue],
+      tagInput: '',
+    }));
+    setError(null);
+  };
+
+  const removeTag = (tag: string) => {
+    setFormData((prev) => ({
+      ...prev,
+      tags: prev.tags.filter((t) => t !== tag),
+    }));
+  };
+
   const addSize = () => {
     if (
       formData.sizeInput.trim() &&
@@ -173,6 +200,7 @@ export default function CakeUploadForm({ onSuccess, onError }: CakeUploadFormPro
       form.append('basePrice', formData.basePrice);
       form.append('flavors', JSON.stringify(formData.flavors));
       form.append('toppings', JSON.stringify(formData.toppings));
+      form.append('tags', JSON.stringify(formData.tags));
       form.append(
         'availableSizes',
         JSON.stringify(
@@ -213,6 +241,8 @@ export default function CakeUploadForm({ onSuccess, onError }: CakeUploadFormPro
         flavorInput: '',
         toppings: [],
         toppingInput: '',
+        tags: [],
+        tagInput: '',
         isCustomizable: true,
         availableSizes: [],
         sizeInput: '',
@@ -430,6 +460,52 @@ export default function CakeUploadForm({ onSuccess, onError }: CakeUploadFormPro
         )}
       </div>
 
+      {/* Tags */}
+      <div className="bg-white rounded-lg shadow p-6 space-y-4">
+        <h2 className="text-xl font-bold text-gray-900">Tags (Optional)</h2>
+        <p className="text-sm text-gray-600">Add tags like bestseller, trending, new, sugar-free, eggless, etc.</p>
+
+        <div className="flex gap-2">
+          <input
+            type="text"
+            value={formData.tagInput}
+            onChange={(e) => setFormData({ ...formData, tagInput: e.target.value })}
+            onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), addTag())}
+            placeholder="e.g., bestseller"
+            className="flex-1 px-4 py-2 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-pink-600 transition"
+          />
+          <button
+            type="button"
+            onClick={addTag}
+            className="px-4 py-2 bg-pink-600 text-white font-semibold rounded-lg hover:bg-pink-700 transition"
+          >
+            Add
+          </button>
+        </div>
+
+        <div className="flex flex-wrap gap-2">
+          {formData.tags.map((tag) => (
+            <span
+              key={tag}
+              className="bg-linear-to-r from-blue-500 to-blue-600 text-white px-3 py-1 rounded-full text-sm font-bold flex items-center gap-2 shadow-sm"
+            >
+              ✨ {tag}
+              <button
+                type="button"
+                onClick={() => removeTag(tag)}
+                className="text-white hover:text-gray-200 transition"
+              >
+                <X size={14} />
+              </button>
+            </span>
+          ))}
+        </div>
+
+        {formData.tags.length === 0 && (
+          <p className="text-sm text-gray-500">No tags added yet</p>
+        )}
+      </div>
+
       {/* Available Sizes (Optional) */}
       <div className="bg-white rounded-lg shadow p-6 space-y-4">
         <h2 className="text-xl font-bold text-gray-900">Available Sizes (Optional)</h2>
@@ -506,7 +582,7 @@ export default function CakeUploadForm({ onSuccess, onError }: CakeUploadFormPro
           >
             <Upload className="w-8 h-8 text-gray-400" />
             <span className="text-sm font-semibold text-gray-900">Click to upload or drag and drop</span>
-            <span className="text-xs text-gray-500">PNG, JPG, GIF up to 10MB</span>
+            <span className="text-xs text-gray-500">PNG, JPG, GIF up to 5MB</span>
           </button>
         </div>
 

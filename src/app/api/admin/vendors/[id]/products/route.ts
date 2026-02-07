@@ -1,7 +1,5 @@
 import { NextResponse } from 'next/server';
-import { PrismaClient } from '@prisma/client';
-
-const prisma = new PrismaClient();
+import { db as prisma } from '@/lib/db/client';
 
 export async function GET(
   request: Request,
@@ -51,6 +49,7 @@ export async function GET(
     return NextResponse.json({
       cakes: cakes.map((cake) => ({
         ...cake,
+        basePrice: parseFloat(cake.basePrice.toString()),
         createdAt: cake.createdAt.toISOString(),
       })),
       pagination: {
@@ -154,10 +153,10 @@ export async function POST(
 
 export async function PATCH(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const vendorId = params.id;
+    const { id: vendorId } = await params;
     const body = await request.json();
 
     const { cakeId, ...updateData } = body;
@@ -203,10 +202,10 @@ export async function PATCH(
 
 export async function DELETE(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const vendorId = params.id;
+    const { id: vendorId } = await params;
     const { searchParams } = new URL(request.url);
     const cakeId = searchParams.get('cakeId');
 

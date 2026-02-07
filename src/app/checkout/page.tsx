@@ -1,11 +1,11 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useCart } from '@/components/cart/CartProvider';
 import { useRouter } from 'next/navigation';
 import { ArrowLeft, ShieldCheck } from 'lucide-react';
 import Link from 'next/link';
-import { signIn } from 'next-auth/react';
+import { signIn, useSession } from 'next-auth/react';
 import SplitPaymentUI from '@/components/checkout/SplitPaymentUI';
 import AddressSelection from '@/components/checkout/AddressSelection';
 
@@ -23,11 +23,15 @@ interface Address {
 export default function CheckoutPage() {
   const { items, getTotal, clearCart } = useCart();
   const router = useRouter();
+  const { data: session } = useSession();
+  const [isLoggedInAtStart] = useState(!!session);
   const [step, setStep] = useState(1);
   const [loading, setLoading] = useState(false);
   const [paymentMethod, setPaymentMethod] = useState('cod');
   const [splitPaymentLinks, setSplitPaymentLinks] = useState<any[]>([]);
   const [selectedAddress, setSelectedAddress] = useState<Address | null>(null);
+  const [deliveryFee, setDeliveryFee] = useState(0);
+  const [vendorDetails, setVendorDetails] = useState<Record<string, any>>({});
 
   const [formData, setFormData] = useState({
     firstName: '',
@@ -40,6 +44,43 @@ export default function CheckoutPage() {
     state: '',
     instructions: ''
   });
+
+  // Fetch vendor details to get delivery fees
+  React.useEffect(() => {
+    const fetchVendorDetails = async () => {
+      if (items.length === 0) return;
+      
+      try {
+        // Get unique vendor IDs
+        const vendorIds = [...new Set(items.map(item => item.vendorId))];
+        
+        // Fetch vendor details for each vendor
+        const vendors: Record<string, any> = {};
+        for (const vendorId of vendorIds) {
+          const response = await fetch(`/api/vendors/${vendorId}`);
+          if (response.ok) {
+            const data = await response.json();
+            vendors[vendorId] = data;
+          }
+        }
+        
+        setVendorDetails(vendors);
+        
+        // Calculate total delivery fee (sum of all vendor delivery fees)
+        const totalFee = vendorIds.reduce((sum, vendorId) => {
+          return sum + (vendors[vendorId]?.deliveryFee || 0);
+        }, 0);
+        
+        setDeliveryFee(totalFee);
+      } catch (error) {
+        console.error('Error fetching vendor details:', error);
+        // Fallback to default fee if fetch fails
+        setDeliveryFee(50);
+      }
+    };
+    
+    fetchVendorDetails();
+  }, [items]);
 
   if (items.length === 0) {
     return (
@@ -54,6 +95,11 @@ export default function CheckoutPage() {
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
+  };
+
+  // Calculate items-only subtotal (without delivery fees)
+  const getItemsOnlySubtotal = () => {
+    return items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
   };
 
   const handleDetailsSubmit = (e: React.FormEvent) => {
@@ -77,6 +123,7 @@ export default function CheckoutPage() {
       setLoading(true);
       
       try {
+        const itemsSubtotal = getItemsOnlySubtotal();
         const orderData = {
           items: items.map(item => ({
             cakeId: item.id,
@@ -96,10 +143,10 @@ export default function CheckoutPage() {
           },
           deliveryType: 'delivery',
           paymentMethod: paymentMethod,
-          subtotal: getTotal(),
-          deliveryFee: 50,
+          subtotal: itemsSubtotal,
+          deliveryFee: deliveryFee,
           discount: 0,
-          total: getTotal() + 50,
+          total: itemsSubtotal + deliveryFee,
           paymentStatus: 'pending',
           notes: JSON.stringify({
             splitPaymentLinks: splitPaymentLinks,
@@ -132,13 +179,14 @@ export default function CheckoutPage() {
             vendorName = items[0].vendor;
           }
           
+          const itemsSubtotal = getItemsOnlySubtotal();
           const newOrder = {
             id: result.orderId,
             orderNumber: result.orderNumber,
             status: 'pending',
             paymentMethod: 'split',
             paymentStatus: 'pending',
-            finalAmount: getTotal() + 50,
+            finalAmount: itemsSubtotal + deliveryFee,
             notes: JSON.stringify({
               splitPaymentLinks: splitPaymentLinks,
             }),
@@ -181,9 +229,13 @@ export default function CheckoutPage() {
           // Still redirect even if auto-login fails
         }
 
-        // Redirect to split payment status page instead of orders page
+        // Redirect to success page if guest, otherwise to split payment status page
         clearCart();
-        router.push(`/split-payment-status/${result.orderId}`);
+        if (!isLoggedInAtStart) {
+          router.push(`/guest-checkout-success/${result.orderId}`);
+        } else {
+          router.push(`/split-payment-status/${result.orderId}`);
+        }
       } catch (error) {
         console.error('Error creating order:', error);
         alert('An error occurred. Please try again.');
@@ -196,6 +248,7 @@ export default function CheckoutPage() {
 
     try {
       // Prepare order data
+      const itemsSubtotal = getItemsOnlySubtotal();
       const orderData = {
         items: items.map(item => ({
           cakeId: item.id,
@@ -215,10 +268,10 @@ export default function CheckoutPage() {
         },
         deliveryType: 'delivery',
         paymentMethod: paymentMethod,
-        subtotal: getTotal(),
-        deliveryFee: 50,
+        subtotal: itemsSubtotal,
+        deliveryFee: deliveryFee,
         discount: 0,
-        total: getTotal() + 50,
+        total: itemsSubtotal + deliveryFee,
       };
 
       // Create order
@@ -246,7 +299,7 @@ export default function CheckoutPage() {
           status: 'pending',
           paymentMethod: paymentMethod,
           paymentStatus: paymentMethod === 'cod' ? 'pending' : 'pending',
-          finalAmount: getTotal() + 50,
+          finalAmount: getTotal() + deliveryFee,
           notes: null,
           items: items.map(item => ({
             name: item.name,
@@ -284,11 +337,20 @@ export default function CheckoutPage() {
         // TODO: Add actual Razorpay integration later
         // For now, just confirm the order as paid
         clearCart();
-        router.push(`/orders/${result.orderId}`);
+        // Redirect to success page if guest, otherwise to orders page
+        if (!isLoggedInAtStart) {
+          router.push(`/guest-checkout-success/${result.orderId}`);
+        } else {
+          router.push(`/orders/${result.orderId}`);
+        }
       } else {
-        // COD - redirect directly to orders page
+        // COD - redirect to success page if guest, otherwise to orders page
         clearCart();
-        router.push(`/orders/${result.orderId}`);
+        if (!isLoggedInAtStart) {
+          router.push(`/guest-checkout-success/${result.orderId}`);
+        } else {
+          router.push(`/orders/${result.orderId}`);
+        }
       }
     } catch (error) {
       console.error('Error creating order:', error);
@@ -304,26 +366,26 @@ export default function CheckoutPage() {
           <ArrowLeft className="w-4 h-4" /> Back to Shop
         </Link>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-12">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 md:gap-8 lg:gap-12">
           {/* Main Checkout Form */}
-          <div className="lg:col-span-2 space-y-8">
+          <div className="lg:col-span-2 space-y-6 md:space-y-8">
             {/* Steps Indicator */}
-            <div className="flex items-center gap-4 mb-8">
-              <div className={`flex items-center gap-2 ${step >= 1 ? 'text-gray-900' : 'text-gray-400'}`}>
-                <div className={`w-8 h-8 rounded-full flex items-center justify-center border-2 font-bold ${step >= 1 ? 'bg-pink-600 text-white border-pink-600' : 'border-gray-300'}`}>1</div>
-                <span className="font-medium">Details</span>
+            <div className="flex items-center gap-2 md:gap-4 mb-8">
+              <div className={`flex items-center gap-1 md:gap-2 ${step >= 1 ? 'text-gray-900' : 'text-gray-400'}`}>
+                <div className={`w-8 h-8 rounded-full flex items-center justify-center border-2 font-bold text-sm md:text-base ${step >= 1 ? 'bg-pink-600 text-white border-pink-600' : 'border-gray-300'}`}>1</div>
+                <span className="font-medium text-xs md:text-sm">Details</span>
               </div>
-              <div className="w-12 h-px bg-gray-300" />
-              <div className={`flex items-center gap-2 ${step >= 2 ? 'text-gray-900' : 'text-gray-400'}`}>
-                <div className={`w-8 h-8 rounded-full flex items-center justify-center border-2 font-bold ${step >= 2 ? 'bg-pink-600 text-white border-pink-600' : 'border-gray-300'}`}>2</div>
-                <span className="font-medium">Payment</span>
+              <div className="w-4 md:w-12 h-px bg-gray-300" />
+              <div className={`flex items-center gap-1 md:gap-2 ${step >= 2 ? 'text-gray-900' : 'text-gray-400'}`}>
+                <div className={`w-8 h-8 rounded-full flex items-center justify-center border-2 font-bold text-sm md:text-base ${step >= 2 ? 'bg-pink-600 text-white border-pink-600' : 'border-gray-300'}`}>2</div>
+                <span className="font-medium text-xs md:text-sm">Payment</span>
               </div>
             </div>
 
-            <form onSubmit={handleDetailsSubmit} className="bg-white p-8 rounded-xl shadow-sm border border-gray-200 hover:shadow-md transition-all duration-300">
-              <h2 className="text-2xl font-bold text-gray-900 mb-6">Shipping Information</h2>
+            <form onSubmit={handleDetailsSubmit} className="bg-white p-4 md:p-6 lg:p-8 rounded-xl shadow-sm border border-gray-200 hover:shadow-md transition-all duration-300">
+              <h2 className="text-xl md:text-2xl font-bold text-gray-900 mb-6">Shipping Information</h2>
               
-              <div className="grid grid-cols-2 gap-6 mb-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
                 <div className="space-y-2">
                   <label className="text-xs uppercase tracking-widest font-bold text-gray-600">First Name</label>
                   <input
@@ -348,7 +410,7 @@ export default function CheckoutPage() {
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-6 mb-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
                 <div className="space-y-2">
                   <label className="text-xs uppercase tracking-widest font-bold text-gray-600">Email</label>
                   <input
@@ -420,7 +482,7 @@ export default function CheckoutPage() {
                     />
                   </div>
 
-                  <div className="grid grid-cols-2 gap-6 mb-8">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
                     <div className="space-y-2">
                       <label className="text-xs uppercase tracking-widest font-bold text-gray-600">City</label>
                       <input
@@ -476,10 +538,10 @@ export default function CheckoutPage() {
               </button>
             </form>
             {step === 2 && (
-              <form onSubmit={handlePaymentSubmit} className="bg-white p-8 rounded-xl shadow-sm border border-gray-200 hover:shadow-md transition-all duration-300">
-                <h2 className="text-2xl font-bold text-gray-900 mb-6">Payment Method</h2>
+              <form onSubmit={handlePaymentSubmit} className="bg-white p-4 md:p-6 lg:p-8 rounded-xl shadow-sm border border-gray-200 hover:shadow-md transition-all duration-300">
+                <h2 className="text-xl md:text-2xl font-bold text-gray-900 mb-6">Payment Method</h2>
                 
-                <div className="space-y-4 mb-8">
+                <div className="space-y-3 md:space-y-4 mb-8">
                   {/* COD Option */}
                   <label className={`flex items-start p-4 border-2 rounded-lg cursor-pointer transition-all ${
                     paymentMethod === 'cod'
@@ -549,7 +611,7 @@ export default function CheckoutPage() {
                 {paymentMethod === 'split' && (
                   <div className="mb-8">
                     <SplitPaymentUI 
-                      totalAmount={getTotal() + 50}
+                      totalAmount={getItemsOnlySubtotal() + deliveryFee}
                       cakeName={items.map(i => i.name).join(', ')}
                       onPaymentLinksGenerated={(links) => {
                         setSplitPaymentLinks(links);
@@ -559,20 +621,20 @@ export default function CheckoutPage() {
                   </div>
                 )}
 
-                <div className="flex gap-4">
+                <div className="flex gap-3 md:gap-4">
                   <button
                     type="button"
                     onClick={() => setStep(1)}
-                    className="flex-1 py-4 border-2 border-gray-300 text-gray-900 uppercase tracking-widest font-bold hover:bg-gray-50 transition-all rounded-lg"
+                    className="flex-1 py-3 md:py-4 border-2 border-gray-300 text-gray-900 uppercase tracking-widest font-bold text-xs md:text-sm hover:bg-gray-50 transition-all rounded-lg"
                   >
                     Back
                   </button>
                   <button
                     type="submit"
                     disabled={loading || (paymentMethod === 'split' && splitPaymentLinks.length === 0)}
-                    className="flex-1 py-4 bg-pink-600 text-white uppercase tracking-widest font-bold hover:bg-pink-700 transition-all duration-300 rounded-lg shadow-sm hover:shadow-md disabled:opacity-50"
+                    className="flex-1 py-3 md:py-4 bg-pink-600 text-white uppercase tracking-widest font-bold text-xs md:text-sm hover:bg-pink-700 transition-all duration-300 rounded-lg shadow-sm hover:shadow-md disabled:opacity-50"
                   >
-                    {loading ? 'Processing...' : `Pay ₹${getTotal() + 50}`}
+                    {loading ? 'Processing...' : `Pay ₹${(getItemsOnlySubtotal() + deliveryFee).toFixed(0)}`}
                   </button>
                 </div>
               </form>
@@ -581,14 +643,31 @@ export default function CheckoutPage() {
 
           {/* Order Summary */}
           <div className="lg:col-span-1">
-            <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200 hover:shadow-md transition-all duration-300 sticky top-8">
-              <h3 className="text-xl font-bold text-gray-900 mb-6">Order Summary</h3>
+            <div className="bg-white p-4 md:p-6 rounded-xl shadow-sm border border-gray-200 hover:shadow-md transition-all duration-300 sticky top-8">
+              <h3 className="text-lg md:text-xl font-bold text-gray-900 mb-6">Order Summary</h3>
               
-              <div className="space-y-4 mb-6 max-h-96 overflow-y-auto pr-2">
+              <div className="space-y-3 md:space-y-4 mb-6 max-h-96 overflow-y-auto pr-2">
                 {items.map((item, idx) => (
                   <div key={`${item.id}-${idx}`} className="flex gap-4 text-sm border-b border-gray-100 pb-4">
-                    <div className="w-16 h-16 bg-pink-50 rounded-lg flex items-center justify-center text-xl shrink-0 border border-pink-100">
-                      {item.image || '🎂'}
+                    <div className="w-16 h-16 bg-gray-50 rounded-lg flex items-center justify-center text-xl shrink-0 overflow-hidden border border-gray-200">
+                      {item.image && item.image.startsWith('http') ? (
+                        <img 
+                          src={item.image} 
+                          alt={item.name}
+                          className="w-full h-full object-cover"
+                        />
+                      ) : item.image && item.image.length === 1 ? (
+                        <span>{item.image}</span>
+                      ) : (
+                        <img 
+                          src={item.image || '🎂'} 
+                          alt={item.name}
+                          className="w-full h-full object-cover"
+                          onError={(e) => {
+                            (e.target as HTMLImageElement).style.display = 'none';
+                          }}
+                        />
+                      )}
                     </div>
                     <div className="flex-1">
                       <div className="flex justify-between mb-1">
@@ -606,16 +685,16 @@ export default function CheckoutPage() {
 
               <div className="border-t border-gray-100 pt-4 space-y-2 mb-6">
                 <div className="flex justify-between text-sm text-gray-600">
-                  <span>Subtotal</span>
-                  <span>₹{getTotal()}</span>
+                  <span>Subtotal (Items)</span>
+                  <span>₹{getItemsOnlySubtotal().toFixed(0)}</span>
                 </div>
                 <div className="flex justify-between text-sm text-gray-600">
                   <span>Delivery</span>
-                  <span>₹50</span>
+                  <span>₹{deliveryFee}</span>
                 </div>
                 <div className="flex justify-between text-lg font-medium pt-2 border-t border-gray-100">
                   <span>Total</span>
-                  <span>₹{getTotal() + 50}</span>
+                  <span>₹{(getItemsOnlySubtotal() + deliveryFee).toFixed(0)}</span>
                 </div>
               </div>
 

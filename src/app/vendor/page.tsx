@@ -34,6 +34,8 @@ export default function VendorDashboard() {
   const [stats, setStats] = useState<DashboardData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [resetting, setResetting] = useState(false);
+  const [showApprovalMessage, setShowApprovalMessage] = useState(false);
 
   const [revenueData, setRevenueData] = useState<Array<{ date: string; revenue: number; orders: number }>>([]);
   const [orderStatusData, setOrderStatusData] = useState<Array<{ name: string; value: number; fill: string }>>([]);
@@ -41,17 +43,41 @@ export default function VendorDashboard() {
   const [cakes, setCakes] = useState<Cake[]>([]);
   const [deletingId, setDeletingId] = useState<string | null>(null);
 
+  // Handle approval message visibility - show only on first login for 10 seconds
+  useEffect(() => {
+    if (stats?.approvalStatus === 'approved' && !localStorage.getItem('approvalMessageShown')) {
+      setShowApprovalMessage(true);
+      localStorage.setItem('approvalMessageShown', 'true');
+      
+      // Auto-hide after 10 seconds
+      const timer = setTimeout(() => {
+        setShowApprovalMessage(false);
+      }, 10000);
+      
+      return () => clearTimeout(timer);
+    }
+  }, [stats?.approvalStatus]);
+
   useEffect(() => {
     const fetchDashboard = async () => {
       try {
-        const response = await fetch('/api/vendor/dashboard', { credentials: 'include' });
+        const response = await fetch('/api/vendor/dashboard', { 
+          credentials: 'include',
+          cache: 'no-store',
+        });
         if (!response.ok) throw new Error('Failed to fetch dashboard');
         const data: DashboardData = await response.json();
+        console.log('Dashboard data:', data);
+        console.log('onboardingStatus:', data.onboardingStatus);
+        console.log('approvalStatus:', data.approvalStatus);
         setStats(data);
 
         // Fetch actual weekly revenue data from API
         try {
-          const weeklyResponse = await fetch('/api/vendor/analytics/weekly-revenue', { credentials: 'include' });
+          const weeklyResponse = await fetch('/api/vendor/analytics/weekly-revenue', { 
+            credentials: 'include',
+            cache: 'no-store',
+          });
           if (weeklyResponse.ok) {
             const weeklyData = await weeklyResponse.json();
             setRevenueData(weeklyData.weeklyData || []);
@@ -65,7 +91,10 @@ export default function VendorDashboard() {
 
         // Fetch actual order status data from API
         try {
-          const statusResponse = await fetch('/api/vendor/analytics/order-status', { credentials: 'include' });
+          const statusResponse = await fetch('/api/vendor/analytics/order-status', { 
+            credentials: 'include',
+            cache: 'no-store',
+          });
           if (statusResponse.ok) {
             const statusData = await statusResponse.json();
             setOrderStatusData(statusData.statusData || []);
@@ -79,7 +108,10 @@ export default function VendorDashboard() {
 
         // Fetch actual top products for this vendor
         try {
-          const productsResponse = await fetch('/api/vendor/products/top', { credentials: 'include' });
+          const productsResponse = await fetch('/api/vendor/products/top', { 
+            credentials: 'include',
+            cache: 'no-store',
+          });
           if (productsResponse.ok) {
             const productsData = await productsResponse.json();
             setTopProducts(productsData);
@@ -94,7 +126,10 @@ export default function VendorDashboard() {
 
         // Fetch cakes for this vendor
         try {
-          const cakesResponse = await fetch('/api/vendor/cakes', { credentials: 'include' });
+          const cakesResponse = await fetch('/api/vendor/cakes', { 
+            credentials: 'include',
+            cache: 'no-store',
+          });
           if (cakesResponse.ok) {
             const cakesData = await cakesResponse.json();
             setCakes(cakesData || []);
@@ -113,13 +148,37 @@ export default function VendorDashboard() {
     };
 
     fetchDashboard();
+
+    // Refetch data when page comes into focus
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        console.log('Page became visible, refetching dashboard...');
+        fetchDashboard();
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
   }, []);
 
   if (loading) return <div className="p-6 text-center text-gray-600 font-medium">Loading dashboard...</div>;
   if (error) return <div className="p-6 text-red-600 font-semibold">Error: {error}</div>;
   if (!stats) return <div className="p-6 text-red-600 font-semibold">No data available</div>;
 
+  // Debug: log all values
+  console.log('=== DASHBOARD VALUES ===');
+  console.log('Full stats:', stats);
+  console.log('onboardingStatus:', stats.onboardingStatus);
+  console.log('approvalStatus:', stats.approvalStatus);
+  
   const needsOnboarding = stats.onboardingStatus !== 'completed' && stats.approvalStatus === 'pending';
+  console.log('needsOnboarding condition:', needsOnboarding, {
+    onboardingStatus: stats.onboardingStatus,
+    approvalStatus: stats.approvalStatus,
+  });
   const isApproved = stats.approvalStatus === 'approved';
   const isRejected = stats.approvalStatus === 'rejected';
 
@@ -148,28 +207,60 @@ export default function VendorDashboard() {
     }
   };
 
+  const handleResetVendor = async () => {
+    if (!window.confirm('⚠️ This will delete ALL vendor data and reset your account. You will need to logout and login again. Are you sure?')) {
+      return;
+    }
+
+    setResetting(true);
+    try {
+      const response = await fetch('/api/vendor/reset', {
+        method: 'POST',
+        credentials: 'include',
+      });
+
+      const data = await response.json();
+
+      if (response.ok || data.redirectToLogin) {
+        alert('✅ ' + (data.message || 'Vendor reset successfully. Redirecting to login...'));
+        // Redirect to logout
+        window.location.href = '/api/auth/signout';
+      } else {
+        alert('Error: ' + (data.error || 'Failed to reset vendor'));
+      }
+    } catch (err) {
+      alert('Error: ' + (err instanceof Error ? err.message : 'Failed to reset vendor'));
+    } finally {
+      setResetting(false);
+    }
+  };
+
   return (
     <div className="space-y-6 bg-linear-to-br from-gray-50 to-white p-6 rounded-lg pt-32 mt-0">
-      {/* Onboarding Status Alert */}
-      {needsOnboarding && (
-        <div className="bg-blue-50 border-l-4 border-blue-600 rounded-lg p-4 flex items-start gap-3">
-          <AlertCircle className="w-6 h-6 text-blue-600 shrink-0 mt-0.5" />
-          <div className="flex-1">
-            <h3 className="font-semibold text-blue-900">Complete Your Onboarding</h3>
-            <p className="text-sm text-blue-700 mt-1">
-              Fill out your business details to start selling. Your information will be reviewed by our team.
-            </p>
-            <Link href="/vendor/onboarding">
-              <button className="mt-3 px-4 py-2 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition">
-                Continue Onboarding
-              </button>
-            </Link>
-          </div>
-        </div>
-      )}
+      {/* Refresh Button */}
+      <div className="flex justify-end gap-2">
+        <button
+          onClick={handleResetVendor}
+          disabled={resetting}
+          className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 font-semibold text-sm disabled:opacity-50"
+          title="Reset vendor and clear all data"
+        >
+          {resetting ? '⏳ Resetting...' : '🔄 Reset Vendor'}
+        </button>
+        <button
+          onClick={() => {
+            console.log('Manual refresh clicked');
+            window.location.reload();
+          }}
+          className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-semibold text-sm"
+          title="Hard refresh dashboard - clears all caches"
+        >
+          🔄 Hard Refresh
+        </button>
+      </div>
 
-      {isApproved && (
-        <div className="bg-green-50 border-l-4 border-green-600 rounded-lg p-4 flex items-start gap-3">
+      {isApproved && showApprovalMessage && (
+        <div className="bg-green-50 border-l-4 border-green-600 rounded-lg p-4 flex items-start gap-3 animate-in fade-in slide-in-from-top-2">
           <CheckCircle className="w-6 h-6 text-green-600 shrink-0 mt-0.5" />
           <div>
             <h3 className="font-semibold text-green-900">Onboarding Approved! 🎉</h3>
@@ -433,11 +524,10 @@ export default function VendorDashboard() {
           </div>
         )}
 
-        {cakes.length > 0 && cakes.length < 4 && (
+        {cakes.length > 0 && (
           <div className="mt-6 p-4 bg-blue-50 rounded-lg border border-blue-200">
             <p className="text-sm text-blue-900">
-              <span className="font-semibold">{cakes.length}/4</span> cakes uploaded. You can add{' '}
-              <span className="font-semibold">{4 - cakes.length}</span> more cake{4 - cakes.length !== 1 ? 's' : ''}.
+              <span className="font-semibold">{cakes.length}</span> cake{cakes.length !== 1 ? 's' : ''} uploaded. You can upload more anytime!
             </p>
           </div>
         )}

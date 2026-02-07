@@ -1,22 +1,26 @@
-import { PrismaClient } from '@prisma/client';
 import { NextRequest, NextResponse } from 'next/server';
-
-const prisma = new PrismaClient();
+import { db as prisma } from '@/lib/db/client';
+import bcrypt from 'bcryptjs';
 
 export async function POST(request: NextRequest) {
   try {
     const formData = await request.formData();
-    const vendorId = formData.get('vendorId') as string;
+    let vendorId = formData.get('vendorId') as string;
+    const sessionVendorId = formData.get('sessionVendorId') as string;
+    const accountEmail = formData.get('accountEmail') as string;
+    const accountPassword = formData.get('accountPassword') as string;
     const dataString = formData.get('data') as string;
 
-    if (!vendorId) {
-      return NextResponse.json(
-        { message: 'Vendor ID is required' },
-        { status: 400 }
-      );
-    }
-
     const data = JSON.parse(dataString);
+
+    // Use sessionVendorId if available (already set in Account), otherwise use vendorId or generate new one
+    if (sessionVendorId) {
+      vendorId = sessionVendorId;
+      console.log('Using sessionVendorId:', vendorId);
+    } else if (!vendorId) {
+      vendorId = `vendor-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+      console.log('Generated new vendorId:', vendorId);
+    }
 
     // Ensure vendor exists in the database
     const vendorExists = await prisma.vendor.findUnique({
@@ -25,12 +29,21 @@ export async function POST(request: NextRequest) {
 
     if (!vendorExists) {
       // Create vendor record if it doesn't exist
-      // Generate slug from business name
-      const slug = data.businessName
+      // Generate slug from business name with uniqueness check
+      let baseSlug = data.businessName
         .toLowerCase()
         .trim()
         .replace(/\s+/g, '-')
         .replace(/[^\w-]/g, '');
+      
+      let slug = baseSlug;
+      let counter = 1;
+      
+      // Check if slug already exists and make it unique
+      while (await prisma.vendor.findUnique({ where: { slug } })) {
+        slug = `${baseSlug}-${counter}`;
+        counter++;
+      }
       
       await prisma.vendor.create({
         data: {
@@ -89,6 +102,9 @@ export async function POST(request: NextRequest) {
         ownerName: data.ownerName,
         ownerPhone: data.ownerPhone,
         ownerEmail: data.ownerEmail,
+        shopPhone: data.shopPhone,
+        shopEmail: data.shopEmail,
+        shopAddress: data.shopAddress,
         bankAccountNumber: data.bankAccountNumber,
         bankIfscCode: data.bankIfscCode,
         bankAccountHolderName: data.bankAccountHolderName,
@@ -103,6 +119,9 @@ export async function POST(request: NextRequest) {
         ownerName: data.ownerName,
         ownerPhone: data.ownerPhone,
         ownerEmail: data.ownerEmail,
+        shopPhone: data.shopPhone,
+        shopEmail: data.shopEmail,
+        shopAddress: data.shopAddress,
         bankAccountNumber: data.bankAccountNumber,
         bankIfscCode: data.bankIfscCode,
         bankAccountHolderName: data.bankAccountHolderName,
@@ -143,10 +162,40 @@ export async function POST(request: NextRequest) {
     });
 
     // Link the Account record to the Vendor by updating vendorId
-    await prisma.account.updateMany({
-      where: { email: data.ownerEmail },
-      data: { vendorId: vendorId },
-    });
+    // Use accountEmail (login email) instead of ownerEmail to ensure correct account is updated
+    // Use upsert to create the Account if it doesn't exist
+    if (accountEmail) {
+      try {
+        // Hash password if provided
+        let hashedPassword: string | undefined;
+        if (accountPassword) {
+          hashedPassword = await bcrypt.hash(accountPassword, 10);
+        }
+
+        const updatedAccount = await prisma.account.upsert({
+          where: { email: accountEmail },
+          update: {
+            vendorId: vendorId,
+            ...(hashedPassword && { password: hashedPassword }),
+          },
+          create: {
+            email: accountEmail,
+            password: hashedPassword || null,
+            name: data.ownerName || 'Vendor User',
+            phone: data.ownerPhone,
+            role: 'vendor',
+            vendorId: vendorId,
+            isActive: true,
+            isVerified: true,
+          },
+        });
+        console.log(`✅ Account linked/created for email ${accountEmail} with vendorId: ${vendorId}`, updatedAccount);
+      } catch (accountError) {
+        console.error(`❌ Error updating Account for ${accountEmail}:`, accountError);
+        // Don't fail the whole request if account update fails
+        console.log('Continuing despite account error...');
+      }
+    }
 
     return NextResponse.json(
       { message: 'Onboarding submitted successfully' },

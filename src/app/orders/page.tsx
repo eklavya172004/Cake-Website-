@@ -2,6 +2,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { useSession } from 'next-auth/react';
 import { ChevronLeft, Package, Clock, MapPin, ChevronRight } from 'lucide-react';
 
 interface Order {
@@ -76,11 +77,22 @@ const calculatePaymentStatus = (data: SplitPaymentData) => {
 
 export default function OrdersHistoryPage() {
   const router = useRouter();
+  const { data: session, status } = useSession();
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState('all');
 
   useEffect(() => {
+    // Redirect to login if not authenticated
+    if (status === 'unauthenticated') {
+      router.push('/auth/customer-login');
+      return;
+    }
+
+    if (status !== 'authenticated') {
+      return;
+    }
+
     const fetchOrders = async () => {
       try {
         // Fetch orders from API
@@ -93,48 +105,23 @@ export default function OrdersHistoryPage() {
           setOrders(apiOrders);
           console.log('Orders loaded from API:', apiOrders);
         } else if (response.status === 401) {
-          // Not authenticated - load from localStorage
-          console.log('Not authenticated, loading from localStorage');
-          const storedOrders = localStorage.getItem('userOrders');
-          console.log('Stored orders from localStorage:', storedOrders);
-          if (storedOrders) {
-            const parsedOrders = JSON.parse(storedOrders);
-            setOrders(parsedOrders);
-            console.log('Parsed and set orders:', parsedOrders);
-          } else {
-            console.log('No orders found in localStorage');
-            setOrders([]);
-          }
-        } else {
-          // Other error - fallback to localStorage
-          console.log('API returned status:', response.status, 'falling back to localStorage');
-          const storedOrders = localStorage.getItem('userOrders');
-          if (storedOrders) {
-            const parsedOrders = JSON.parse(storedOrders);
-            setOrders(parsedOrders);
-            console.log('Fallback orders from localStorage:', parsedOrders);
-          } else {
-            setOrders([]);
-          }
+          // Not authenticated - redirect to login
+          router.push('/auth/customer-login');
+          return;
+          // Other error
+          console.log('API returned status:', response.status);
+          setOrders([]);
         }
       } catch (error) {
         console.error('Failed to fetch orders:', error);
-        // Fallback to localStorage
-        const storedOrders = localStorage.getItem('userOrders');
-        console.log('Exception caught, loading from localStorage:', storedOrders);
-        if (storedOrders) {
-          const parsedOrders = JSON.parse(storedOrders);
-          setOrders(parsedOrders);
-        } else {
-          setOrders([]);
-        }
+        setOrders([]);
       } finally {
         setLoading(false);
       }
     };
 
     fetchOrders();
-  }, []);
+  }, [status, router]);
 
   const filteredOrders = filter === 'all' 
     ? orders 

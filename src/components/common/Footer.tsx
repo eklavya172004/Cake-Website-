@@ -13,7 +13,7 @@ export default function Footer() {
           
           {/* Brand Section */}
           <div>
-            <h3 className="text-2xl font-bold text-pink-600 mb-4">🎂 Cake Shop</h3>
+            <h3 className="text-2xl font-bold text-pink-600 mb-4">🎂 Purble Palace</h3>
             <p className="text-gray-600 text-sm mb-6 leading-relaxed">
               Crafting premium custom cakes and delightful memories. Artistic designs meet unforgettable flavors.
             </p>
@@ -62,7 +62,7 @@ export default function Footer() {
               </li>
               <li className="flex gap-3 text-gray-600 hover:text-pink-600 transition-colors cursor-pointer">
                 <Mail className="w-5 h-5 flex-shrink-0 mt-0.5" /> 
-                <span className="font-medium">hello@cakeshop.com</span>
+                <span className="font-medium">hello@purblepalace.in</span>
               </li>
               <li className="flex gap-3 text-gray-600 hover:text-pink-600 transition-colors cursor-pointer">
                 <MapPin className="w-5 h-5 flex-shrink-0 mt-0.5" /> 
@@ -77,7 +77,7 @@ export default function Footer() {
 
         {/* Bottom Footer */}
         <div className="flex flex-col md:flex-row justify-between items-center gap-4">
-          <p className="text-gray-600 text-sm font-medium">© {currentYear} Cake Shop. All rights reserved.</p>
+          <p className="text-gray-600 text-sm font-medium">© {currentYear} Purble Palace. All rights reserved.</p>
           <div className="flex gap-6 text-sm">
             <a href="#" className="text-gray-600 hover:text-pink-600 font-medium transition-colors">Sitemap</a>
             <a href="#" className="text-gray-600 hover:text-pink-600 font-medium transition-colors">Contact Us</a>

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { prisma } from '@/lib/prisma';
+import { db as prisma } from '@/lib/db/client';
 
 export async function GET(request: NextRequest) {
   try {
@@ -32,6 +32,7 @@ export async function GET(request: NextRequest) {
             slug: true,
             logo: true,
             rating: true,
+            deliveryFee: true,
           },
         },
         reviews: {
@@ -58,6 +59,7 @@ export async function GET(request: NextRequest) {
 
       return {
         ...cake,
+        basePrice: parseFloat(cake.basePrice.toString()),
         averageRating: parseFloat(avgRating.toFixed(1)),
         reviewCount: cake.reviews.length,
       };

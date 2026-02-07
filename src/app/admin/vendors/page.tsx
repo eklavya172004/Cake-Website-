@@ -63,7 +63,7 @@ export default function AdminVendors() {
       if (!response.ok) throw new Error('Failed to approve vendor');
       
       setVendors(vendors.map(v => 
-        v.id === vendorId ? { ...v, status: 'approved' } : v
+        v.id === vendorId ? { ...v, status: 'approved', verification: 'verified' } : v
       ));
     } catch (err) {
       alert(err instanceof Error ? err.message : 'An error occurred');
@@ -81,7 +81,7 @@ export default function AdminVendors() {
       if (!response.ok) throw new Error('Failed to reject vendor');
       
       setVendors(vendors.map(v => 
-        v.id === vendorId ? { ...v, status: 'rejected' } : v
+        v.id === vendorId ? { ...v, status: 'rejected', verification: 'rejected' } : v
       ));
     } catch (err) {
       alert(err instanceof Error ? err.message : 'An error occurred');
@@ -244,7 +244,7 @@ export default function AdminVendors() {
                             ? 'bg-green-100 text-green-700'
                             : 'bg-yellow-100 text-yellow-700'
                         }`}>
-                          {vendor.verification.charAt(0).toUpperCase() + vendor.verification.slice(1)}
+                          {vendor.verification ? vendor.verification.charAt(0).toUpperCase() + vendor.verification.slice(1) : 'Pending'}
                         </span>
                       </td>
                       <td className="px-6 py-4">

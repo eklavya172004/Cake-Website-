@@ -173,7 +173,7 @@ If you encounter issues:
 1. Check this guide for your specific problem
 2. Review error messages carefully (they describe the problem)
 3. Contact support through the help center
-4. Email: support@cakeshop.com
+4. Email: support@purblepalace.in
 
 ## What Happens Next
 

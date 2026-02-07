@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
-import { OpenAI } from 'openai';
+import OpenAI from 'openai';
 
-// Initialize OpenAI client lazily to avoid errors during build
+// Lazy initialization
 let openai: OpenAI | null = null;
 
 function getOpenAIClient() {
@@ -15,33 +15,27 @@ function getOpenAIClient() {
 
 export async function POST(req: Request) {
   try {
-    // Check if API key is configured
     if (!process.env.OPENAI_API_KEY) {
       return NextResponse.json(
-        {
-          success: false,
-          error: 'OpenAI API key not configured. Please set OPENAI_API_KEY in environment variables.',
-        },
+        { success: false, error: 'OpenAI API key not configured' },
         { status: 500 }
       );
     }
 
     const { name, flavor, size, toppings, frosting, message } = await req.json();
 
-    // Validate inputs
     if (!name || !flavor) {
       return NextResponse.json(
-        {
-          success: false,
-          error: 'Cake name and flavor are required',
-        },
+        { success: false, error: 'Cake name and flavor are required' },
         { status: 400 }
       );
     }
 
-    // Build detailed prompt for DALL-E
-    const toppingsList = toppings && toppings.length > 0 ? toppings.join(', ') : 'elegantly decorated';
-    
+    const toppingsList =
+      Array.isArray(toppings) && toppings.length > 0
+        ? toppings.join(', ')
+        : 'elegant bakery-style decorations';
+
     const prompt = buildCakePrompt({
       name,
       flavor,
@@ -51,73 +45,63 @@ export async function POST(req: Request) {
       message,
     });
 
-    // Call DALL-E 3 API
     const client = getOpenAIClient();
-    const response = await client.images.generate({
-      model: 'dall-e-3',
-      prompt: prompt,
-      n: 1,
-      size: '1024x1024',
-      quality: 'standard',
-      style: 'vivid',
-    });
 
-    const imageUrl = response.data?.[0]?.url;
+    // Optional timeout protection
+    const controller = new AbortController();
+    setTimeout(() => controller.abort(), 20000); // 20s timeout
+
+    const response = await client.images.generate(
+      {
+        model: 'gpt-image-1',
+        prompt,
+        n: 1,
+        size: '1024x1024',
+        quality: 'low',
+      },
+      { signal: controller.signal }
+    );
+
+    const imageData = response.data?.[0];
+
+    if (!imageData) {
+      return NextResponse.json(
+        { success: false, error: 'No image returned from OpenAI' },
+        { status: 500 }
+      );
+    }
+
+    // ✅ Handle BOTH url and base64
+    const imageUrl =
+      imageData.url ??
+      (imageData.b64_json
+        ? `data:image/png;base64,${imageData.b64_json}`
+        : null);
 
     if (!imageUrl) {
       return NextResponse.json(
-        {
-          success: false,
-          error: 'Failed to generate image from OpenAI',
-        },
+        { success: false, error: 'Image generation failed' },
         { status: 500 }
       );
     }
 
     return NextResponse.json({
-      imageUrl,
       success: true,
-      method: 'openai-dall-e-3',
-      revisedPrompt: response.data?.[0]?.revised_prompt,
+      imageUrl,
+      revisedPrompt: imageData.revised_prompt,
+      model: 'gpt-image-1',
+      size: '1024x1024',
     });
   } catch (error: any) {
     console.error('Error generating cake image:', error);
-
-    // Handle specific OpenAI errors
-    if (error.status === 401) {
-      return NextResponse.json(
-        {
-          success: false,
-          error: 'Invalid OpenAI API key. Please check your OPENAI_API_KEY.',
-        },
-        { status: 401 }
-      );
-    }
-
-    if (error.status === 429) {
-      return NextResponse.json(
-        {
-          success: false,
-          error: 'Rate limit exceeded. Please try again in a moment.',
-        },
-        { status: 429 }
-      );
-    }
-
-    if (error.status === 400) {
-      return NextResponse.json(
-        {
-          success: false,
-          error: 'Invalid request to OpenAI. Please try with different parameters.',
-        },
-        { status: 400 }
-      );
-    }
-
+        // file deleted
     return NextResponse.json(
       {
         success: false,
-        error: error.message || 'Failed to generate cake image',
+        error:
+          error?.name === 'AbortError'
+            ? 'Image generation timed out'
+            : error?.message || 'Image generation failed',
       },
       { status: 500 }
     );
@@ -125,8 +109,8 @@ export async function POST(req: Request) {
 }
 
 /**
- * Build a detailed, vivid prompt for DALL-E 3
- * DALL-E 3 is very prompt-sensitive, so we need to be specific
+ * Prompt optimized for preview images
+ * (resize on frontend)
  */
 function buildCakePrompt({
   name,
@@ -141,81 +125,69 @@ function buildCakePrompt({
   size: string;
   toppings: string;
   frosting: string;
-  message: string;
+  message?: string;
 }): string {
   const sizeDescription = getSizeDescription(size);
-
   const flavorDescription = getFlavorDescription(flavor);
+  const frostingDescription =
+    frostingDescriptions[frosting?.toLowerCase()] || 'smooth buttercream';
 
-  const frostingDescription = frostingDescriptions[frosting?.toLowerCase()] || 'beautifully frosted';
+  let prompt = `A realistic professional bakery photograph of a ${sizeDescription} ${flavorDescription} cake.`;
 
-  let prompt = `A professional bakery-quality photograph of a stunning ${size} ${flavor} cake.`;
-
-  prompt += ` The cake has ${frostingDescription} frosting with an elegant finish.`;
-
-  if (toppings && toppings.trim() !== 'elegantly decorated') {
-    prompt += ` It is decorated with ${toppings}.`;
-  } else {
-    prompt += ` It features elegant decorations and professional presentation.`;
-  }
+  prompt += ` The cake has ${frostingDescription} frosting.`;
+  prompt += ` Decorated with ${toppings}.`;
 
   if (message) {
-    const safeName = message.substring(0, 50).replace(/[<>"]/g, '');
-    prompt += ` The cake displays the text "${safeName}" written in elegant script or lettering on top.`;
+    const safeText = message.substring(0, 40).replace(/[<>"]/g, '');
+    prompt += ` The cake has the text "${safeText}" written neatly on top.`;
   }
 
-  prompt += ` The cake is displayed on a clean white plate or cake stand against a soft, blurred background.`;
-  prompt += ` Professional studio lighting, shallow depth of field, bakery showcase style, 8k quality, mouth-watering presentation.`;
+  prompt += ` Clean background, soft studio lighting, sharp focus, no watermark.`;
 
   return prompt;
 }
 
 function getSizeDescription(size: string): string {
-  const sizeMap: Record<string, string> = {
-    small: 'small (2-4 servings)',
-    medium: 'medium (6-8 servings)',
-    large: 'large (10-12 servings)',
-    xlarge: 'extra-large celebration',
-    '2-seater': 'small intimate',
+  const map: Record<string, string> = {
+    small: 'small',
+    medium: 'medium',
+    large: 'large',
+    xlarge: 'extra large',
+    '2-seater': 'small',
     '4-seater': 'medium',
     '6-seater': 'large',
-    '8-seater': 'extra-large',
+    '8-seater': 'extra large',
   };
 
-  return sizeMap[size?.toLowerCase()] || `${size} sized`;
+  return map[size?.toLowerCase()] || 'medium';
 }
 
 function getFlavorDescription(flavor: string): string {
-  const flavorMap: Record<string, string> = {
-    chocolate: 'rich dark chocolate',
+  const map: Record<string, string> = {
+    chocolate: 'rich chocolate',
     vanilla: 'classic vanilla',
     strawberry: 'fresh strawberry',
-    'red velvet': 'luxurious red velvet',
-    cheesecake: 'creamy cheesecake',
-    carrot: 'moist carrot cake',
-    lemon: 'tangy lemon',
-    funfetti: 'colorful funfetti',
-    'black forest': 'elegant black forest with cherries',
-    'german chocolate': 'german chocolate',
+    'red velvet': 'red velvet',
+    cheesecake: 'cheesecake',
+    carrot: 'carrot cake',
+    lemon: 'lemon',
+    funfetti: 'funfetti',
+    'black forest': 'black forest',
   };
 
-  for (const [key, value] of Object.entries(flavorMap)) {
+  for (const key in map) {
     if (flavor?.toLowerCase().includes(key)) {
-      return value;
+      return map[key];
     }
   }
 
-  return flavor || 'delicious';
+  return flavor;
 }
 
 const frostingDescriptions: Record<string, string> = {
-  'classic': 'smooth white buttercream',
-  'chocolate': 'rich chocolate buttercream',
-  'cream cheese': 'tangy cream cheese',
-  'swiss meringue': 'silky swiss meringue',
-  'fondant': 'smooth white fondant',
-  'ganache': 'glossy chocolate ganache',
-  'ermine': 'luscious ermine',
-  'american buttercream': 'creamy american buttercream',
-  'italian meringue': 'elegant italian meringue',
+  classic: 'smooth white buttercream',
+  chocolate: 'rich chocolate buttercream',
+  'cream cheese': 'cream cheese frosting',
+  fondant: 'smooth fondant',
+  ganache: 'glossy chocolate ganache',
 };

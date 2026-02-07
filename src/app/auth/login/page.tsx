@@ -4,14 +4,19 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { signIn } from 'next-auth/react';
 import Link from 'next/link';
-import { Cake } from 'lucide-react';
+import { Cake, X } from 'lucide-react';
 
 export default function LoginPage() {
   const router = useRouter();
-  const [role, setRole] = useState<'customer' | 'vendor' | 'admin'>('customer');
+  const [role, setRole] = useState<'vendor' | 'admin'>('vendor');
   const [isSignUp, setIsSignUp] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [showForgotPasswordModal, setShowForgotPasswordModal] = useState(false);
+  const [forgotPasswordEmail, setForgotPasswordEmail] = useState('');
+  const [forgotPasswordLoading, setForgotPasswordLoading] = useState(false);
+  const [forgotPasswordError, setForgotPasswordError] = useState('');
+  const [forgotPasswordSuccess, setForgotPasswordSuccess] = useState(false);
 
   const [formData, setFormData] = useState({
     email: '',
@@ -23,6 +28,46 @@ export default function LoginPage() {
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
+  };
+
+  const handleForgotPasswordSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setForgotPasswordError('');
+    setForgotPasswordSuccess(false);
+    setForgotPasswordLoading(true);
+
+    try {
+      if (!forgotPasswordEmail) {
+        setForgotPasswordError('Email is required');
+        setForgotPasswordLoading(false);
+        return;
+      }
+
+      const response = await fetch('/api/auth/forgot-password', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: forgotPasswordEmail }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        setForgotPasswordError(data.error || 'Failed to send reset email');
+        setForgotPasswordLoading(false);
+        return;
+      }
+
+      setForgotPasswordSuccess(true);
+      // Close modal after 3 seconds
+      setTimeout(() => {
+        setShowForgotPasswordModal(false);
+        setForgotPasswordEmail('');
+        setForgotPasswordSuccess(false);
+      }, 3000);
+    } catch (err: any) {
+      setForgotPasswordError(err.message || 'An error occurred');
+      setForgotPasswordLoading(false);
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -59,10 +104,13 @@ export default function LoginPage() {
         return;
       }
 
+      // For signup, store password in sessionStorage to be used during onboarding
+      if (isSignUp) {
+        sessionStorage.setItem('signupPassword', formData.password);
+      }
+
       // Redirect based on role
-      if (role === 'customer') {
-        router.push('/');
-      } else if (role === 'vendor') {
+      if (role === 'vendor') {
         router.push('/vendor');
       } else if (role === 'admin') {
         router.push('/admin');
@@ -74,13 +122,13 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-pink-50 via-purple-50 to-blue-50 flex items-center justify-center p-4">
+    <div className="min-h-screen mt-32 bg-gradient-to-br from-pink-50 via-purple-50 to-blue-50 flex items-center justify-center p-4">
       <div className="w-full max-w-md">
         {/* Header */}
         <div className="text-center mb-8">
           <div className="flex items-center justify-center gap-2 mb-4">
             <Cake className="w-10 h-10 text-pink-600" />
-            <span className="text-2xl font-bold text-gray-900">CakeShop</span>
+            <span className="text-2xl font-bold text-gray-900">PurblePalace</span>
           </div>
           <h1 className="text-3xl font-bold text-gray-900">Welcome Back</h1>
           <p className="text-gray-600 mt-2">
@@ -94,16 +142,15 @@ export default function LoginPage() {
             <label className="block text-sm font-medium text-gray-700 mb-3">
               Select your role
             </label>
-            <div className="grid grid-cols-3 gap-3">
+            <div className="grid grid-cols-2 gap-3">
               {[
-                { id: 'customer', label: 'Customer', icon: '👤' },
                 { id: 'vendor', label: 'Vendor', icon: '🏪' },
                 { id: 'admin', label: 'Admin', icon: '⚙️' },
               ].map((r) => (
                 <button
                   key={r.id}
                   onClick={() => {
-                    setRole(r.id as 'customer' | 'vendor' | 'admin');
+                    setRole(r.id as 'vendor' | 'admin');
                     setError('');
                   }}
                   className={`py-2 px-3 rounded-lg border-2 transition text-center font-medium text-sm ${
@@ -187,6 +234,18 @@ export default function LoginPage() {
               </div>
             )}
 
+            {!isSignUp && (
+              <div className="text-right">
+                <button
+                  type="button"
+                  onClick={() => setShowForgotPasswordModal(true)}
+                  className="text-pink-600 hover:text-pink-700 text-sm font-medium"
+                >
+                  Forgot Password?
+                </button>
+              </div>
+            )}
+
             <button
               type="submit"
               disabled={loading}
@@ -210,14 +269,97 @@ export default function LoginPage() {
             </button>
           </div>
         </div>
-
-        {/* Demo Info */}
-        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 text-sm text-blue-900">
-          <p className="font-semibold mb-2">Demo Credentials:</p>
-          <p>Admin: admin@example.com / password123</p>
-          <p>Vendor: vendor@example.com / password123</p>
-        </div>
       </div>
+
+      {/* Forgot Password Modal */}
+      {showForgotPasswordModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-lg shadow-xl p-6 max-w-sm w-full">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-xl font-bold text-gray-900">Forgot Password?</h2>
+              <button
+                onClick={() => {
+                  setShowForgotPasswordModal(false);
+                  setForgotPasswordEmail('');
+                  setForgotPasswordError('');
+                  setForgotPasswordSuccess(false);
+                }}
+                className="text-gray-400 hover:text-gray-600"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {forgotPasswordSuccess ? (
+              <div className="text-center">
+                <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-green-100 mb-3">
+                  <svg
+                    className="w-6 h-6 text-green-600"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M5 13l4 4L19 7"
+                    />
+                  </svg>
+                </div>
+                <p className="text-green-700 font-medium">
+                  Reset link sent successfully! Check your email for instructions.
+                </p>
+              </div>
+            ) : (
+              <form onSubmit={handleForgotPasswordSubmit} className="space-y-4">
+                <p className="text-gray-600 text-sm mb-4">
+                  Enter your email address and we'll send you a link to reset your password.
+                </p>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Email Address
+                  </label>
+                  <input
+                    type="email"
+                    value={forgotPasswordEmail}
+                    onChange={(e) => setForgotPasswordEmail(e.target.value)}
+                    placeholder="you@example.com"
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500"
+                  />
+                </div>
+
+                {forgotPasswordError && (
+                  <div className="bg-red-50 border border-red-200 text-red-700 px-3 py-2 rounded text-sm">
+                    {forgotPasswordError}
+                  </div>
+                )}
+
+                <button
+                  type="submit"
+                  disabled={forgotPasswordLoading}
+                  className="w-full bg-gradient-to-r from-pink-600 to-purple-600 text-white font-semibold py-2 px-4 rounded-lg hover:shadow-lg transition disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {forgotPasswordLoading ? 'Sending...' : 'Send Reset Link'}
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowForgotPasswordModal(false);
+                    setForgotPasswordEmail('');
+                    setForgotPasswordError('');
+                  }}
+                  className="w-full text-gray-600 hover:text-gray-900 font-medium py-2"
+                >
+                  Cancel
+                </button>
+              </form>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

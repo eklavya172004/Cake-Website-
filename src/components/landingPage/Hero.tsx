@@ -14,7 +14,6 @@ const serviceableAreas = [
   { name: 'Faridabad', pincodes: ['121001', '121002', '121003', '121004'] },
   { name: 'Ghaziabad', pincodes: ['201001', '201002', '201003', '201004'] },
   { name: 'Noida', pincodes: ['201301', '201303', '201304', '201305'] },
-  { name: 'Greater Noida', pincodes: ['201306', '201308', '201310', '203207'] },
 ];
 
 const vendors = [

@@ -1,9 +1,10 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
-import { AlertCircle, CheckCircle, Upload, X, ArrowLeft } from 'lucide-react';
+import { AlertCircle, CheckCircle, X, ArrowLeft } from 'lucide-react';
+import OnboardingStatusPage from './status/page';
 
 interface OnboardingData {
   // Business Information
@@ -17,6 +18,11 @@ interface OnboardingData {
   ownerName: string;
   ownerPhone: string;
   ownerEmail: string;
+
+  // Shop Contact Details (for customers)
+  shopPhone: string;
+  shopEmail: string;
+  shopAddress: string;
 
   // Bank Details
   bankAccountNumber: string;
@@ -38,10 +44,12 @@ interface OnboardingData {
 export default function VendorOnboarding() {
   const { data: session } = useSession();
   const router = useRouter();
-  const [step, setStep] = useState(1);
+  const [step, setStep] = useState<number>(1);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState(false);
+  const [hasSubmittedOnboarding, setHasSubmittedOnboarding] = useState(false);
+  const [checkingStatus, setCheckingStatus] = useState(true);
 
   const [formData, setFormData] = useState<OnboardingData>({
     businessName: '',
@@ -52,6 +60,9 @@ export default function VendorOnboarding() {
     ownerName: '',
     ownerPhone: '',
     ownerEmail: '',
+    shopPhone: '',
+    shopEmail: '',
+    shopAddress: '',
     bankAccountNumber: '',
     bankIfscCode: '',
     bankAccountHolderName: '',
@@ -65,8 +76,49 @@ export default function VendorOnboarding() {
     ],
   });
 
+  // Check if vendor has already submitted onboarding
+  useEffect(() => {
+    const checkOnboardingStatus = async () => {
+      try {
+        const response = await fetch('/api/vendor/onboarding/status', {
+          credentials: 'include',
+        });
+
+        if (response.ok) {
+          setHasSubmittedOnboarding(true);
+        }
+      } catch {
+        // If error, vendor hasn't submitted yet
+        setHasSubmittedOnboarding(false);
+      } finally {
+        setCheckingStatus(false);
+      }
+    };
+
+    if (session?.user) {
+      checkOnboardingStatus();
+    }
+  }, [session]);
+
+  // If vendor has submitted, show status page
+  if (!checkingStatus && hasSubmittedOnboarding) {
+    return <OnboardingStatusPage />;
+  }
+
+  // If still checking, show loading
+  if (checkingStatus) {
+    return (
+      <div className="min-h-screen bg-linear-to-br from-gray-50 to-white p-6 pt-32 flex items-center justify-center">
+        <div className="text-center">
+          <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-pink-600"></div>
+          <p className="text-gray-600 mt-4">Loading...</p>
+        </div>
+      </div>
+    );
+  }
+
   const handleInputChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>,
+    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>,
     areaIndex?: number
   ) => {
     const { name, value } = e.target;
@@ -140,6 +192,25 @@ export default function VendorOnboarding() {
     }
 
     if (currentStep === 3) {
+      if (!formData.shopPhone || !formData.shopEmail || !formData.shopAddress) {
+        setError('All shop contact details are required');
+        return false;
+      }
+      if (!/^\d{10}$/.test(formData.shopPhone)) {
+        setError('Shop phone number must be 10 digits');
+        return false;
+      }
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.shopEmail)) {
+        setError('Invalid shop email address');
+        return false;
+      }
+      if (formData.shopAddress.trim().length < 10) {
+        setError('Please provide a complete shop address');
+        return false;
+      }
+    }
+
+    if (currentStep === 4) {
       if (!formData.bankAccountNumber || !formData.bankIfscCode || !formData.bankAccountHolderName) {
         setError('All bank details are required');
         return false;
@@ -150,7 +221,7 @@ export default function VendorOnboarding() {
       }
     }
 
-    if (currentStep === 4) {
+    if (currentStep === 5) {
       if (
         formData.serviceAreas.some((area) => !area.location || !area.pincodes)
       ) {
@@ -165,7 +236,7 @@ export default function VendorOnboarding() {
   const handleSubmit = async () => {
     if (!validateStep(step)) return;
 
-    if (step < 4) {
+    if (step < 5) {
       setStep(step + 1);
       return;
     }
@@ -176,8 +247,23 @@ export default function VendorOnboarding() {
 
     try {
       const formDataMultipart = new FormData();
-      const vendorId = (session?.user as { vendorId?: string })?.vendorId || '';
-      formDataMultipart.append('vendorId', vendorId);
+      let vendorId = (session?.user as { vendorId?: string })?.vendorId || '';
+      const accountEmail = (session?.user as { email?: string })?.email || '';
+      
+      // Get the password from sessionStorage (stored during signup)
+      const accountPassword = typeof window !== 'undefined' ? sessionStorage.getItem('signupPassword') : null;
+      
+      // If no vendorId exists, create one
+      if (!vendorId) {
+        console.log('No vendorId in session, generating one...');
+        vendorId = `vendor-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+      }
+      
+      formDataMultipart.append('sessionVendorId', vendorId);
+      formDataMultipart.append('accountEmail', accountEmail);
+      if (accountPassword) {
+        formDataMultipart.append('accountPassword', accountPassword);
+      }
       formDataMultipart.append('data', JSON.stringify(formData));
 
       const response = await fetch('/api/vendor/onboarding', {
@@ -204,6 +290,7 @@ export default function VendorOnboarding() {
   const progressSteps = [
     'Business Info',
     'Owner Details',
+    'Shop Contact',
     'Bank Account',
     'Service Areas',
   ];
@@ -233,26 +320,25 @@ export default function VendorOnboarding() {
               <div key={index} className="flex items-center flex-1">
                 <div
                   className={`flex items-center justify-center w-10 h-10 rounded-full font-semibold text-sm ${
-                    index + 1 <= step
+                    index + 1 < step
+                      ? 'bg-pink-600 text-white'
+                      : index + 1 === step
                       ? 'bg-pink-600 text-white'
                       : 'bg-gray-200 text-gray-600'
                   }`}
                 >
                   {index + 1 < step ? '✓' : index + 1}
                 </div>
-                <div className={`flex-1 h-1 mx-2 ${
-                  index + 1 < step ? 'bg-pink-600' : 'bg-gray-200'
-                }`}></div>
+                {index < progressSteps.length - 1 && (
+                  <div className={`flex-1 h-1 mx-2 ${
+                    index + 1 < step ? 'bg-pink-600' : 'bg-gray-200'
+                  }`}></div>
+                )}
               </div>
             ))}
-            <div className={`flex items-center justify-center w-10 h-10 rounded-full font-semibold text-sm ${
-              step === 4 ? 'bg-pink-600 text-white' : 'bg-gray-200 text-gray-600'
-            }`}>
-              {step === 4 ? '4' : '4'}
-            </div>
           </div>
           <p className="text-sm text-gray-600 text-center">
-            Step {step} of 4: {progressSteps[step - 1]}
+            Step {step} of {progressSteps.length}: {progressSteps[step - 1]}
           </p>
         </div>
 
@@ -407,8 +493,60 @@ export default function VendorOnboarding() {
             </div>
           )}
 
-          {/* Step 3: Bank Account */}
+          {/* Step 2.5: Shop Contact Details */}
           {step === 3 && (
+            <div className="space-y-6">
+              <h2 className="text-2xl font-bold text-gray-900">Shop Contact Details</h2>
+              <p className="text-gray-600 text-sm">
+                How customers can reach your shop. These details will be displayed publicly.
+              </p>
+
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  Shop Phone Number *
+                </label>
+                <input
+                  type="tel"
+                  name="shopPhone"
+                  value={formData.shopPhone}
+                  onChange={handleInputChange}
+                  placeholder="10-digit number"
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-transparent outline-none transition"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  Shop Email Address *
+                </label>
+                <input
+                  type="email"
+                  name="shopEmail"
+                  value={formData.shopEmail}
+                  onChange={handleInputChange}
+                  placeholder="shop@example.com"
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-transparent outline-none transition"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  Shop Address *
+                </label>
+                <textarea
+                  name="shopAddress"
+                  value={formData.shopAddress}
+                  onChange={handleInputChange}
+                  placeholder="Full address where customers can visit"
+                  rows={4}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-transparent outline-none transition resize-none"
+                />
+              </div>
+            </div>
+          )}
+
+          {/* Step 3: Bank Account */}
+          {step === 4 && (
             <div className="space-y-6">
               <h2 className="text-2xl font-bold text-gray-900">Bank Account Details</h2>
               <p className="text-gray-600 text-sm">
@@ -460,7 +598,7 @@ export default function VendorOnboarding() {
           )}
 
           {/* Step 4: Service Areas */}
-          {step === 4 && (
+          {step === 5 && (
             <div className="space-y-6">
               <h2 className="text-2xl font-bold text-gray-900">Service Areas</h2>
               <p className="text-gray-600 text-sm">
@@ -591,7 +729,7 @@ export default function VendorOnboarding() {
                   : 'bg-pink-600 hover:bg-pink-700'
               }`}
             >
-              {loading ? 'Processing...' : step === 4 ? 'Submit & Complete' : 'Next'}
+              {loading ? 'Processing...' : step === 5 ? 'Submit & Complete' : 'Next'}
             </button>
           </div>
         </div>

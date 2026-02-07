@@ -1,8 +1,8 @@
-# CakeShop Admin & Vendor Dashboard Setup
+# PurblePalace Admin & Vendor Dashboard Setup
 
 ## 🎯 Project Overview
 
-This is a comprehensive admin and vendor dashboard system for the CakeShop platform with role-based access control, real-time analytics, and complete vendor management.
+This is a comprehensive admin and vendor dashboard system for the PurblePalace platform with role-based access control, real-time analytics, and complete vendor management.
 
 ## 📁 Project Structure
 

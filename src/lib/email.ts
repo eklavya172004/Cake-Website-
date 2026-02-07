@@ -119,7 +119,7 @@ export async function sendVendorOrderNotification(
               <a href="${process.env.NEXTAUTH_URL}/vendor/orders" class="button">View Order in Dashboard</a>
 
               <div class="footer">
-                <p>This is an automated notification from Cake Shop. Please do not reply to this email.</p>
+                <p>This is an automated notification from Purble Palace. Please do not reply to this email.</p>
               </div>
             </div>
           </div>
@@ -128,7 +128,7 @@ export async function sendVendorOrderNotification(
     `;
 
     const result = await resend.emails.send({
-      from: 'orders@cakeshop.com',
+      from: 'orders@purblepalace.in',
       to: vendorEmail,
       subject: `📦 New Order #${orderNumber} - Action Required!`,
       html,
@@ -225,7 +225,7 @@ export async function sendCustomerOrderConfirmation(
               <a href="${process.env.NEXTAUTH_URL}/orders" class="button">Track Your Order</a>
 
               <div class="footer">
-                <p>Thank you for ordering with Cake Shop!</p>
+                <p>Thank you for ordering with Purble Palace!</p>
                 <p>This is an automated confirmation email. Please do not reply to this email.</p>
               </div>
             </div>
@@ -235,7 +235,7 @@ export async function sendCustomerOrderConfirmation(
     `;
 
     const result = await resend.emails.send({
-      from: 'orders@cakeshop.com',
+      from: 'orders@purblepalace.in',
       to: customerEmail,
       subject: `✅ Order Confirmed - #${orderNumber}`,
       html,

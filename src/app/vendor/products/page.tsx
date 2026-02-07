@@ -47,16 +47,22 @@ export default function VendorProducts() {
   useEffect(() => {
     const fetchVerificationStatus = async () => {
       try {
-        const response = await fetch('/api/vendor/onboarding/status', {
+        const response = await fetch('/api/vendor/approval-status', {
           credentials: 'include',
+          cache: 'no-store',
         });
 
         if (response.ok) {
           const data = await response.json();
-          setVerificationStatus(data.status);
+          console.log('Products page - Approval status:', data);
+          setVerificationStatus(data.status || 'pending');
+        } else {
+          console.warn('Failed to fetch approval status:', response.status);
+          setVerificationStatus('pending');
         }
       } catch (err) {
         console.error('Error fetching verification status:', err);
+        setVerificationStatus('pending');
       } finally {
         setCheckingStatus(false);
       }
@@ -178,12 +184,12 @@ export default function VendorProducts() {
             <div className="flex items-center gap-2 mt-2">
               <CheckCircle className="w-5 h-5 text-green-600" />
               <span className="text-sm text-green-700 font-semibold">
-                Your profile is verified ({cakes.length}/4 cakes uploaded)
+                Your profile is verified - Ready to sell
               </span>
             </div>
           )}
         </div>
-        {isApproved && cakes.length < 4 && (
+        {isApproved && (
           <Link href="/vendor/cakes/upload">
             <button className="bg-pink-600 hover:bg-pink-700 text-white font-semibold py-2 px-4 rounded-lg flex items-center gap-2 transition shadow-md hover:shadow-lg">
               <Plus size={18} /> Add Cake
@@ -291,19 +297,10 @@ export default function VendorProducts() {
         </div>
       )}
 
-      {cakes.length > 0 && cakes.length < 4 && (
+      {cakes.length > 0 && (
         <div className="bg-blue-50 border-2 border-blue-200 rounded-lg p-4">
           <p className="text-sm text-blue-900">
-            <span className="font-semibold">{cakes.length}/4</span> cakes uploaded. You can add{' '}
-            <span className="font-semibold">{4 - cakes.length}</span> more cake{4 - cakes.length !== 1 ? 's' : ''}.
-          </p>
-        </div>
-      )}
-
-      {cakes.length >= 4 && (
-        <div className="bg-yellow-50 border-2 border-yellow-200 rounded-lg p-4">
-          <p className="text-sm text-yellow-900">
-            You have reached the maximum limit of 4 cakes. To add more, delete some existing cakes.
+            <span className="font-semibold">{cakes.length}</span> cake{cakes.length !== 1 ? 's' : ''} uploaded. You can upload more anytime!
           </p>
         </div>
       )}

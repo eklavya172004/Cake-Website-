@@ -1,16 +1,41 @@
 import { NextResponse, NextRequest } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
-import { PrismaClient } from '@prisma/client';
+import { db as prisma } from '@/lib/db/client';
 
-const prisma = new PrismaClient();
+// Helper to wait for database connection
+const waitForDb = async (maxAttempts = 5) => {
+  for (let i = 0; i < maxAttempts; i++) {
+    try {
+      await prisma.$queryRaw`SELECT 1`;
+      return true;
+    } catch (error) {
+      if (i < maxAttempts - 1) {
+        await new Promise(resolve => setTimeout(resolve, 100));
+      }
+    }
+  }
+  return false;
+};
 
 export async function GET(request: NextRequest) {
-  let prismaConnection: PrismaClient | null = null;
-  
   try {
-    prismaConnection = new PrismaClient();
-    
+    // Wait for database to be ready
+    const dbReady = await waitForDb();
+    if (!dbReady) {
+      return NextResponse.json({
+        todayOrders: 0,
+        todayRevenue: 0,
+        totalRevenue: 0,
+        rating: 0,
+        completionRate: 0,
+        pendingOrders: 0,
+        totalProducts: 0,
+        onboardingStatus: 'pending',
+        approvalStatus: 'pending',
+      });
+    }
+
     const session = await getServerSession(authOptions);
     console.log('Session:', session);
     
@@ -24,7 +49,7 @@ export async function GET(request: NextRequest) {
     // Get user from Account table using a more flexible approach
     let account;
     try {
-      account = await prismaConnection.account.findFirst({
+      account = await prisma.account.findFirst({
         where: { email: session.user.email },
       });
     } catch (dbError) {
@@ -75,8 +100,13 @@ export async function GET(request: NextRequest) {
 
     // Get vendor details
     let vendor;
+    console.log('📊 Dashboard API - Fetching vendor:', { 
+      accountVendorId: account.vendorId, 
+      accountEmail: account.email,
+      accountRole: account.role 
+    });
     try {
-      vendor = await prismaConnection.vendor.findUnique({
+      vendor = await prisma.vendor.findUnique({
         where: { id: account.vendorId },
         include: {
           orders: {
@@ -112,6 +142,7 @@ export async function GET(request: NextRequest) {
     }
 
     if (!vendor) {
+      console.log('❌ Vendor not found for ID:', account.vendorId);
       return NextResponse.json({
         todayOrders: 0,
         todayRevenue: 0,
@@ -124,6 +155,14 @@ export async function GET(request: NextRequest) {
         approvalStatus: 'pending',
       });
     }
+
+    console.log('✅ Vendor found:', { 
+      vendorId: vendor.id,
+      vendorName: vendor.name,
+      hasProfile: !!vendor.profile,
+      approvalStatus: vendor.approvalStatus,
+      approvalStatusType: typeof vendor.approvalStatus,
+    });
 
     const today = new Date().toDateString();
     const todayOrders = (vendor.orders || []).filter(
@@ -159,6 +198,11 @@ export async function GET(request: NextRequest) {
       totalProducts: (vendor.cakes || []).length,
       onboardingStatus: vendor.profile ? 'completed' : 'pending',
       approvalStatus: vendor.approvalStatus || 'pending',
+    }, {
+      headers: {
+        'Cache-Control': 'no-store, no-cache, must-revalidate, max-age=0',
+        'Pragma': 'no-cache',
+      },
     });
   } catch (error) {
     console.error('Vendor dashboard error:', error);
@@ -174,9 +218,5 @@ export async function GET(request: NextRequest) {
       onboardingStatus: 'pending',
       approvalStatus: 'pending',
     });
-  } finally {
-    if (prismaConnection) {
-      await prismaConnection.$disconnect();
-    }
   }
 }

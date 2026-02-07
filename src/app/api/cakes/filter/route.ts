@@ -73,6 +73,7 @@ export async function GET(request: NextRequest) {
               name: true,
               slug: true,
               rating: true,
+              deliveryFee: true,
             },
           },
         },
@@ -87,7 +88,10 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({
       success: true,
-      data: cakes,
+      data: cakes.map(cake => ({
+        ...cake,
+        basePrice: parseFloat(cake.basePrice.toString()),
+      })),
       pagination: {
         total,
         limit,

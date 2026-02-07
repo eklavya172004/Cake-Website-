@@ -15,6 +15,7 @@ interface CakeProduct {
   discount?: number;
   flavor?: string;
   vendorId?: string;
+  vendorName?: string;
   slug?: string;
 }
 
@@ -77,10 +78,11 @@ export default function Home() {
           id: cake.id,
           name: cake.name,
           price: cake.basePrice,
-          rating: 4.9,
-          reviews: Math.floor(Math.random() * 5000) + 500,
-          image: "🍰",
+          rating: cake.vendor?.rating || 4.9,
+          reviews: cake.vendor?.totalReviews || Math.floor(Math.random() * 5000) + 500,
+          image: cake.images?.[0] || cake.vendor?.logo || "🍰", // Show first cake image, fallback to vendor logo, then emoji
           vendorId: cake.vendor?.id || cake.vendorId,
+          vendorName: cake.vendor?.name || "Unknown Vendor",
           slug: cake.slug,
           flavor: cake.category,
         }));
@@ -222,7 +224,7 @@ export default function Home() {
       <section className="py-20 px-4 bg-gradient-to-r from-red-50 via-orange-50 to-pink-50">
         <div className="max-w-6xl mx-auto">
           <div className="text-center mb-16">
-            <h2 className="text-4xl font-bold text-gray-900 mb-4 animate-fade-in">Why Choose PurplePalace</h2>
+            <h2 className="text-4xl font-bold text-gray-900 mb-4 animate-fade-in">Why Choose PurblePalace</h2>
             <p className="text-gray-700 text-lg animate-fade-in animation-delay-200">Everything you need for the perfect cake experience</p>
           </div>
 
@@ -344,7 +346,24 @@ export default function Home() {
                 >
                 {/* Cake Image */}
                 <div className="relative bg-gradient-to-br from-pink-50 to-orange-50 aspect-square flex items-center justify-center overflow-hidden group">
-                  <div className="text-6xl group-hover:scale-110 transition">{cake.image}</div>
+                  {cake.image && cake.image.startsWith('http') ? (
+                    <img 
+                      src={cake.image} 
+                      alt={cake.name}
+                      className="w-full h-full object-cover group-hover:scale-110 transition"
+                    />
+                  ) : cake.image && cake.image.length === 1 ? (
+                    <div className="text-6xl group-hover:scale-110 transition">{cake.image}</div>
+                  ) : (
+                    <img 
+                      src={cake.image || 'https://via.placeholder.com/400?text=Cake'} 
+                      alt={cake.name}
+                      className="w-full h-full object-cover group-hover:scale-110 transition"
+                      onError={(e) => {
+                        (e.target as HTMLImageElement).src = 'https://via.placeholder.com/400?text=Cake';
+                      }}
+                    />
+                  )}
                   {cake.discount && (
                     <div className="absolute top-3 right-3 bg-pink-600 text-white text-xs font-bold px-3 py-1 rounded-lg">
                       {cake.discount}% OFF
@@ -357,7 +376,12 @@ export default function Home() {
 
                 {/* Cake Details */}
                 <div className="p-4">
-                  <h4 className="font-semibold text-gray-900 text-sm mb-2 line-clamp-2">{cake.name}</h4>
+                  <h4 className="font-semibold text-gray-900 text-sm mb-1 line-clamp-2">{cake.name}</h4>
+                  
+                  {/* Vendor Name */}
+                  {cake.vendorName && (
+                    <p className="text-xs text-gray-500 mb-2">{cake.vendorName}</p>
+                  )}
 
                   {/* Rating */}
                   <div className="flex items-center gap-2 mb-3">
@@ -401,7 +425,24 @@ export default function Home() {
               >
                 {/* Cake Image */}
                 <div className="relative bg-gradient-to-br from-pink-50 to-orange-50 aspect-square flex items-center justify-center overflow-hidden group">
-                  <div className="text-6xl group-hover:scale-110 transition-transform duration-300">{cake.image}</div>
+                  {cake.image && cake.image.startsWith('http') ? (
+                    <img 
+                      src={cake.image} 
+                      alt={cake.name}
+                      className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
+                    />
+                  ) : cake.image && cake.image.length === 1 ? (
+                    <div className="text-6xl group-hover:scale-110 transition-transform duration-300">{cake.image}</div>
+                  ) : (
+                    <img 
+                      src={cake.image || 'https://via.placeholder.com/400?text=Cake'} 
+                      alt={cake.name}
+                      className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
+                      onError={(e) => {
+                        (e.target as HTMLImageElement).src = 'https://via.placeholder.com/400?text=Cake';
+                      }}
+                    />
+                  )}
                   {cake.discount && (
                     <div className="absolute top-3 right-3 bg-pink-600 text-white text-xs font-bold px-3 py-1 rounded-lg shadow-sm">
                       {cake.discount}% OFF
@@ -414,7 +455,12 @@ export default function Home() {
 
                 {/* Cake Details */}
                 <div className="p-4">
-                  <h4 className="font-semibold text-gray-900 text-sm mb-2 line-clamp-2">{cake.name}</h4>
+                  <h4 className="font-semibold text-gray-900 text-sm mb-1 line-clamp-2">{cake.name}</h4>
+                  
+                  {/* Vendor Name */}
+                  {cake.vendorName && (
+                    <p className="text-xs text-gray-500 mb-2">{cake.vendorName}</p>
+                  )}
 
                   {/* Rating */}
                   <div className="flex items-center gap-2 mb-3">
@@ -457,7 +503,18 @@ export default function Home() {
               >
                 {/* Cake Image */}
                 <div className="relative bg-gradient-to-br from-red-50 to-pink-50 aspect-square flex items-center justify-center overflow-hidden group">
-                  <div className="text-6xl group-hover:scale-110 transition">{cake.image}</div>
+                  {cake.image && (cake.image.startsWith('http') || cake.image.startsWith('/')) ? (
+                    <img
+                      src={cake.image}
+                      alt={cake.name}
+                      className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                      onError={(e) => {
+                        (e.target as HTMLImageElement).style.display = 'none';
+                      }}
+                    />
+                  ) : (
+                    <div className="text-6xl group-hover:scale-110 transition">{cake.image || "🎂"}</div>
+                  )}
                   {cake.discount && (
                     <div className="absolute top-3 right-3 bg-red-500 text-white text-xs font-bold px-2 py-1 rounded">
                       {cake.discount}% OFF
@@ -470,7 +527,12 @@ export default function Home() {
 
                 {/* Cake Details */}
                 <div className="p-4">
-                  <h4 className="font-semibold text-gray-900 text-sm mb-2 line-clamp-2">{cake.name}</h4>
+                  <h4 className="font-semibold text-gray-900 text-sm mb-1 line-clamp-2">{cake.name}</h4>
+                  
+                  {/* Vendor Name */}
+                  {cake.vendorName && (
+                    <p className="text-xs text-gray-500 mb-2">{cake.vendorName}</p>
+                  )}
 
                   {/* Rating */}
                   <div className="flex items-center gap-2 mb-3">
@@ -535,7 +597,18 @@ export default function Home() {
               >
                 {/* Cake Image */}
                 <div className="relative bg-gray-100 aspect-square flex items-center justify-center overflow-hidden group">
-                  <div className="text-6xl group-hover:scale-110 transition">{cake.image}</div>
+                  {cake.image && (cake.image.startsWith('http') || cake.image.startsWith('/')) ? (
+                    <img 
+                      src={cake.image} 
+                      alt={cake.name}
+                      className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                      onError={(e) => {
+                        (e.target as HTMLImageElement).style.display = 'none';
+                      }}
+                    />
+                  ) : (
+                    <div className="text-6xl group-hover:scale-110 transition">{cake.image || "🎂"}</div>
+                  )}
                   {cake.discount && (
                     <div className="absolute top-3 right-3 bg-pink-600 text-white text-xs font-bold px-3 py-1 rounded-lg">
                       {cake.discount}% OFF
@@ -586,7 +659,7 @@ export default function Home() {
       <section className="py-16 px-4 bg-white">
         <div className="max-w-6xl mx-auto">
           <h3 className="text-3xl font-bold text-gray-900 mb-12 text-center">
-            Why Choose PurplePalace For Online Cake Delivery?
+            Why Choose PurblePalace For Online Cake Delivery?
           </h3>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">

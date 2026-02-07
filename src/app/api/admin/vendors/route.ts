@@ -1,10 +1,9 @@
 import { NextResponse } from 'next/server';
-import { PrismaClient } from '@prisma/client';
-
-const prisma = new PrismaClient();
+import { db as prisma } from '@/lib/db/client';
 
 export async function GET() {
   try {
+    console.log('=== ADMIN VENDORS API CALLED ===');
     const vendors = await prisma.vendor.findMany({
       include: {
         profile: true,
@@ -31,7 +30,7 @@ export async function GET() {
       rating: vendor.rating || 0,
       revenue: 0,
       status: vendor.approvalStatus,
-      verification: vendor.verificationStatus,
+      verification: vendor.profile?.verificationStatus || 'pending',
       profile: vendor.profile ? {
         businessName: vendor.profile.businessName,
         businessType: vendor.profile.businessType,

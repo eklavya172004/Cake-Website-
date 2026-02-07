@@ -70,7 +70,7 @@ export default function VendorLayout({
         <div className="p-4 border-b border-gray-700 flex items-center justify-between">
           {sidebarOpen && (
             <div>
-              <div className="font-bold text-xl">CakeShop</div>
+              <div className="font-bold text-xl">PurblePalace</div>
               <div className="text-xs text-gray-400">Vendor Panel</div>
             </div>
           )}

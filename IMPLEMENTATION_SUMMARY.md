@@ -1,4 +1,4 @@
-# CakeShop Admin & Vendor Dashboard - Complete Implementation Summary
+# PurblePalace Admin & Vendor Dashboard - Complete Implementation Summary
 
 ## ✅ What Has Been Built
 

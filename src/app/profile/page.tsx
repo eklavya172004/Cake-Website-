@@ -93,7 +93,7 @@ export default function UserDashboard() {
   ];
 
   const supportChannels = [
-    { channel: 'Email', contact: 'support@cakeshop.com', icon: 'E', response: '24 hours' },
+    { channel: 'Email', contact: 'support@purblepalace.in', icon: 'E', response: '24 hours' },
     { channel: 'Phone', contact: '+91 1800-CAKE-123', icon: 'P', response: '2 hours' },
     { channel: 'Live Chat', contact: 'Available 10 AM - 10 PM', icon: 'C', response: 'Instant' },
     { channel: 'WhatsApp', contact: '+91 98765 43210', icon: 'W', response: '30 mins' },
@@ -145,36 +145,36 @@ export default function UserDashboard() {
   }
 
   return (
-    <div className="min-h-screen mt-10 pt-32 bg-linear-to-br from-white via-pink-50 to-orange-50">
-      <div className="sticky top-32 z-40 bg-white/80 backdrop-blur-md border-b border-pink-100 shadow-sm">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex items-center justify-between">
-          <h1 className="text-2xl font-bold bg-linear-to-r from-pink-600 to-orange-600 bg-clip-text text-transparent">
+    <div className="min-h-screen mt-10 pt-20 md:pt-32 bg-linear-to-br from-white via-pink-50 to-orange-50">
+      <div className="sticky top-20 mt-20 md:mt-0 md:top-32 z-40 bg-white/80 backdrop-blur-md border-b border-pink-100 shadow-sm">
+        <div className="max-w-7xl mx-auto px-4  md:px-6 lg:px-8 py-3 md:py-4 flex items-center justify-between">
+          <h1 className="text-xl md:text-2xl font-bold bg-linear-to-r from-pink-600 to-orange-600 bg-clip-text text-transparent">
             Account Dashboard
           </h1>
           <button
             onClick={handleLogout}
-            className="flex items-center gap-2 px-4 py-2 text-red-600 hover:bg-red-50 rounded-lg transition-all duration-200 font-medium"
+            className="flex items-center gap-2 px-3 md:px-4 py-2 text-red-600 hover:bg-red-50 rounded-lg transition-all duration-200 font-medium text-sm md:text-base"
           >
-            <LogOut className="w-5 h-5" />
+            <LogOut className="w-4 h-4 md:w-5 md:h-5" />
             <span className="hidden sm:inline">Logout</span>
           </button>
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 lg:py-12">
-        <div className="grid grid-cols-1 lg:grid-cols-5 gap-8">
+      <div className="max-w-7xl mx-auto px-4 md:px-6 lg:px-8 py-6 md:py-8 lg:py-12">
+        <div className="grid grid-cols-1 lg:grid-cols-5 gap-6 md:gap-8">
           <div className="lg:col-span-1">
             <div className="space-y-4">
-              <div className="bg-white rounded-2xl shadow-lg overflow-hidden border border-pink-100 sticky top-40">
-                <div className="h-24 bg-linear-to-r from-pink-600 via-pink-500 to-orange-500"></div>
-                <div className="px-6 pb-6 -mt-12 relative z-10">
+              <div className="bg-white rounded-2xl shadow-lg overflow-hidden border border-pink-100 sticky top-24 md:top-36">
+                <div className="h-20 md:h-24 bg-linear-to-r from-pink-600 via-pink-500 to-orange-500"></div>
+                <div className="px-4 md:px-6 pb-6 md:pb-8 -mt-10 relative z-10">
                   <div className="mb-4">
-                    <div className="w-24 h-24 rounded-full bg-linear-to-br from-pink-400 to-orange-400 flex items-center justify-center text-4xl shadow-lg border-4 border-white">
+                    <div className="w-20 h-20 md:w-24 md:h-24 rounded-full bg-linear-to-br from-pink-400 to-orange-400 flex items-center justify-center text-3xl md:text-4xl shadow-lg border-4 border-white">
                       {user.avatar || 'C'}
                     </div>
                   </div>
-                  <h3 className="font-bold text-lg text-gray-900">{user.name}</h3>
-                  <p className="text-sm text-gray-600 truncate">{user.email}</p>
+                  <h3 className="font-bold text-lg md:text-xl text-gray-900">{user.name}</h3>
+                  <p className="text-xs md:text-sm text-gray-600 truncate">{user.email}</p>
                   <div className="mt-4 pt-4 border-t border-gray-200">
                     <p className="text-xs text-gray-500 mb-1">Member since</p>
                     <p className="text-sm font-semibold text-gray-900">{joinDate}</p>
@@ -182,7 +182,7 @@ export default function UserDashboard() {
                 </div>
               </div>
 
-              <nav className="bg-white rounded-2xl shadow-lg border border-pink-100 p-2">
+              <nav className="bg-white rounded-2xl shadow-lg border border-pink-100 p-1 md:p-2">
                 {[
                   { id: 'profile', label: 'My Profile', icon: User },
                   { id: 'orders', label: 'Orders', icon: Package, badge: orders.length },
@@ -196,16 +196,16 @@ export default function UserDashboard() {
                     <button
                       key={item.id}
                       onClick={() => setActiveSection(item.id as any)}
-                      className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200 mb-1 ${
+                      className={`w-full flex items-center gap-2 md:gap-3 px-3 md:px-4 py-2 md:py-3 rounded-lg transition-all duration-200 mb-1 text-xs md:text-sm ${
                         activeSection === item.id
                           ? 'bg-linear-to-r from-pink-600 to-orange-500 text-white shadow-md'
                           : 'text-gray-700 hover:bg-gray-50'
                       }`}
                     >
-                      <Icon className="w-5 h-5 shrink-0" />
-                      <span className="font-medium text-sm">{item.label}</span>
+                      <Icon className="w-4 h-4 md:w-5 md:h-5 shrink-0" />
+                      <span className="font-medium">{item.label}</span>
                       {item.badge !== undefined && (
-                        <span className={`ml-auto px-2.5 py-0.5 rounded-full text-xs font-bold ${
+                        <span className={`ml-auto px-2 md:px-2.5 py-0.5 rounded-full text-xs font-bold ${
                           activeSection === item.id
                             ? 'bg-white/30'
                             : 'bg-pink-100 text-pink-700'
@@ -218,17 +218,17 @@ export default function UserDashboard() {
                 })}
               </nav>
 
-              <div className="bg-white rounded-2xl shadow-lg border border-pink-100 p-6 hidden lg:block">
-                <h4 className="font-bold text-gray-900 mb-4">Quick Stats</h4>
+              <div className="bg-white rounded-2xl shadow-lg border border-pink-100 p-4 md:p-6 hidden lg:block">
+                <h4 className="font-bold text-gray-900 mb-4 text-sm md:text-base">Quick Stats</h4>
                 <div className="space-y-3">
                   <div className="flex items-center justify-between">
-                    <span className="text-sm text-gray-600">Total Orders</span>
-                    <span className="font-bold text-lg text-pink-600">{orders.length}</span>
+                    <span className="text-xs md:text-sm text-gray-600">Total Orders</span>
+                    <span className="font-bold text-base md:text-lg text-pink-600">{orders.length}</span>
                   </div>
                   <div className="h-px bg-gray-200"></div>
                   <div className="flex items-center justify-between">
-                    <span className="text-sm text-gray-600">Spent</span>
-                    <span className="font-bold text-lg text-green-600">
+                    <span className="text-xs md:text-sm text-gray-600">Spent</span>
+                    <span className="font-bold text-base md:text-lg text-green-600">
                       INR {(orders.reduce((sum, o) => sum + (o.finalAmount || o.totalAmount || 0), 0)).toFixed(0)}
                     </span>
                   </div>
@@ -241,45 +241,45 @@ export default function UserDashboard() {
             {activeSection === 'profile' && (
               <div className="space-y-6">
                 <div className="bg-white rounded-2xl shadow-lg border border-pink-100 overflow-hidden">
-                  <div className="h-32 bg-linear-to-r from-pink-600 via-pink-500 to-orange-500"></div>
-                  <div className="px-8 pb-8">
-                    <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4 -mt-16 relative z-10 mb-8">
-                      <div className="flex items-end gap-4">
-                        <div className="w-32 h-32 rounded-2xl bg-linear-to-br from-pink-400 to-orange-400 flex items-center justify-center text-6xl shadow-lg border-4 border-white">
+                  <div className="h-24 md:h-32 bg-linear-to-r from-pink-600 via-pink-500 to-orange-500"></div>
+                  <div className="px-4 md:px-6 lg:px-8 pb-6 md:pb-8">
+                    <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4 -mt-12 md:-mt-16 relative z-10 mb-6 md:mb-8">
+                      <div className="flex items-end gap-3 md:gap-4">
+                        <div className="w-24 h-24 md:w-32 md:h-32 rounded-2xl bg-linear-to-br from-pink-400 to-orange-400 flex items-center justify-center text-4xl md:text-6xl shadow-lg border-4 border-white">
                           {user.avatar || 'C'}
                         </div>
                         <div className="pb-2">
-                          <h2 className="text-3xl font-bold text-gray-900">{user.name}</h2>
-                          <p className="text-gray-600">Member since {joinDate}</p>
+                          <h2 className="text-2xl md:text-3xl font-bold text-gray-900">{user.name}</h2>
+                          <p className="text-xs md:text-sm text-gray-600">Member since {joinDate}</p>
                         </div>
                       </div>
                       <button 
                         onClick={() => setIsEditModalOpen(true)}
-                        className="px-6 py-2 rounded-lg bg-pink-50 text-pink-600 hover:bg-pink-100 transition-colors font-semibold flex items-center gap-2"
+                        className="px-4 md:px-6 py-2 rounded-lg bg-pink-50 text-pink-600 hover:bg-pink-100 transition-colors font-semibold flex items-center gap-2 text-sm md:text-base"
                       >
-                        <Settings className="w-5 h-5" />
+                        <Settings className="w-4 h-4 md:w-5 md:h-5" />
                         Edit Profile
                       </button>
                     </div>
 
-                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 pt-6 border-t border-gray-100">
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 md:gap-6 pt-4 md:pt-6 border-t border-gray-100">
                       <div>
-                        <p className="text-sm text-gray-600 mb-1">Email Address</p>
-                        <p className="font-semibold text-gray-900 flex items-center gap-2">
-                          <Mail className="w-4 h-4 text-pink-600" />
-                          {user.email}
+                        <p className="text-xs md:text-sm text-gray-600 mb-1">Email Address</p>
+                        <p className="font-semibold text-gray-900 flex items-center gap-2 text-sm md:text-base truncate">
+                          <Mail className="w-4 h-4 text-pink-600 shrink-0" />
+                          <span className="truncate">{user.email}</span>
                         </p>
                       </div>
                       <div>
-                        <p className="text-sm text-gray-600 mb-1">Phone Number</p>
-                        <p className="font-semibold text-gray-900 flex items-center gap-2">
-                          <Phone className="w-4 h-4 text-pink-600" />
+                        <p className="text-xs md:text-sm text-gray-600 mb-1">Phone Number</p>
+                        <p className="font-semibold text-gray-900 flex items-center gap-2 text-sm md:text-base">
+                          <Phone className="w-4 h-4 text-pink-600 shrink-0" />
                           {user.phone || 'Not provided'}
                         </p>
                       </div>
                       <div>
-                        <p className="text-sm text-gray-600 mb-1">Account Status</p>
-                        <p className="font-semibold text-green-600 flex items-center gap-2">
+                        <p className="text-xs md:text-sm text-gray-600 mb-1">Account Status</p>
+                        <p className="font-semibold text-green-600 flex items-center gap-2 text-sm md:text-base">
                           <span className="w-2 h-2 bg-green-600 rounded-full"></span>
                           Active
                         </p>
@@ -288,41 +288,41 @@ export default function UserDashboard() {
                   </div>
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                  <div className="bg-white rounded-xl shadow border border-pink-100 p-6 hover:shadow-lg transition-shadow">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
+                  <div className="bg-white rounded-xl shadow border border-pink-100 p-4 md:p-6 hover:shadow-lg transition-shadow">
                     <div className="flex items-center justify-between mb-2">
-                      <p className="text-sm text-gray-600">Total Orders</p>
-                      <Package className="w-5 h-5 text-pink-600" />
+                      <p className="text-xs md:text-sm text-gray-600">Total Orders</p>
+                      <Package className="w-4 h-4 md:w-5 md:h-5 text-pink-600" />
                     </div>
-                    <p className="text-3xl font-bold text-gray-900">{orders.length}</p>
+                    <p className="text-2xl md:text-3xl font-bold text-gray-900">{orders.length}</p>
                   </div>
-                  <div className="bg-white rounded-xl shadow border border-pink-100 p-6 hover:shadow-lg transition-shadow">
+                  <div className="bg-white rounded-xl shadow border border-pink-100 p-4 md:p-6 hover:shadow-lg transition-shadow">
                     <div className="flex items-center justify-between mb-2">
-                      <p className="text-sm text-gray-600">Total Spent</p>
-                      <TrendingUp className="w-5 h-5 text-green-600" />
+                      <p className="text-xs md:text-sm text-gray-600">Total Spent</p>
+                      <TrendingUp className="w-4 h-4 md:w-5 md:h-5 text-green-600" />
                     </div>
-                    <p className="text-3xl font-bold text-green-600">INR {(orders.reduce((sum, o) => sum + (o.finalAmount || o.totalAmount || 0), 0)).toFixed(0)}</p>
+                    <p className="text-2xl md:text-3xl font-bold text-green-600">INR {(orders.reduce((sum, o) => sum + (o.finalAmount || o.totalAmount || 0), 0)).toFixed(0)}</p>
                   </div>
-                  <div className="bg-white rounded-xl shadow border border-pink-100 p-6 hover:shadow-lg transition-shadow">
+                  <div className="bg-white rounded-xl shadow border border-pink-100 p-4 md:p-6 hover:shadow-lg transition-shadow">
                     <div className="flex items-center justify-between mb-2">
-                      <p className="text-sm text-gray-600">Deliveries</p>
-                      <Truck className="w-5 h-5 text-blue-600" />
+                      <p className="text-xs md:text-sm text-gray-600">Deliveries</p>
+                      <Truck className="w-4 h-4 md:w-5 md:h-5 text-blue-600" />
                     </div>
-                    <p className="text-3xl font-bold text-blue-600">{orders.filter(o => o.status === 'delivered').length}</p>
+                    <p className="text-2xl md:text-3xl font-bold text-blue-600">{orders.filter(o => o.status === 'delivered').length}</p>
                   </div>
-                  <div className="bg-white rounded-xl shadow border border-pink-100 p-6 hover:shadow-lg transition-shadow">
+                  <div className="bg-white rounded-xl shadow border border-pink-100 p-4 md:p-6 hover:shadow-lg transition-shadow">
                     <div className="flex items-center justify-between mb-2">
-                      <p className="text-sm text-gray-600">Customer Rating</p>
-                      <Award className="w-5 h-5 text-orange-600" />
+                      <p className="text-xs md:text-sm text-gray-600">Customer Rating</p>
+                      <Award className="w-4 h-4 md:w-5 md:h-5 text-orange-600" />
                     </div>
-                    <p className="text-3xl font-bold text-orange-600">4.8 Stars</p>
+                    <p className="text-2xl md:text-3xl font-bold text-orange-600">4.8 Stars</p>
                   </div>
                 </div>
 
                 {/* Delivery Addresses Section */}
-                <div className="bg-white rounded-2xl shadow-lg border border-pink-100 p-8">
-                  <h3 className="text-2xl font-bold text-gray-900 mb-6 flex items-center gap-2">
-                    <Truck className="w-6 h-6 text-pink-600" />
+                <div className="bg-white rounded-2xl shadow-lg border border-pink-100 p-4 md:p-6 lg:p-8">
+                  <h3 className="text-xl md:text-2xl font-bold text-gray-900 mb-4 md:mb-6 flex items-center gap-2">
+                    <Truck className="w-5 h-5 md:w-6 md:h-6 text-pink-600" />
                     Delivery Addresses
                   </h3>
                   <AddressManager user={user} onAddressUpdate={fetchUserProfile} />
@@ -331,41 +331,41 @@ export default function UserDashboard() {
             )}
 
             {activeSection === 'orders' && (
-              <div className="space-y-6">
-                <div className="flex items-center justify-between">
-                  <h2 className="text-3xl font-bold text-gray-900">Your Orders</h2>
-                  <span className="text-sm text-gray-600 bg-pink-50 px-4 py-2 rounded-lg font-medium">{orders.length} total</span>
+              <div className="space-y-4 md:space-y-6">
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                  <h2 className="text-2xl md:text-3xl font-bold text-gray-900">Your Orders</h2>
+                  <span className="text-xs md:text-sm text-gray-600 bg-pink-50 px-3 md:px-4 py-2 rounded-lg font-medium w-fit">{orders.length} total</span>
                 </div>
 
                 {orders.length === 0 ? (
-                  <div className="bg-white rounded-2xl shadow-lg border border-pink-100 p-16 text-center">
-                    <div className="w-24 h-24 mx-auto mb-6 bg-gray-100 rounded-full flex items-center justify-center">
-                      <Package className="w-12 h-12 text-gray-400" />
+                  <div className="bg-white rounded-2xl shadow-lg border border-pink-100 p-8 md:p-16 text-center">
+                    <div className="w-20 h-20 md:w-24 md:h-24 mx-auto mb-4 md:mb-6 bg-gray-100 rounded-full flex items-center justify-center">
+                      <Package className="w-10 h-10 md:w-12 md:h-12 text-gray-400" />
                     </div>
-                    <h3 className="text-xl font-bold text-gray-900 mb-2">No orders yet</h3>
-                    <p className="text-gray-600 mb-8">Start your cake shopping journey today!</p>
+                    <h3 className="text-lg md:text-xl font-bold text-gray-900 mb-2">No orders yet</h3>
+                    <p className="text-sm md:text-base text-gray-600 mb-6 md:mb-8">Start your cake shopping journey today!</p>
                     {process.env.NODE_ENV === 'development' && (
                       <a
                         href="/dev/create-test-order"
-                        className="inline-block px-6 py-3 bg-pink-600 text-white rounded-lg hover:bg-pink-700 transition-colors font-semibold"
+                        className="inline-block px-4 md:px-6 py-2 md:py-3 bg-pink-600 text-white rounded-lg hover:bg-pink-700 transition-colors font-semibold text-sm md:text-base"
                       >
                         Create Test Order
                       </a>
                     )}
                   </div>
                 ) : (
-                  <div className="grid gap-4">
+                  <div className="grid gap-3 md:gap-4">
                     {orders.map((order) => (
                       <div
                         key={order.id}
-                        className="bg-white rounded-xl shadow border border-pink-100 p-6 hover:shadow-lg transition-all duration-200 cursor-pointer group"
+                        className="bg-white rounded-xl shadow border border-pink-100 p-4 md:p-6 hover:shadow-lg transition-all duration-200 cursor-pointer group"
                         onClick={() => handleOrderClick(order.id)}
                       >
-                        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 md:gap-4">
                           <div className="flex-1">
-                            <div className="flex items-center gap-3 mb-2">
-                              <h3 className="font-bold text-lg text-gray-900">{order.orderNumber || order.id.slice(0, 8)}</h3>
-                              <span className={`px-3 py-1 rounded-full text-xs font-bold ${
+                            <div className="flex items-center gap-2 md:gap-3 mb-2">
+                              <h3 className="font-bold text-base md:text-lg text-gray-900">{order.orderNumber || order.id.slice(0, 8)}</h3>
+                              <span className={`px-2 md:px-3 py-1 rounded-full text-xs font-bold ${
                                 order.status === 'delivered' ? 'bg-green-100 text-green-700' :
                                 order.status === 'cancelled' ? 'bg-red-100 text-red-700' :
                                 order.status === 'pending' ? 'bg-yellow-100 text-yellow-700' :

@@ -1,7 +1,7 @@
 # 🎨 Bakingo UI Theme Refactoring Guide
 
 ## Overview
-The CakeShop website has been refactored to match the Bakingo website's modern, clean design system. This guide explains the new theme and how to maintain consistency across the application.
+The PurblePalace website has been refactored to match a modern, clean design system. This guide explains the new theme and how to maintain consistency across the application.
 
 ## Color Palette
 

@@ -1,7 +1,5 @@
-import { PrismaClient } from '@prisma/client';
 import { NextRequest, NextResponse } from 'next/server';
-
-const prisma = new PrismaClient();
+import { db as prisma } from '@/lib/db/client';
 
 export async function POST(
   request: NextRequest,
@@ -11,6 +9,7 @@ export async function POST(
     const { id } = await params;
     const vendorId = id;
 
+    // Update both Vendor approval status and VendorProfile verification status
     const vendor = await prisma.vendor.update({
       where: { id: vendorId },
       data: {
@@ -19,8 +18,20 @@ export async function POST(
       },
     });
 
+    // Also update the verification status in VendorProfile
+    await prisma.vendorProfile.update({
+      where: { vendorId },
+      data: {
+        verificationStatus: 'verified',
+        verifiedAt: new Date(),
+        verifiedBy: 'admin',
+        isApproved: true,
+        approvedAt: new Date(),
+      },
+    });
+
     return NextResponse.json({
-      message: 'Vendor approved successfully',
+      message: 'Vendor approved and verified successfully',
       vendor,
     });
   } catch (error) {

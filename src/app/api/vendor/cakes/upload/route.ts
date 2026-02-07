@@ -1,10 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
-import { PrismaClient } from '@prisma/client';
+import { db as prisma } from '@/lib/db/client';
 import { v2 as cloudinary } from 'cloudinary';
-
-const prisma = new PrismaClient();
 
 cloudinary.config({
   cloud_name: process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME,
@@ -15,6 +13,8 @@ cloudinary.config({
 export async function POST(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
+    console.log('🍰 Cake Upload - Session:', { email: session?.user?.email, role: (session?.user as any)?.role });
+    
     if (!session?.user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
@@ -22,14 +22,40 @@ export async function POST(request: NextRequest) {
     // Get account and vendor info
     const account = await prisma.account.findUnique({
       where: { email: session.user.email! },
+      select: { email: true, role: true, vendorId: true, id: true },
     });
 
-    if (!account || account.role !== 'vendor' || !account.vendorId) {
+    console.log('🍰 Cake Upload - Account lookup:', {
+      email: session.user.email,
+      found: account !== null,
+      account: account ? JSON.stringify(account) : 'null'
+    });
+
+    if (!account) {
+      console.log('🍰 Cake Upload - Account not found in database for email:', session.user.email);
       return NextResponse.json(
-        { error: 'Vendor not found' },
+        { error: 'Account not found in database' },
         { status: 401 }
       );
     }
+
+    if (account.role !== 'vendor') {
+      console.log('🍰 Cake Upload - Account role is not vendor:', account.role);
+      return NextResponse.json(
+        { error: 'Account is not a vendor account' },
+        { status: 401 }
+      );
+    }
+
+    if (!account.vendorId) {
+      console.log('🍰 Cake Upload - Account has no vendorId, onboarding not completed');
+      return NextResponse.json(
+        { error: 'Vendor onboarding not completed' },
+        { status: 401 }
+      );
+    }
+
+    console.log('🍰 Cake Upload - Account verified, vendorId:', account.vendorId);
 
     // Check vendor onboarding status
     const vendor = await prisma.vendor.findUnique({
@@ -51,13 +77,8 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Check max cakes limit (4 cakes per vendor)
-    if (vendor.cakes.length >= 4) {
-      return NextResponse.json(
-        { error: 'Maximum 4 cakes allowed per vendor' },
-        { status: 400 }
-      );
-    }
+    // No limit on number of cakes per vendor
+    // Only restriction is on images per cake (max 4)
 
     const formData = await request.formData();
 
@@ -65,9 +86,11 @@ export async function POST(request: NextRequest) {
     const name = formData.get('name') as string;
     const description = formData.get('description') as string;
     const category = formData.get('category') as string;
+    const cakeType = formData.get('cakeType') as string | null;
     const basePrice = parseFloat(formData.get('basePrice') as string);
     const flavorsStr = formData.get('flavors') as string;
     const toppingsStr = formData.get('toppings') as string;
+    const tagsStr = formData.get('tags') as string;
     const availableSizesStr = formData.get('availableSizes') as string;
     const isCustomizable = formData.get('isCustomizable') === 'true';
 
@@ -96,6 +119,20 @@ export async function POST(request: NextRequest) {
         { error: 'Maximum 4 images allowed per cake' },
         { status: 400 }
       );
+    }
+
+    // Validate image file sizes (max 5MB per image)
+    const MAX_IMAGE_SIZE = 5 * 1024 * 1024; // 5MB in bytes
+    for (let i = 0; i < imageFiles.length; i++) {
+      const imageFile = imageFiles[i];
+      if (imageFile.size > MAX_IMAGE_SIZE) {
+        return NextResponse.json(
+          { 
+            error: `Image ${i + 1} exceeds maximum size of 5MB. Current size: ${(imageFile.size / 1024 / 1024).toFixed(2)}MB` 
+          },
+          { status: 400 }
+        );
+      }
     }
 
     // Upload images to Cloudinary
@@ -128,6 +165,7 @@ export async function POST(request: NextRequest) {
     // Parse arrays
     const flavors = JSON.parse(flavorsStr || '[]');
     const toppings = JSON.parse(toppingsStr || '[]');
+    const tags = JSON.parse(tagsStr || '[]');
     const availableSizes = JSON.parse(availableSizesStr || '[]');
 
     // Create slug from name
@@ -144,9 +182,11 @@ export async function POST(request: NextRequest) {
         slug,
         description,
         category,
+        cakeType: cakeType || null,
         basePrice,
         images: uploadedImages,
         flavors,
+        tags,
         customOptions: {
           toppings,
           frostings: [], // Can be added later if needed
@@ -169,7 +209,7 @@ export async function POST(request: NextRequest) {
         id: cake.id,
         name: cake.name,
         category: cake.category,
-        basePrice: cake.basePrice,
+        basePrice: parseFloat(cake.basePrice.toString()),
         images: cake.images,
       },
     });

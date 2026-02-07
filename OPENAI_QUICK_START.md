@@ -26,7 +26,7 @@
 ### 1D. Get API Key
 1. Go to: https://platform.openai.com/api/keys
 2. Click "Create new secret key"
-3. Name it: "Cake Shop"
+3. Name it: "Purble Palace"
 4. Click "Create secret key"
 5. **COPY THE KEY** (it won't show again!)
    - Format should be: `sk_...`

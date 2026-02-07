@@ -7,7 +7,7 @@ async function getVendorId() {
   });
   console.log('First Vendor ID:', vendor?.id);
   const account = await prisma.account.findFirst({
-    where: { email: 'vendor@cakeshop.com' }
+    where: { email: 'vendor@purblepalace.in' }
   });
   console.log('Account vendor connection:', account?.vendorId);
   await prisma.$disconnect();

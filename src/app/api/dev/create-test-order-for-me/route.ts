@@ -67,8 +67,8 @@ export async function POST(request: NextRequest) {
     }
 
     const cake = vendor.cakes[0];
-    const basePrice = cake.basePrice || 500;
-    const deliveryFee = 50;
+    const basePrice = parseFloat(cake.basePrice.toString()) || 500;
+    const deliveryFee = parseFloat(vendor.deliveryFee.toString()) || 50;
     const totalAmount = basePrice + deliveryFee;
 
     // Create order

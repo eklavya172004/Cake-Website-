@@ -22,7 +22,8 @@ export async function GET() {
 
     // Group pincodes by area
     const groupedAreas = [
-      { name: 'North Delhi', pincodes: Array.from(allPincodes).filter(p => p.startsWith('110')) },
+      { name: 'North Delhi', pincodes: Array.from(allPincodes).filter(p => p.startsWith('1100')) },
+      { name: 'South Delhi', pincodes: Array.from(allPincodes).filter(p => p.startsWith('1101')) },
       { name: 'Gurgaon', pincodes: Array.from(allPincodes).filter(p => p.startsWith('122')) },
       { name: 'Faridabad', pincodes: Array.from(allPincodes).filter(p => p.startsWith('121')) },
       { name: 'Ghaziabad', pincodes: Array.from(allPincodes).filter(p => p.startsWith('201') && parseInt(p) < 201300) },

@@ -170,7 +170,6 @@ async function main() {
         preparationTime: 30 + i * 10,
         minOrderAmount: 500,
         isActive: true,
-        verificationStatus: 'verified',
         approvalStatus: 'approved',
         rating: 4.5 + Math.random() * 0.5,
         totalReviews: 20 + Math.floor(Math.random() * 50),
@@ -233,7 +232,7 @@ async function main() {
   await prisma.user.create({
     data: {
       name: 'Customer User',
-      email: 'customer@cakeshop.com',
+      email: 'customer@purblepalace.in',
       phone: '9876543210',
     },
   });
@@ -245,7 +244,7 @@ async function main() {
 
   await prisma.account.create({
     data: {
-      email: 'admin@cakeshop.com',
+      email: 'admin@purblepalace.in',
       password: adminHash,
       name: 'Admin User',
       role: 'admin',
@@ -257,7 +256,7 @@ async function main() {
 
   await prisma.account.create({
     data: {
-      email: 'vendor@cakeshop.com',
+      email: 'vendor@purblepalace.in',
       password: vendorHash,
       name: 'Vendor User',
       role: 'vendor',
@@ -267,8 +266,8 @@ async function main() {
 
   console.log('\n✅ Seed completed successfully!');
   console.log('\nTest Credentials:');
-  console.log('  Admin: admin@cakeshop.com / admin123');
-  console.log('  Vendor: vendor@cakeshop.com / vendor123');
+  console.log('  Admin: admin@purblepalace.in / admin123');
+  console.log('  Vendor: vendor@purblepalace.in / vendor123');
   console.log('\nDatabase populated with:');
   console.log(`  - ${vendors.length} vendors`);
   console.log(`  - ${cakeCount} cakes`);

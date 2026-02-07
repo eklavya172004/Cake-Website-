@@ -1,7 +1,6 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { Search } from 'lucide-react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 
@@ -90,15 +89,14 @@ export function CakeSearchContent() {
       </div>
 
       {/* Search and Sort Bar */}
-      <div className="grid grid-cols-1  md:grid-cols-3 gap-4 mb-12">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-12">
         <div className="md:col-span-2 relative group">
-          <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5 group-focus-within:text-pink-600 transition-colors" />
           <input
             type="text"
             placeholder="Search cakes..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-12 pr-4 py-3 bg-white border-2 border-gray-300 rounded-lg focus:border-pink-600 focus:outline-none transition-colors placeholder:text-gray-500 font-medium"
+            className="w-full px-4 py-3 bg-white border-2 border-gray-300 rounded-lg focus:border-pink-600 focus:outline-none transition-colors placeholder:text-gray-500 font-medium"
           />
         </div>
 
@@ -179,7 +177,7 @@ export function CakeSearchContent() {
                 </div>
 
                 {/* Rating */}
-                {cake.rating && cake.rating > 0 && (
+                {cake.rating !== undefined && cake.rating !== null && cake.rating > 0 && (
                   <div className="flex items-center gap-1 mb-3">
                     <span className="text-yellow-400">★</span>
                     <span className="text-sm font-bold text-gray-900">{cake.rating.toFixed(1)}</span>

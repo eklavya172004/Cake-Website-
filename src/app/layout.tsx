@@ -9,6 +9,7 @@ import MainNavbar from "@/components/common/MainNavbar";
 import FooterWrapper from "@/components/common/FooterWrapper";
 import { HideNavbarProvider } from "@/components/HideNavbarProvider";
 import { CartWrapper } from "@/components/cart/CartWrapper";
+import { Toaster } from "react-hot-toast";
 
 const dmSans = DM_Sans({
   variable: "--font-dm-sans",
@@ -37,6 +38,7 @@ export default function RootLayout({
       <body
         className={`${dmSans.variable} ${dmSerif.variable} antialiased`}
       >
+        <Toaster position="top-center" />
         <HideNavbarProvider>
           <AuthSessionProvider>
             <CartProvider>

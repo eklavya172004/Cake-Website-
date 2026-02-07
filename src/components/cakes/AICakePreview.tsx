@@ -2,6 +2,8 @@
 
 import React, { useState, useEffect } from 'react';
 import { Sparkles, RefreshCw, Download, AlertCircle } from 'lucide-react';
+import { useSession } from 'next-auth/react';
+import toast from 'react-hot-toast';
 
 interface AICakePreviewProps {
   name: string;
@@ -10,6 +12,7 @@ interface AICakePreviewProps {
   toppings: string[];
   frosting: string;
   message: string;
+  cakeId?: string;
 }
 
 export default function AICakePreview({
@@ -19,56 +22,85 @@ export default function AICakePreview({
   toppings,
   frosting,
   message,
+  cakeId,
 }: AICakePreviewProps) {
+  const { data: session } = useSession();
   const [imageUrl, setImageUrl] = useState<string>('');
   const [loading, setLoading] = useState(false);
   const [showPreview, setShowPreview] = useState(false);
   const [imageError, setImageError] = useState(false);
   const [generationCount, setGenerationCount] = useState(0);
+  const [remaining, setRemaining] = useState<number | null>(null);
+  const [limitError, setLimitError] = useState<string>('');
+  const [usageInfo, setUsageInfo] = useState<string>('');
 
   const generateCakeImage = async () => {
-    if (!name || !flavor) {
-      alert('Please provide at least a cake name and flavor to generate an image');
+    if (!session) {
+      toast.error('Please sign in to generate cake images');
+      return;
+    }
+
+    // Build a single prompt string for the new endpoint
+    const promptParts = [
+      name ? `Cake name: ${name}` : '',
+      flavor ? `Flavor: ${flavor}` : '',
+      size ? `Size: ${size}` : '',
+      toppings && toppings.length > 0 ? `Toppings: ${toppings.join(', ')}` : '',
+      frosting ? `Frosting: ${frosting}` : '',
+      message ? `Message: ${message}` : '',
+    ].filter(Boolean);
+    const prompt = promptParts.join('. ');
+
+    if (!prompt) {
+      toast.error('Please describe the cake first.');
       return;
     }
 
     setLoading(true);
     setImageError(false);
+    setLimitError('');
+    
     try {
-      // Try OpenAI first, fall back to basic generation if needed
-      const response = await fetch('/api/generate-cake-image-openai', {
+      toast.loading('🎨 Generating your cake design... This will take 10-20 seconds', { id: 'cake-gen' });
+      
+      const response = await fetch('/api/generate-cake', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({
-          name,
-          flavor,
-          size,
-          toppings: toppings.filter(t => t), // Filter out empty toppings
-          frosting,
-          message,
-        }),
+        body: JSON.stringify({ prompt, cakeId }),
       });
 
       const data = await response.json();
-      
+
       if (response.ok && data.imageUrl) {
         setImageUrl(data.imageUrl);
         setShowPreview(true);
         setGenerationCount(prev => prev + 1);
-      } else if (response.status === 401 || response.status === 500) {
-        // If OpenAI is not configured, show helpful error
-        setImageError(true);
-        alert(data.error || 'Image generation not configured. Please setup OpenAI API key.');
+        if (data.remaining !== undefined) {
+          setRemaining(data.remaining);
+        }
+        if (data.usageInfo) {
+          setUsageInfo(data.usageInfo);
+        }
+        toast.success('🎉 Cake design generated!', { id: 'cake-gen' });
       } else {
-        setImageError(true);
-        alert(data.error || 'Failed to generate cake image. Please try again.');
+        toast.dismiss('cake-gen');
+        if (response.status === 429) {
+          // Rate limit hit
+          setLimitError(data.error || 'Generation limit reached');
+          setRemaining(0);
+          toast.error(data.error || "You've reached your generation limit");
+        } else {
+          setImageError(true);
+          toast.error(data.error || 'Failed to generate cake image');
+        }
       }
     } catch (error) {
+      toast.dismiss('cake-gen');
       console.error('Error generating cake image:', error);
       setImageError(true);
-      alert('Error generating cake image. Please try again.');
+      toast.error('Error generating cake image. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -78,6 +110,7 @@ export default function AICakePreview({
     if (!imageUrl) return;
     
     try {
+      toast.loading('Downloading image...', { id: 'download' });
       const response = await fetch(imageUrl, {
         mode: 'no-cors'
       });
@@ -90,11 +123,15 @@ export default function AICakePreview({
       a.click();
       window.URL.revokeObjectURL(url);
       document.body.removeChild(a);
+      toast.success('Image downloaded successfully!', { id: 'download' });
     } catch (error) {
+      toast.dismiss('download');
       console.error('Error downloading image:', error);
-      alert('Failed to download image');
+      toast.error('Failed to download image');
     }
   };
+
+  const isLimitReached = remaining === 0;
 
   return (
     <div className="space-y-6 py-8 border-t border-[#1a1a1a]/10">
@@ -128,12 +165,32 @@ export default function AICakePreview({
         {!showPreview && (
           <button
             onClick={generateCakeImage}
-            disabled={loading}
+            disabled={loading || isLimitReached}
             className="w-full bg-pink-500 text-white py-4 font-bold uppercase tracking-widest text-sm flex items-center justify-center gap-3 hover:bg-pink-600 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <Sparkles className="w-5 h-5" />
             {loading ? 'Generating Your Design...' : 'Generate AI Preview'}
           </button>
+        )}
+
+        {/* Usage Info */}
+        {remaining !== null && (
+          <div className={`p-3 rounded-lg text-sm ${isLimitReached ? 'bg-red-50 border border-red-200' : 'bg-blue-50 border border-blue-200'}`}>
+            <p className={isLimitReached ? 'text-red-700 font-semibold' : 'text-blue-700'}>
+              {usageInfo || `Generations remaining: ${remaining}`}
+            </p>
+          </div>
+        )}
+
+        {/* Limit Error */}
+        {limitError && (
+          <div className="bg-red-50 border border-red-200 p-4 rounded-lg flex gap-3">
+            <AlertCircle className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" />
+            <div>
+              <h4 className="font-semibold text-red-900 text-sm mb-1">Generation Limit Reached</h4>
+              <p className="text-sm text-red-700">{limitError}</p>
+            </div>
+          </div>
         )}
       </div>
 

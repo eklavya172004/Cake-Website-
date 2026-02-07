@@ -1,46 +1,9 @@
 import { NextAuthOptions } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 import bcrypt from "bcryptjs";
+import { PrismaClient } from "@prisma/client";
 
-// Demo credentials for testing (hashed passwords)
-const DEMO_ACCOUNTS: Record<
-  string,
-  {
-    id: string;
-    email: string;
-    password: string;
-    name: string;
-    role: "admin" | "vendor" | "customer";
-    vendorId?: string;
-    phone: string;
-  }
-> = {
-  "admin@cakeshop.com": {
-    id: "admin-1",
-    email: "admin@cakeshop.com",
-    password: "$2b$10$8yFpUG8UqO9DttJVp3DO7.JPRIIiP7XQRuWwCOy1GACWwinhLPpia", // admin123 hashed
-    name: "Admin User",
-    role: "admin",
-    phone: "+91-9876543210",
-  },
-  "vendor@cakeshop.com": {
-    id: "cmk2v0ykj00009nl0pm57q43u",
-    email: "vendor@cakeshop.com",
-    password: "$2b$10$9u/uQEgi2/8P8IuUo4JlXO7HGTqceJ20YFO4xnPVofIzgWt40o0z.", // vendor123 hashed
-    name: "Vendor User",
-    role: "vendor",
-    vendorId: "cmk2v0ykj00009nl0pm57q43u",
-    phone: "+91-9876543211",
-  },
-  "customer@cakeshop.com": {
-    id: "customer-1",
-    email: "customer@cakeshop.com",
-    password: "$2b$10$Ox3SezpvWGdlmQ0m.OSKS.VixVcEjG9mhuyy3c5zZBr1/EG1FxF5m", // customer123 hashed
-    name: "Customer User",
-    role: "customer",
-    phone: "+91-9876543212",
-  },
-};
+const prisma = new PrismaClient();
 
 export const authOptions: NextAuthOptions = {
   providers: [
@@ -61,53 +24,73 @@ export const authOptions: NextAuthOptions = {
 
         const role = credentials.role || "customer";
 
-        // Check if account exists in demo accounts
-        const demoAccount = DEMO_ACCOUNTS[credentials.email];
-
         if (credentials.isSignUp === "true") {
-          // Sign Up (demo mode - just validate)
-          if (demoAccount) {
-            throw new Error("Account already exists");
-          }
-
+          // Sign Up - validate new account doesn't exist
           if (!credentials.firstName || !credentials.phone) {
             throw new Error("First name and phone are required");
           }
 
-          const hashedPassword = await bcrypt.hash(credentials.password, 10);
+          // Check if email already exists in Account table
+          const existingAccount = await prisma.account.findUnique({
+            where: { email: credentials.email },
+          });
 
+          if (existingAccount) {
+            throw new Error("Account already exists");
+          }
+
+          const hashedPassword = await bcrypt.hash(credentials.password, 10);
+          const newAccountId = `${role}-${Date.now()}`;
+          const newVendorId = role === "vendor" ? `vendor-${Date.now()}` : undefined;
+
+          // Account will be created in the database during onboarding submission
           const newAccount = {
-            id: `${role}-${Date.now()}`,
+            id: newAccountId,
             email: credentials.email,
             password: hashedPassword,
             name: credentials.firstName,
             role: role as any,
             phone: credentials.phone,
-            vendorId: role === "vendor" ? `vendor-${Date.now()}` : undefined,
+            vendorId: newVendorId,
           };
 
+          console.log(`✅ Vendor signup (session only): ${credentials.email}, vendorId: ${newVendorId}`);
           return newAccount as any;
         } else {
-          // Login
-          if (!demoAccount) {
-            throw new Error("Account not found. Please use demo credentials.");
+          // Login - check database for registered accounts
+          const account = await prisma.account.findUnique({
+            where: { email: credentials.email },
+          });
+
+          if (!account) {
+            throw new Error("Account not found");
+          }
+
+          if (!account.password) {
+            throw new Error("Invalid credentials");
           }
 
           const isPasswordValid = await bcrypt.compare(
             credentials.password,
-            demoAccount.password
+            account.password
           );
 
           if (!isPasswordValid) {
             throw new Error("Invalid password");
           }
 
+          // Update last login
+          await prisma.account.update({
+            where: { id: account.id },
+            data: { lastLogin: new Date() },
+          });
+
           return {
-            id: demoAccount.id,
-            email: demoAccount.email,
-            name: demoAccount.name,
-            role: demoAccount.role,
-            vendorId: demoAccount.vendorId,
+            id: account.id,
+            email: account.email,
+            name: account.name,
+            role: account.role,
+            vendorId: account.vendorId || undefined,
           };
         }
       },
@@ -141,6 +124,13 @@ export const authOptions: NextAuthOptions = {
   },
   pages: {
     signIn: "/auth/login",
+    signOut: "/auth/login",
     error: "/auth/login",
+  },
+  events: {
+    async signOut({ token }) {
+      // Called whenever the user signs out
+      console.log("User signed out:", token?.email);
+    },
   },
 };

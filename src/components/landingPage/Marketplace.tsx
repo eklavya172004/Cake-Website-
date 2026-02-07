@@ -11,7 +11,6 @@ const serviceableAreas = [
   { name: 'Faridabad', pincodes: ['121001', '121002', '121003', '121004'] },
   { name: 'Ghaziabad', pincodes: ['201001', '201002', '201003', '201004'] },
   { name: 'Noida', pincodes: ['201301', '201303', '201304', '201305'] },
-  { name: 'Greater Noida', pincodes: ['201306', '201308', '201310', '203207'] },
 ];
 
 const vendors = [
@@ -188,7 +187,7 @@ export default function Marketplace() {
 
             <div className="mt-6 pt-6 border-t border-gray-200">
               <p className="text-xs text-gray-500 text-center">
-                We deliver to: North Delhi, South Delhi, Gurgaon, Faridabad, Ghaziabad, Noida, Greater Noida
+                We deliver to: North Delhi, South Delhi, Gurgaon, Faridabad, Ghaziabad, Noida
               </p>
             </div>
           </div>

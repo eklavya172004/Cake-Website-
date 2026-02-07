@@ -47,7 +47,7 @@ export default function AdminLayout({
         {/* Logo */}
         <div className="p-4 border-b border-gray-800 flex items-center justify-between">
           {sidebarOpen && (
-            <div className="font-bold text-xl">CakeShop Admin</div>
+            <div className="font-bold text-xl">PurblePalace Admin</div>
           )}
           <button
             onClick={() => setSidebarOpen(!sidebarOpen)}

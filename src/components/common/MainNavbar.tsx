@@ -62,11 +62,11 @@ const categories = [
       {
         title: 'Delivery Cities',
         items: [
-          { label: 'Bangalore', param: 'deliveryCity=Bangalore' },
+          { label: 'Gurgaon', param: 'deliveryCity=Gurgaon' },
+          { label: 'Faridabad', param: 'deliveryCity=Faridabad' },
+          { label: 'Ghaziabad', param: 'deliveryCity=Ghaziabad' },
+          { label: 'Noida', param: 'deliveryCity=Noida' },
           { label: 'Delhi', param: 'deliveryCity=Delhi' },
-          { label: 'Mumbai', param: 'deliveryCity=Mumbai' },
-          { label: 'Hyderabad', param: 'deliveryCity=Hyderabad' },
-          { label: 'Pune', param: 'deliveryCity=Pune' },
         ]
       }
     ]
@@ -138,7 +138,7 @@ export default function MainNavbar() {
     }, 0);
   };
 
-  const deliveryCities = ['Bangalore', 'Delhi', 'Mumbai', 'Hyderabad', 'Pune', 'Chennai', 'Kolkata', 'Noida'];
+  const deliveryCities = ['Gurgaon', 'Faridabad', 'Ghaziabad', 'Noida', 'Delhi'];
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -180,7 +180,7 @@ export default function MainNavbar() {
             {/* Logo */}
             <Link href="/" className="flex items-center gap-2 font-bold text-lg md:text-xl text-white hover:text-pink-100 transition-colors flex-shrink-0">
               <Home className="w-5 h-5 md:w-6 md:h-6" />
-              <span className="hidden sm:inline">Bakingo</span>
+              <span className="hidden sm:inline">Purblepalace</span>
             </Link>
 
             {/* Search Bar */}
@@ -199,20 +199,6 @@ export default function MainNavbar() {
                   }}
                   className="w-full px-4 py-3 bg-white border border-pink-300 rounded-lg focus:outline-none focus:border-pink-400 focus:ring-2 focus:ring-pink-200 transition-all text-sm md:text-base"
                 />
-                
-                {searchQuery && (
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setSearchQuery('');
-                      setSearchSuggestions([]);
-                      setShowSuggestions(false);
-                    }}
-                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
-                  >
-                    <X className="w-5 h-5" />
-                  </button>
-                )}
 
                 {/* Search Suggestions Dropdown */}
                 {showSuggestions && (
@@ -237,7 +223,7 @@ export default function MainNavbar() {
                             <div className="flex-1">
                               <p className="font-medium text-gray-900 group-hover:text-pink-600 transition-colors">{cake.name}</p>
                               {cake.basePrice && (
-                                <p className="text-sm text-gray-500">₹{Math.round(cake.basePrice)}</p>
+                                <p className="text-sm text-gray-500">₹{Math.round(parseFloat(cake.basePrice.toString()))}</p>
                               )}
                             </div>
                             <Search className="w-4 h-4 text-pink-600 opacity-0 group-hover:opacity-100 transition-opacity" />
@@ -269,14 +255,14 @@ export default function MainNavbar() {
 
             {/* Right Action Buttons */}
             <div className="flex items-center gap-3 flex-shrink-0">
-              {/* Track Order Button */}
+              {/* Track Order Button - Visible for all users */}
               <button
-                onClick={() => router.push('/orders')}
+                onClick={() => router.push(session ? '/orders' : '/track-orders')}
                 className="hidden sm:flex items-center gap-2 px-3 py-2 bg-white text-pink-600 rounded-lg hover:bg-pink-50 transition-all font-medium text-sm whitespace-nowrap border border-white hover:border-pink-600"
                 title="Track your order"
               >
                 <Package className="w-4 h-4" />
-                <span className="hidden md:inline">Track</span>
+                <span>Track Order</span>
               </button>
 
               {/* Cart Button */}
@@ -315,7 +301,7 @@ export default function MainNavbar() {
                 </button>
               ) : (
                 <button
-                  onClick={() => router.push('/auth/login')}
+                  onClick={() => router.push('/auth/customer-login')}
                   className="flex items-center gap-2 px-3 py-2 bg-white text-pink-600 rounded-lg hover:bg-pink-50 transition-all font-medium text-sm whitespace-nowrap border border-white hover:border-pink-600"
                   title="Login or Sign up"
                 >
@@ -335,15 +321,15 @@ export default function MainNavbar() {
             <div className="flex items-center gap-2 text-gray-700">
               <MapPin className="w-4 h-4 text-pink-600 flex-shrink-0" />
               <span className="font-medium">We deliver to:</span>
-              <span className="hidden sm:inline text-gray-600">{deliveryCities.slice(0, 4).join(', ')} & more</span>
+              <span className="text-xs sm:text-sm text-gray-600 truncate">{deliveryCities.slice(0, 3).join(', ')} & more</span>
             </div>
             <div className="flex items-center gap-4 text-gray-700">
               <button
-                onClick={() => router.push('/orders')}
-                className="flex items-center gap-1 hover:text-pink-600 transition-colors font-medium"
+                onClick={() => router.push(session ? '/orders' : '/track-orders')}
+                className="flex items-center gap-2 hover:text-pink-600 transition-colors font-medium"
               >
                 <Package className="w-4 h-4" />
-                <span className="hidden sm:inline">Track Order</span>
+                <span>Track Order</span>
               </button>
             </div>
           </div>
@@ -442,7 +428,7 @@ export default function MainNavbar() {
                 </button>
                 <button
                   onClick={() => {
-                    router.push('/orders');
+                    router.push('/track-orders');
                     setMobileMenuOpen(false);
                   }}
                   className="flex-1 flex items-center justify-center gap-2 px-3 py-2 bg-white border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-100 font-medium text-sm"
@@ -523,7 +509,7 @@ export default function MainNavbar() {
                   ) : (
                     <button
                       onClick={() => {
-                        router.push('/auth/login');
+                        router.push('/auth/customer-login');
                         setMobileMenuOpen(false);
                       }}
                       className="w-full px-4 py-2 bg-pink-600 text-white rounded-lg hover:bg-pink-700 transition-all font-semibold"

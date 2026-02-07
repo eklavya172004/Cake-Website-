@@ -4,7 +4,7 @@ import bcrypt from 'bcryptjs';
 const prisma = new PrismaClient();
 
 async function main() {
-  console.log('í¼± Starting database seed...');
+  console.log('ï¿½ï¿½ï¿½ Starting database seed...');
 
   // Clear existing data
   await prisma.order.deleteMany({});
@@ -22,7 +22,6 @@ async function main() {
       preparationTime: 30,
       minOrderAmount: 500,
       isActive: true,
-      verificationStatus: 'verified',
       approvalStatus: 'approved',
       rating: 4.8,
       totalReviews: 45,
@@ -36,7 +35,6 @@ async function main() {
       preparationTime: 45,
       minOrderAmount: 1000,
       isActive: true,
-      verificationStatus: 'verified',
       approvalStatus: 'approved',
       rating: 4.6,
       totalReviews: 32,
@@ -50,7 +48,6 @@ async function main() {
       preparationTime: 60,
       minOrderAmount: 1500,
       isActive: true,
-      verificationStatus: 'verified',
       approvalStatus: 'approved',
       rating: 4.7,
       totalReviews: 28,
@@ -100,7 +97,7 @@ async function main() {
   const customer = await prisma.user.create({
     data: {
       name: 'Customer User',
-      email: 'customer@cakeshop.com',
+      email: 'customer@purblepalace.in',
       phone: '1234567890',
     },
   });
@@ -112,7 +109,7 @@ async function main() {
 
   const adminAccount = await prisma.account.create({
     data: {
-      email: 'admin@cakeshop.com',
+      email: 'admin@purblepalace.in',
       password: adminHash,
       name: 'Admin User',
       role: 'admin',
@@ -124,7 +121,7 @@ async function main() {
 
   const vendorAccount = await prisma.account.create({
     data: {
-      email: 'vendor@cakeshop.com',
+      email: 'vendor@purblepalace.in',
       password: vendorHash,
       name: 'Vendor User',
       role: 'vendor',
@@ -152,7 +149,7 @@ async function main() {
             name: randomCake.name,
             quantity: 1,
             customization: {},
-            price: randomCake.basePrice,
+            price: parseFloat(randomCake.basePrice.toString()),
           },
         ],
         deliveryAddress: {
@@ -163,10 +160,10 @@ async function main() {
         },
         deliveryPincode: '10001',
         status: statuses[Math.floor(Math.random() * statuses.length)],
-        totalAmount: randomCake.basePrice,
+        totalAmount: parseFloat(randomCake.basePrice.toString()),
         deliveryFee: 50,
         discount: 0,
-        finalAmount: randomCake.basePrice + 50,
+        finalAmount: parseFloat(randomCake.basePrice.toString()) + 50,
         paymentMethod: Math.random() > 0.5 ? 'online' : 'cod',
         paymentStatus: 'completed',
         createdAt: new Date(now.getTime() - Math.random() * 30 * 24 * 60 * 60 * 1000),
@@ -176,9 +173,9 @@ async function main() {
 
   console.log('âœ… Seed completed successfully!');
   console.log('\nTest Credentials:');
-  console.log('  Admin: admin@cakeshop.com / admin123');
-  console.log('  Vendor: vendor@cakeshop.com / vendor123');
-  console.log('  Customer: customer@cakeshop.com (any password)');
+  console.log('  Admin: admin@purblepalace.in / admin123');
+  console.log('  Vendor: vendor@purblepalace.in / vendor123');
+  console.log('  Customer: customer@purblepalace.in (any password)');
 }
 
 main()

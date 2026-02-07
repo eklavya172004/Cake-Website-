@@ -8,14 +8,16 @@ export const middleware = withAuth(
     // Protect admin routes
     if (pathname.startsWith("/admin")) {
       if (!token || (token.role !== "admin")) {
-        return Response.redirect(new URL("/auth/login", req.url));
+        const loginUrl = new URL("/auth/login", req.url);
+        return Response.redirect(loginUrl);
       }
     }
 
     // Protect vendor routes
     if (pathname.startsWith("/vendor")) {
       if (!token || (token.role !== "vendor")) {
-        return Response.redirect(new URL("/auth/login", req.url));
+        const loginUrl = new URL("/auth/login", req.url);
+        return Response.redirect(loginUrl);
       }
     }
 
@@ -23,7 +25,19 @@ export const middleware = withAuth(
   },
   {
     callbacks: {
-      authorized: ({ token }) => {
+      authorized: ({ token, req }) => {
+        const pathname = req.nextUrl.pathname;
+        
+        // Admin routes require admin role
+        if (pathname.startsWith("/admin")) {
+          return token?.role === "admin";
+        }
+        
+        // Vendor routes require vendor role
+        if (pathname.startsWith("/vendor")) {
+          return token?.role === "vendor";
+        }
+        
         return !!token;
       },
     },

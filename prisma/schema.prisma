@@ -76,6 +76,21 @@ model Account {
 }
 
 // ============================================
+// PASSWORD RESET TOKENS
+// ============================================
+
+model PasswordResetToken {
+  id              String   @id @default(cuid())
+  accountEmail    String
+  token           String   @unique // JWT or hash
+  expiresAt       DateTime
+  createdAt       DateTime @default(now())
+  
+  @@index([accountEmail])
+  @@index([token])
+}
+
+// ============================================
 // VENDORS & CAKES
 // ============================================
 
@@ -90,12 +105,11 @@ model Vendor {
   rating            Float    @default(0)
   totalReviews      Int      @default(0)
   minOrderAmount    Float    @default(0)
+  deliveryFee       Float    @default(50) // Default delivery fee in rupees
   preparationTime   Int      // in minutes
   isActive          Boolean  @default(true)
   
   // Vendor Status
-  verificationStatus String  @default("pending") // pending, verified, rejected
-  verifiedAt        DateTime?
   approvalStatus    String   @default("pending") // pending, approved, rejected
   approvedAt        DateTime?
   
@@ -116,7 +130,6 @@ model Vendor {
 
   @@index([slug])
   @@index([isActive])
-  @@index([verificationStatus])
   @@index([approvalStatus])
 }
 
@@ -140,6 +153,11 @@ model VendorProfile {
   ownerName             String
   ownerPhone            String
   ownerEmail            String
+  
+  // Shop Contact Information (for customers)
+  shopPhone             String?
+  shopEmail             String?
+  shopAddress           String?
   
   // Bank Details
   bankAccountNumber     String
@@ -453,7 +471,7 @@ model Cake {
   name            String
   slug            String
   description     String?
-  basePrice       Float
+  basePrice       Decimal  @db.Decimal(10, 2)
   category        String   // "Cakes", "Theme Cakes", "Desserts", "Birthday", "Hampers", "Anniversary", "Occasions", "Customized Cakes"
   cakeType        String?  // "Ribbon Cakes", "Fresh Drops", "Gourmet Cakes", "Bento Cakes", etc.
   flavor          String?  // "Chocolate", "Vanilla", "Strawberry", etc.
@@ -484,6 +502,27 @@ model Cake {
   @@index([isActive])
   @@index([popularity])
   @@index([tags])
+}
+
+// ============================================
+// CAKE IMAGE GENERATION TRACKING
+// ============================================
+
+model CakeImageGeneration {
+  id          String   @id @default(cuid())
+  userId      String   // Email or user ID from session
+  cakeId      String?  // Cake ID being customized (optional for new cakes)
+  prompt      String   // The prompt used for generation
+  imageUrl    String?  // The generated image URL
+  status      String   // "success" or "failed"
+  error       String?  // Error message if failed
+  
+  createdAt   DateTime @default(now())
+  
+  @@index([userId])
+  @@index([cakeId])
+  @@index([createdAt])
+  @@index([userId, createdAt]) // For counting user's total generations
 }
 
 // ============================================

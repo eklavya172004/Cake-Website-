@@ -134,6 +134,12 @@ export default function VendorDetailPage() {
     }
   };
 
+  const handleVerificationUpdate = (verification: string) => {
+    if (vendor) {
+      setVendor({ ...vendor, verification });
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -318,7 +324,7 @@ export default function VendorDetailPage() {
         </div>
 
         <div className="p-6">
-          {activeTab === 'details' && <VendorDetailsCard vendor={vendor} />}
+          {activeTab === 'details' && <VendorDetailsCard vendor={vendor} onVerificationUpdate={handleVerificationUpdate} />}
           {activeTab === 'products' && <ProductsTab vendorId={vendorId} />}
           {activeTab === 'orders' && <OrdersTab vendorId={vendorId} />}
         </div>

@@ -1,7 +1,5 @@
 import { NextResponse } from 'next/server';
-import { PrismaClient } from '@prisma/client';
-
-const prisma = new PrismaClient();
+import { db as prisma } from '@/lib/db/client';
 
 export async function GET(
   request: Request,
@@ -74,17 +72,15 @@ export async function GET(
       { error: 'Failed to fetch vendor orders' },
       { status: 500 }
     );
-  } finally {
-    await prisma.$disconnect();
   }
 }
 
 export async function PATCH(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const vendorId = params.id;
+    const { id: vendorId } = await params;
     const { orderId, status, notes } = await request.json();
 
     if (!orderId || !status) {
@@ -129,8 +125,8 @@ export async function PATCH(
       data: {
         orderId,
         status,
-        timestamp: new Date(),
-        changedBy: 'vendor',
+        message: `Order status updated to ${status}`,
+        createdBy: 'vendor',
       },
     });
 
@@ -147,7 +143,5 @@ export async function PATCH(
       { error: 'Failed to update order' },
       { status: 500 }
     );
-  } finally {
-    await prisma.$disconnect();
   }
 }

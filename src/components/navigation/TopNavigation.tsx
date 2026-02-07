@@ -34,7 +34,7 @@ const getCakeTypeParam = (itemName: string): string => {
   const trendingCakes = ['Ribbon Cakes', 'Fresh Drops', 'Gourmet Cakes', 'Bento Cakes', 'Camera Cakes', 'Anime Cakes', 'Labubu Cakes', 'Cricket Cakes', 'Pinata Cakes', 'Drip Cakes'];
   const byType = ['Bestsellers', 'Eggless Cakes', 'Photo Cakes', 'Cheese Cakes', 'Half Cakes', 'Heart Shaped Cakes', 'Rose Cakes'];
   const byFlavour = ['Chocolate Cakes', 'Butterscotch Cakes', 'Strawberry Cakes', 'Pineapple Cakes', 'Kit Kat Cakes', 'Black Forest Cakes', 'Red Velvet Cakes', 'Vanilla Cakes', 'Fruit Cakes', 'Blueberry Cakes'];
-  const deliveryCities = ['Cakes To Bangalore', 'Cakes To Delhi', 'Cakes To Gurgaon', 'Cakes To Hyderabad', 'Cakes To Noida', 'Cakes To Mumbai', 'Cakes To Jaipur', 'Cakes To Pune', 'Cakes To Chandigarh', 'Cakes To Chennai'];
+  const deliveryCities = ['Cakes To Gurgaon', 'Cakes To Faridabad', 'Cakes To Ghaziabad', 'Cakes To Noida', 'Cakes To Delhi'];
 
   if (trendingCakes.includes(itemName)) return `/cakes/search?cakeType=${encodeURIComponent(itemName)}`;
   if (byType.includes(itemName)) return `/cakes/search?cakeType=${encodeURIComponent(itemName)}`;
@@ -61,7 +61,7 @@ export default function TopNavigation() {
           {/* Logo/Home */}
           <Link href="/" className="flex items-center gap-2 font-bold text-xl text-pink-600 hover:text-pink-700 transition-colors shrink-0">
             <Home className="w-5 h-5" />
-            <span className="hidden sm:inline">Bakingo Cakes</span>
+            <span className="hidden sm:inline">PURBLE PALACE</span>
           </Link>
 
           {/* Right Section */}

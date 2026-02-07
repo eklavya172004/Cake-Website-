@@ -64,13 +64,30 @@ export function CartSidebar() {
           ) : (
             items.map((item, index) => (
               <div key={`${item.id}-${index}`} className="flex gap-4">
-                <div className="w-20 h-20 bg-gray-50 rounded-lg flex items-center justify-center text-2xl shrink-0">
-                  {item.image || '🎂'}
+                <div className="w-20 h-20 bg-gray-50 rounded-lg flex items-center justify-center text-2xl shrink-0 overflow-hidden">
+                  {item.image && item.image.startsWith('http') ? (
+                    <img 
+                      src={item.image} 
+                      alt={item.name}
+                      className="w-full h-full object-cover"
+                    />
+                  ) : item.image && item.image.length === 1 ? (
+                    <span>{item.image}</span>
+                  ) : (
+                    <img 
+                      src={item.image || '🎂'} 
+                      alt={item.name}
+                      className="w-full h-full object-cover"
+                      onError={(e) => {
+                        (e.target as HTMLImageElement).style.display = 'none';
+                      }}
+                    />
+                  )}
                 </div>
                 <div className="flex-1">
                   <div className="flex justify-between items-start mb-1">
                     <h3 className="font-medium line-clamp-1">{item.name}</h3>
-                    <span className="font-medium">₹{item.price * item.quantity}</span>
+                    <span className="font-medium">₹{(item.price * item.quantity).toFixed(0)}</span>
                   </div>
                   <p className="text-xs text-gray-500 mb-3">{item.vendor}</p>
                   
@@ -115,13 +132,33 @@ export function CartSidebar() {
         {/* Footer */}
         {items.length > 0 && (
           <div className="p-6 border-t border-gray-100 bg-gray-50">
-            <div className="flex justify-between items-center mb-4">
-              <span className="text-gray-600">Subtotal</span>
-              <span className="text-xl font-serif">₹{getTotal()}</span>
+            <div className="space-y-3 mb-6">
+              {/* Items Subtotal */}
+              <div className="flex justify-between items-center text-gray-600">
+                <span>Items Subtotal</span>
+                <span className="font-medium">₹{items.reduce((sum, item) => sum + (item.price * item.quantity), 0).toFixed(0)}</span>
+              </div>
+              
+              {/* Delivery Charges - Show once per vendor */}
+              {Array.from(new Map(items.map(item => [item.vendorId, item.deliveryFee])).entries()).map(([vendorId, fee]) => (
+                fee !== undefined && fee > 0 && (
+                  <div key={vendorId} className="flex justify-between items-center text-gray-600">
+                    <span>Delivery Charge</span>
+                    <span className="font-medium">₹{fee.toFixed(0)}</span>
+                  </div>
+                )
+              ))}
+              
+              {/* Total */}
+              <div className="border-t pt-3 flex justify-between items-center">
+                <span className="font-semibold text-gray-900">Total</span>
+                <span className="text-xl font-bold text-pink-600">₹{getTotal().toFixed(0)}</span>
+              </div>
+              
+              <p className="text-xs text-gray-500 text-center mt-3">
+                Taxes calculated at checkout
+              </p>
             </div>
-            <p className="text-xs text-gray-500 mb-6 text-center">
-              Shipping & taxes calculated at checkout
-            </p>
             <button 
               onClick={handleCheckout}
               className="w-full py-4 bg-black text-white uppercase tracking-widest text-xs font-bold hover:bg-gray-900 transition-colors flex items-center justify-center gap-2"
