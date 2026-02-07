@@ -74,7 +74,7 @@ export async function POST(request: NextRequest) {
     // Send email via Resend
     try {
       const emailResponse = await resend.emails.send({
-        from: 'noreply@delauni.resend.app',
+        from: 'noreply@purblepalace.in',
         to: email,
         subject: 'Reset Your Password - PurblePalace',
         html: `
