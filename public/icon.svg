@@ -1,0 +1,51 @@
+<svg
+  width="512"
+  height="512"
+  viewBox="0 0 512 512"
+  xmlns="http://www.w3.org/2000/svg"
+>
+  <!-- Background -->
+  <rect width="512" height="512" rx="110" fill="#F3E8FF"/>
+
+  <!-- Cake Base -->
+  <rect x="136" y="260" width="240" height="90" rx="24" fill="#C084FC"/>
+  <rect x="168" y="200" width="176" height="70" rx="22" fill="#D8B4FE"/>
+  <rect x="200" y="150" width="112" height="55" rx="18" fill="#E9D5FF"/>
+
+  <!-- Cake Drip -->
+  <path
+    d="M168 200
+       Q190 215 212 200
+       Q234 215 256 200
+       Q278 215 300 200
+       Q322 215 344 200
+       L344 220
+       L168 220 Z"
+    fill="#F5F3FF"
+  />
+
+  <!-- Candle -->
+  <rect x="248" y="115" width="16" height="35" rx="8" fill="#9333EA"/>
+  <circle cx="256" cy="105" r="10" fill="#F97316"/>
+
+  <!-- Palace Towers -->
+  <rect x="110" y="260" width="50" height="100" rx="18" fill="#B794F4"/>
+  <rect x="352" y="260" width="50" height="100" rx="18" fill="#B794F4"/>
+
+  <!-- Windows -->
+  <circle cx="135" cy="300" r="8" fill="#F5F3FF"/>
+  <circle cx="377" cy="300" r="8" fill="#F5F3FF"/>
+
+  <!-- Text -->
+  <text
+    x="256"
+    y="420"
+    text-anchor="middle"
+    font-size="56"
+    font-weight="700"
+    fill="#7E22CE"
+    font-family="Poppins, Arial, sans-serif"
+  >
+    Purble
+  </text>
+</svg>
