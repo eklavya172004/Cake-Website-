@@ -75,7 +75,7 @@ export async function GET(request: NextRequest) {
     });
 
     // Format service areas to match frontend expectations
-    const formattedServiceAreas = serviceAreas.map((area) => ({
+    const formattedServiceAreas = serviceAreas.map((area: any) => ({
       location: area.areaName,
       pincodes: area.pincode,
       deliveryFee: area.deliveryFee,

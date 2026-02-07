@@ -52,7 +52,7 @@ export async function POST(request: NextRequest) {
     });
 
     return NextResponse.json({
-      orders: orders.map(order => ({
+      orders: orders.map((order: any) => ({
         id: order.id,
         orderNumber: order.orderNumber,
         status: order.status,

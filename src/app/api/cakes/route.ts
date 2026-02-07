@@ -169,7 +169,7 @@ export async function GET(request: Request) {
     });
     
     return NextResponse.json(
-      cakes.map(cake => ({
+      cakes.map((cake: any) => ({
         ...cake,
         basePrice: parseFloat(cake.basePrice.toString()),
       }))

@@ -18,7 +18,7 @@ export async function GET() {
 
     // Extract all unique pincodes
     const allPincodes = new Set<string>();
-    serviceAreas.forEach(area => allPincodes.add(area.pincode));
+    serviceAreas.forEach((area: any) => allPincodes.add(area.pincode));
 
     // Group pincodes by area
     const groupedAreas = [

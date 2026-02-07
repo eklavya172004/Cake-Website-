@@ -47,7 +47,7 @@ export async function GET(
     ]);
 
     return NextResponse.json({
-      cakes: cakes.map((cake) => ({
+      cakes: cakes.map((cake: any) => ({
         ...cake,
         basePrice: parseFloat(cake.basePrice.toString()),
         createdAt: cake.createdAt.toISOString(),

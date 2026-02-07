@@ -42,7 +42,7 @@ export async function GET(request: NextRequest) {
     });
 
     // Format the response
-    const formattedOrders = orders.map(order => ({
+    const formattedOrders = orders.map((order: any) => ({
       id: order.id,
       orderNumber: order.orderNumber,
       status: order.status,
@@ -65,9 +65,9 @@ export async function GET(request: NextRequest) {
     console.log("User orders API - Total orders:", formattedOrders.length);
     
     // Log all split payment orders
-    const splitOrders = formattedOrders.filter(o => o.paymentMethod === 'split');
+    const splitOrders = formattedOrders.filter((o: any) => o.paymentMethod === 'split');
     console.log("Split payment orders found:", splitOrders.length);
-    splitOrders.forEach((order, idx) => {
+    splitOrders.forEach((order: any, idx: number) => {
       console.log(`  [${idx}] Order ${order.orderNumber} - Notes:`, order.notes ? JSON.parse(order.notes).splitPaymentLinks?.length + " links" : "no notes");
     });
 

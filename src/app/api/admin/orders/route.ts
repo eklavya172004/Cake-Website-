@@ -9,7 +9,7 @@ export async function GET() {
       take: 50,
     });
 
-    const formattedOrders = orders.map((order) => ({
+    const formattedOrders = orders.map((order: any) => ({
       id: order.orderNumber,
       customerName: order.user?.name || 'Unknown',
       vendorName: order.vendor?.name || 'Unknown',

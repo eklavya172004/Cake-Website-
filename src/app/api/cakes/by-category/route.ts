@@ -50,10 +50,10 @@ export async function GET(request: NextRequest) {
     });
 
     // Calculate average rating for each cake
-    const cakesWithRatings = cakes.map((cake) => {
+    const cakesWithRatings = cakes.map((cake: any) => {
       const avgRating =
         cake.reviews.length > 0
-          ? cake.reviews.reduce((sum, review) => sum + review.rating, 0) /
+          ? cake.reviews.reduce((sum: number, review: any) => sum + review.rating, 0) /
             cake.reviews.length
           : 0;
 

@@ -14,10 +14,10 @@ export async function GET() {
     const revenueTrend = Array.from({ length: 30 }, (_, i) => {
       const date = new Date(Date.now() - (29 - i) * 24 * 60 * 60 * 1000);
       const dayOrders = orders.filter(
-        (o) =>
+        (o: any) =>
           new Date(o.createdAt).toDateString() === date.toDateString()
       );
-      const revenue = dayOrders.reduce((sum, o) => sum + o.finalAmount, 0);
+      const revenue = dayOrders.reduce((sum: number, o: any) => sum + o.finalAmount, 0);
       const orderCount = dayOrders.length;
       return {
         date: date.toLocaleDateString('en-US', {
@@ -33,20 +33,20 @@ export async function GET() {
     const cakes = await prisma.cake.findMany({
       select: { id: true, category: true },
     });
-    const cakeMap = new Map(cakes.map(c => [c.id, c.category]));
+    const cakeMap = new Map<string, string>(cakes.map((c: any) => [String(c.id), String(c.category)]));
 
     // Calculate category distribution
     const categoryCount = new Map<string, number>();
     
-    orders.forEach((order) => {
+    orders.forEach((order: any) => {
       try {
         const items = Array.isArray(order.items) ? order.items : [];
         items.forEach((item: any) => {
-          const cakeId = item.cakeId;
-          const category = cakeMap.get(cakeId) || 'Other';
+          const cakeId = String(item.cakeId || '');
+          const category = String(cakeMap.get(cakeId) || 'Other');
           categoryCount.set(category, (categoryCount.get(category) || 0) + 1);
         });
-      } catch (error) {
+      } catch (error: any) {
         console.error('Error parsing order items:', error);
       }
     });

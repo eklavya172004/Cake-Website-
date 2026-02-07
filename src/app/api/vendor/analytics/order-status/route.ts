@@ -33,7 +33,7 @@ export async function GET() {
         cancelled: 0,
       };
 
-      orders.forEach((order) => {
+      orders.forEach((order: any) => {
         const status = order.status || 'pending';
         if (status === 'delivered' || status === 'out_for_delivery' || status === 'picked_up') {
           statusCounts.delivered += 1;

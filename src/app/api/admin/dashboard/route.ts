@@ -7,9 +7,9 @@ export async function GET() {
       include: { vendor: true },
     });
 
-    const totalRevenue = orders.reduce((sum, o) => sum + o.finalAmount, 0);
+    const totalRevenue = orders.reduce((sum: number, o: any) => sum + o.finalAmount, 0);
     const totalOrders = orders.length;
-    const activeVendors = new Set(orders.map((o) => o.vendorId)).size;
+    const activeVendors = new Set(orders.map((o: any) => o.vendorId)).size;
     const disputes = 0;
 
     const ordersByStatus = orders.reduce(
@@ -23,7 +23,7 @@ export async function GET() {
     // Calculate top vendors by revenue
     const vendorStats = new Map<string, { name: string; orders: number; revenue: number }>();
     
-    orders.forEach((order) => {
+    orders.forEach((order: any) => {
       if (order.vendor) {
         const existing = vendorStats.get(order.vendorId) || {
           name: order.vendor.name,
@@ -52,12 +52,12 @@ export async function GET() {
       const nextDate = new Date(date);
       nextDate.setDate(nextDate.getDate() + 1);
 
-      const dayOrders = orders.filter((order) => {
+      const dayOrders = orders.filter((order: any) => {
         const orderDate = new Date(order.createdAt || new Date());
         return orderDate >= date && orderDate < nextDate;
       });
 
-      const dayRevenue = dayOrders.reduce((sum, order) => sum + order.finalAmount, 0);
+      const dayRevenue = dayOrders.reduce((sum: number, order: any) => sum + order.finalAmount, 0);
 
       revenueData.push({
         date: date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),

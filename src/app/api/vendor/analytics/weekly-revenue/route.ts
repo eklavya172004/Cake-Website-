@@ -46,7 +46,7 @@ export async function GET() {
         dataByDate[dayName] = { revenue: 0, orders: 0 };
       }
 
-      orders.forEach((order) => {
+      orders.forEach((order: any) => {
         const dateObj = new Date(order.createdAt);
         const dayName = dateObj.toLocaleDateString('en-US', { weekday: 'short' });
         if (!dataByDate[dayName]) {

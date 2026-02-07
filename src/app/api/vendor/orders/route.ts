@@ -27,7 +27,7 @@ export async function GET() {
       orderBy: { createdAt: 'desc' },
     });
 
-    const formattedOrders = orders.map((order) => ({
+    const formattedOrders = orders.map((order: any) => ({
       id: order.id,
       orderNumber: order.orderNumber,
       customer: order.user?.name || 'Unknown',

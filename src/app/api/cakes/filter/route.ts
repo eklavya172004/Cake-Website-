@@ -88,7 +88,7 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({
       success: true,
-      data: cakes.map(cake => ({
+      data: cakes.map((cake: any) => ({
         ...cake,
         basePrice: parseFloat(cake.basePrice.toString()),
       })),

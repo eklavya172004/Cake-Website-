@@ -55,7 +55,7 @@ export async function GET() {
 
       // Count reviews for each cake
       const products = await Promise.all(
-        vendor.cakes.map(async (cake) => {
+        vendor.cakes.map(async (cake: any) => {
           const reviewCount = await db.cakeReview.count({
             where: { cakeId: cake.id },
           });

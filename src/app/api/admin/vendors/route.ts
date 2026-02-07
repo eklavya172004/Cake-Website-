@@ -19,7 +19,7 @@ export async function GET() {
       },
     });
 
-    const vendorData = vendors.map((vendor) => ({
+    const vendorData = vendors.map((vendor: any) => ({
       id: vendor.id,
       name: vendor.name,
       owner: vendor.account?.name || vendor.name,
@@ -40,7 +40,7 @@ export async function GET() {
         businessProof: vendor.profile.businessProof,
         addressProof: vendor.profile.addressProof,
       } : null,
-      serviceAreas: vendor.serviceAreas.map((area) => ({
+      serviceAreas: vendor.serviceAreas.map((area: any) => ({
         location: area.areaName,
         pincodes: [area.pincode],
       })),

@@ -53,7 +53,7 @@ export async function GET(
     ]);
 
     return NextResponse.json({
-      orders: orders.map((order) => ({
+      orders: orders.map((order: any) => ({
         ...order,
         createdAt: order.createdAt.toISOString(),
         deliveredAt: order.deliveredAt?.toISOString(),

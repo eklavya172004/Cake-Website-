@@ -72,17 +72,17 @@ export async function GET(
     console.log(`Vendor ${vendorId}: Found ${allOrders.length} orders`);
     console.log(`Vendor ${vendorId}: Found ${vendor._count.cakes} cakes`);
 
-    const completedOrders = allOrders.filter((o) => o.status === 'delivered').length;
+    const completedOrders = allOrders.filter((o: any) => o.status === 'delivered').length;
     const pendingOrders = allOrders.filter(
-      (o) => ['pending', 'confirmed', 'preparing', 'ready', 'picked_up', 'out_for_delivery'].includes(o.status)
+      (o: any) => ['pending', 'confirmed', 'preparing', 'ready', 'picked_up', 'out_for_delivery'].includes(o.status)
     ).length;
-    const cancelledOrders = allOrders.filter((o) => o.status === 'cancelled').length;
+    const cancelledOrders = allOrders.filter((o: any) => o.status === 'cancelled').length;
 
     const thisMonthStart = new Date();
     thisMonthStart.setDate(1);
     const thisMonthRevenue = allOrders
-      .filter((o) => new Date(o.createdAt) >= thisMonthStart && o.status === 'delivered')
-      .reduce((sum, o) => sum + (o.totalAmount || 0), 0);
+      .filter((o: any) => new Date(o.createdAt) >= thisMonthStart && o.status === 'delivered')
+      .reduce((sum: number, o: any) => sum + (o.totalAmount || 0), 0);
 
     const vendorData = {
       id: vendor.id,
@@ -111,15 +111,15 @@ export async function GET(
             addressProof: vendor.profile.addressProof,
           }
         : null,
-      serviceAreas: vendor.serviceAreas.map((area) => ({
+      serviceAreas: vendor.serviceAreas.map((area: any) => ({
         location: area.areaName,
         pincodes: area.pincode ? [area.pincode] : [],
         deliveryFee: area.deliveryFee,
       })),
       products: {
         total: vendor._count.cakes,
-        active: vendor.cakes.filter((c) => c.isActive).length,
-        inactive: vendor.cakes.filter((c) => !c.isActive).length,
+        active: vendor.cakes.filter((c: any) => c.isActive).length,
+        inactive: vendor.cakes.filter((c: any) => !c.isActive).length,
       },
       orders: {
         total: vendor._count.orders,
@@ -128,7 +128,7 @@ export async function GET(
         cancelled: cancelledOrders,
       },
       revenue: {
-        total: allOrders.reduce((sum, o) => sum + o.totalAmount, 0),
+        total: allOrders.reduce((sum: number, o: any) => sum + o.totalAmount, 0),
         thisMonth: thisMonthRevenue,
       },
     };
