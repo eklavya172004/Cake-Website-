@@ -9,8 +9,6 @@ const nextConfig: NextConfig = {
       },
     ],
   },
-  // Output as standalone for better serverless support
-  output: 'standalone',
 };
 
 export default nextConfig;

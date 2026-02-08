@@ -2,18 +2,9 @@
   command = "npm run build"
   publish = ".next"
 
+[build.environment]
+  NODE_VERSION = "20.9.0"
+
 [dev]
   command = "npm run dev"
   port = 3000
-  framework = "next"
-
-[build.environment]
-  NODE_VERSION = "20.9.0"
-  NPM_VERSION = "10"
-
-# Force HTTPS redirect
-[[redirects]]
-  from = "http://*"
-  to = "https://:splat"
-  status = 301
-  force = true
