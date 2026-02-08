@@ -5,19 +5,28 @@ const globalForPrisma = globalThis as unknown as {
   prisma: PrismaClient | undefined;
 };
 
-export const prisma = globalForPrisma.prisma ?? new PrismaClient({
-  // Only log errors in production
-  // In development, suppress Prisma engine connection errors during Turbopack startup
-  log: process.env.NODE_ENV === 'production' ? ['query', 'error', 'warn'] : ['error'],
-  errorFormat: 'pretty',
-});
+export const prisma =
+  globalForPrisma.prisma ??
+  new PrismaClient({
+    log:
+      process.env.NODE_ENV === 'production'
+        ? ['error']
+        : ['error'],
+    errorFormat: 'pretty',
+  });
 
-// Ensure proper connection handling
 if (process.env.NODE_ENV !== 'production') {
   globalForPrisma.prisma = prisma;
 }
 
-// Initialize connection on app startup
+// Handle graceful shutdown
+process.on('SIGINT', async () => {
+  await prisma.$disconnect();
+});
+
+process.on('SIGTERM', async () => {
+  await prisma.$disconnect();
+});
 if (process.env.NODE_ENV !== 'production') {
   prisma.$connect()
     .then(() => console.log('✅ Database connected successfully'))
