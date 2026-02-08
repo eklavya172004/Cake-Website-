@@ -7,7 +7,6 @@ A comprehensive, full-featured e-commerce platform for cake shops with role-base
 **🎉 Website is LIVE and Production Ready!**
 
 - **Primary Domain**: https://purblepalace.com
-- **Live Demo**: https://6987ca5addbc2a8e2213af3f--purblepalace.netlify.app
 - **GitHub**: https://github.com/eklavya172004/Cake-Website-
 
 ---
