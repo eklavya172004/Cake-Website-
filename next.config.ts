@@ -9,9 +9,6 @@ const nextConfig: NextConfig = {
       },
     ],
   },
-  // Netlify optimizations
-  swcMinify: true,
-  compress: true,
 };
 
 export default nextConfig;
