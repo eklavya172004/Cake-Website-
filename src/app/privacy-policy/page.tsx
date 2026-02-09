@@ -1,6 +1,6 @@
 export default function PrivacyPolicy() {
   return (
-    <div className="min-h-screen bg-linear-to-br from-pink-50 to-white py-12 px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen mt-28 bg-linear-to-br from-pink-50 to-white py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-4xl mx-auto">
         <div className="bg-white rounded-lg shadow-lg p-8">
           <h1 className="text-4xl font-bold text-pink-700 mb-8">Privacy Policy</h1>
@@ -107,7 +107,7 @@ export default function PrivacyPolicy() {
               If you have any questions about this Privacy Policy or our privacy practices, please contact us at:
             </p>
             <div className="mt-4 p-4 bg-pink-50 rounded-lg">
-              <p className="text-gray-700"><strong>Email:</strong> privacy@cakeshop.com</p>
+              <p className="text-gray-700"><strong>Email:</strong> support@purblepalace.in</p>
               <p className="text-gray-700"><strong>Phone:</strong> +91 1234567890</p>
               <p className="text-gray-700"><strong>Address:</strong> Cake Shop, Your City, Country</p>
             </div>

@@ -1,6 +1,6 @@
 export default function ReturnPolicy() {
   return (
-    <div className="min-h-screen bg-linear-to-br from-pink-50 to-white py-12 px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen mt-24 bg-linear-to-br from-pink-50 to-white py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-4xl mx-auto">
         <div className="bg-white rounded-lg shadow-lg p-8">
           <h1 className="text-4xl font-bold text-pink-700 mb-8">Return & Refund Policy</h1>
