@@ -1,5 +1,6 @@
 'use client';
 
+import Link from 'next/link';
 import { Mail, Phone, MapPin, Facebook, Instagram, Twitter } from 'lucide-react';
 
 export default function Footer() {
@@ -18,13 +19,13 @@ export default function Footer() {
               Crafting premium custom cakes and delightful memories. Artistic designs meet unforgettable flavors.
             </p>
             <div className="flex gap-4">
-              <a href="#" className="p-2 rounded-lg bg-pink-100 text-pink-600 hover:bg-pink-200 transition-all duration-300">
+              <a href="#" title="Facebook" className="p-2 rounded-lg bg-pink-100 text-pink-600 hover:bg-pink-200 transition-all duration-300">
                 <Facebook className="w-5 h-5" />
               </a>
-              <a href="#" className="p-2 rounded-lg bg-pink-100 text-pink-600 hover:bg-pink-200 transition-all duration-300">
+              <a href="#" title="Instagram" className="p-2 rounded-lg bg-pink-100 text-pink-600 hover:bg-pink-200 transition-all duration-300">
                 <Instagram className="w-5 h-5" />
               </a>
-              <a href="#" className="p-2 rounded-lg bg-pink-100 text-pink-600 hover:bg-pink-200 transition-all duration-300">
+              <a href="#" title="Twitter" className="p-2 rounded-lg bg-pink-100 text-pink-600 hover:bg-pink-200 transition-all duration-300">
                 <Twitter className="w-5 h-5" />
               </a>
             </div>
@@ -34,10 +35,10 @@ export default function Footer() {
           <div>
             <h4 className="font-bold text-gray-900 mb-6 uppercase text-sm tracking-wider">Navigation</h4>
             <ul className="space-y-3 text-sm">
-              <li><a href="/" className="text-gray-600 hover:text-pink-600 font-medium transition-colors">Home</a></li>
-              <li><a href="/cakes" className="text-gray-600 hover:text-pink-600 font-medium transition-colors">Browse Cakes</a></li>
-              <li><a href="/orders" className="text-gray-600 hover:text-pink-600 font-medium transition-colors">Track Order</a></li>
-              <li><a href="/profile" className="text-gray-600 hover:text-pink-600 font-medium transition-colors">My Profile</a></li>
+              <li><Link href="/" className="text-gray-600 hover:text-pink-600 font-medium transition-colors">Home</Link></li>
+              <li><Link href="/cakes" className="text-gray-600 hover:text-pink-600 font-medium transition-colors">Browse Cakes</Link></li>
+              <li><Link href="/orders" className="text-gray-600 hover:text-pink-600 font-medium transition-colors">Track Order</Link></li>
+              <li><Link href="/profile" className="text-gray-600 hover:text-pink-600 font-medium transition-colors">My Profile</Link></li>
             </ul>
           </div>
 
@@ -45,9 +46,9 @@ export default function Footer() {
           <div>
             <h4 className="font-bold text-gray-900 mb-6 uppercase text-sm tracking-wider">Legal</h4>
             <ul className="space-y-3 text-sm">
-              <li><a href="#" className="text-gray-600 hover:text-pink-600 font-medium transition-colors">Privacy Policy</a></li>
-              <li><a href="#" className="text-gray-600 hover:text-pink-600 font-medium transition-colors">Terms of Service</a></li>
-              <li><a href="#" className="text-gray-600 hover:text-pink-600 font-medium transition-colors">Return Policy</a></li>
+              <li><Link href="/privacy-policy" className="text-gray-600 hover:text-pink-600 font-medium transition-colors">Privacy Policy</Link></li>
+              <li><Link href="/terms-of-service" className="text-gray-600 hover:text-pink-600 font-medium transition-colors">Terms of Service</Link></li>
+              <li><Link href="/return-policy" className="text-gray-600 hover:text-pink-600 font-medium transition-colors">Return Policy</Link></li>
               <li><a href="#" className="text-gray-600 hover:text-pink-600 font-medium transition-colors">FAQ</a></li>
             </ul>
           </div>
@@ -57,15 +58,15 @@ export default function Footer() {
             <h4 className="font-bold text-gray-900 mb-6 uppercase text-sm tracking-wider">Get In Touch</h4>
             <ul className="space-y-4 text-sm">
               <li className="flex gap-3 text-gray-600 hover:text-pink-600 transition-colors cursor-pointer">
-                <Phone className="w-5 h-5 flex-shrink-0 mt-0.5" /> 
+                <Phone className="w-5 h-5 shrink-0 mt-0.5" /> 
                 <span className="font-medium">+91 9876-543-210</span>
               </li>
               <li className="flex gap-3 text-gray-600 hover:text-pink-600 transition-colors cursor-pointer">
-                <Mail className="w-5 h-5 flex-shrink-0 mt-0.5" /> 
+                <Mail className="w-5 h-5 shrink-0 mt-0.5" /> 
                 <span className="font-medium">hello@purblepalace.in</span>
               </li>
               <li className="flex gap-3 text-gray-600 hover:text-pink-600 transition-colors cursor-pointer">
-                <MapPin className="w-5 h-5 flex-shrink-0 mt-0.5" /> 
+                <MapPin className="w-5 h-5 shrink-0 mt-0.5" /> 
                 <span className="font-medium">New Delhi, India</span>
               </li>
             </ul>
