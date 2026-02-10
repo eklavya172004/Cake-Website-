@@ -34,121 +34,186 @@ export async function POST(request: NextRequest) {
 
     console.log(`Received webhook event: ${eventType}`);
 
-    // Handle payment link completion
-    if (eventType === 'payment_link.completed') {
-      const paymentLinkId = event.payload.payment_link.entity.id;
-      const amount = event.payload.payment_link.entity.amount / 100; // Convert from paise
-      const customerEmail = event.payload.payment_link.entity.description;
+    // Handle payment link paid event
+    if (eventType === 'payment_link.paid') {
+      const paymentLinkEntity = event.payload.payment_link.entity;
+      const paymentEntity = event.payload.payment.entity;
+      
+      const paymentLinkId = paymentLinkEntity.id;
+      const amount = paymentLinkEntity.amount / 100; // Convert from paise
+      const orderId = paymentLinkEntity.notes?.order_id;
+      const paymentType = paymentLinkEntity.notes?.payment_type || 'single';
 
       console.log(
-        `Payment link ${paymentLinkId} completed for amount: ₹${amount}`
+        `Payment link ${paymentLinkId} paid for order ${orderId}. Amount: ₹${amount}, Type: ${paymentType}`
       );
 
-      // Find orders with this payment link ID in the notes
-      const orders = await prisma.order.findMany({
-        where: {
-          notes: {
-            contains: paymentLinkId,
-          },
+      if (!orderId) {
+        return NextResponse.json({ status: 'ok' });
+      }
+
+      // Get the order
+      const order = await prisma.order.findUnique({
+        where: { id: orderId },
+        include: { 
+          vendor: {
+            include: { profile: true }
+          }
         },
       });
 
-      for (const order of orders) {
-        if (!order.notes) continue;
+      if (!order) {
+        console.warn(`Order ${orderId} not found`);
+        return NextResponse.json({ status: 'ok' });
+      }
 
+      // Handle SINGLE payment mode
+      if (paymentType === 'single') {
+        // Update order payment status
+        await prisma.order.update({
+          where: { id: orderId },
+          data: {
+            paymentStatus: 'completed',
+            paymentMethod: 'razorpay',
+            razorpayPaymentId: paymentEntity.id,
+            status: 'confirmed',
+            splitStatus: 'split_complete', // For single payments, mark as complete
+          },
+        });
+
+        // Trigger payment split (20% admin, 80% vendor)
         try {
-          const notes = JSON.parse(order.notes);
-          if (!notes.splitPaymentLinks) continue;
-
-          // Update the payment link status
-          const updatedLinks = notes.splitPaymentLinks.map((link: any) => {
-            if (link.id === paymentLinkId) {
-              return { ...link, status: 'paid' };
+          const response = await fetch(
+            `${process.env.NEXTAUTH_URL || 'http://localhost:3000'}/api/payment/process-split`,
+            {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                orderId,
+                totalAmount: order.finalAmount,
+                vendorId: order.vendorId,
+                vendorBankAccount: order.vendor.profile ? {
+                  account_number: order.vendor.profile.bankAccountNumber,
+                  ifsc: order.vendor.profile.bankIfscCode,
+                  beneficiary_name: order.vendor.profile.bankAccountHolderName,
+                } : undefined,
+              }),
             }
-            return link;
-          });
-
-          // Check if all payments are completed
-          const allPaid = updatedLinks.every((link: any) => link.status === 'paid');
-
-          // Update the order with new links data
-          const updatedNotes = {
-            ...notes,
-            splitPaymentLinks: updatedLinks,
-          };
-
-          await prisma.order.update({
-            where: { id: order.id },
-            data: {
-              notes: JSON.stringify(updatedNotes),
-              paymentStatus: allPaid ? 'completed' : 'pending',
-              status: allPaid ? 'confirmed' : order.status,
-            },
-          });
-
-          console.log(
-            `Updated order ${order.id}. All paid: ${allPaid}`
           );
 
-          // If all payments are received, you can trigger order confirmation here
-          if (allPaid) {
-            console.log(`All payments received for order ${order.id}`);
-            // You can add additional logic here - send confirmation email, update vendor status, etc.
-          }
-        } catch (parseError) {
-          console.error('Error parsing order notes:', parseError);
+          const splitResult = await response.json();
+          console.log(
+            `Split payment processed for order ${orderId}:`,
+            splitResult
+          );
+        } catch (splitError) {
+          console.error('Error processing payment split:', splitError);
         }
       }
-    }
-
-    // Handle payment link cancelled
-    if (eventType === 'payment_link.cancelled') {
-      const paymentLinkId = event.payload.payment_link.entity.id;
-      console.log(`Payment link ${paymentLinkId} was cancelled`);
-
-      // Update the link status to cancelled
-      const orders = await prisma.order.findMany({
-        where: {
-          notes: {
-            contains: paymentLinkId,
-          },
-        },
-      });
-
-      for (const order of orders) {
-        if (!order.notes) continue;
+      // Handle SPLIT payment mode
+      else if (paymentType === 'split') {
+        console.log(`Processing split payment for order ${orderId}`);
 
         try {
-          const notes = JSON.parse(order.notes);
-          if (!notes.splitPaymentLinks) continue;
-
-          const updatedLinks = notes.splitPaymentLinks.map((link: any) => {
-            if (link.id === paymentLinkId) {
-              return { ...link, status: 'cancelled' };
-            }
-            return link;
+          // Get co-payment details from CoPayment model
+          const coPayment = await prisma.coPayment.findUnique({
+            where: { orderId },
+            include: { contributors: true },
           });
 
-          await prisma.order.update({
-            where: { id: order.id },
+          if (!coPayment) {
+            console.warn(`CoPayment not found for order ${orderId}`);
+            return NextResponse.json({ status: 'ok' });
+          }
+
+          // Mark this contributor as paid
+          const updatedContributors = coPayment.contributors.map((c) => {
+            if (c.paymentLinkId === paymentLinkId) {
+              return { ...c, status: 'paid', paidAt: new Date() };
+            }
+            return c;
+          });
+
+          // Update co-payment status
+          const allPaid = updatedContributors.every((c) => c.status === 'paid');
+          const collectedAmount = updatedContributors.reduce(
+            (sum, c) => sum + (c.status === 'paid' ? c.amount : 0),
+            0
+          );
+
+          await prisma.coPayment.update({
+            where: { id: coPayment.id },
             data: {
-              notes: JSON.stringify({
-                ...notes,
-                splitPaymentLinks: updatedLinks,
-              }),
+              status: allPaid ? 'completed' : 'partial',
+              collectedAmount,
+              completedAt: allPaid ? new Date() : null,
             },
           });
-        } catch (parseError) {
-          console.error('Error parsing order notes:', parseError);
+
+          // If all split payments are received, process the split
+          if (allPaid) {
+            console.log(`All split payments received for order ${orderId}`);
+
+            // Update order status
+            await prisma.order.update({
+              where: { id: orderId },
+              data: {
+                paymentStatus: 'completed',
+                paymentMethod: 'razorpay_split',
+                status: 'confirmed',
+                splitStatus: 'all_paid',
+              },
+            });
+
+            // Trigger batch payment split (20% admin, 80% vendor)
+            try {
+              const response = await fetch(
+                `${process.env.NEXTAUTH_URL || 'http://localhost:3000'}/api/payment/process-split`,
+                {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({
+                    orderId,
+                    totalAmount: order.finalAmount,
+                    vendorId: order.vendorId,
+                    vendorBankAccount: order.vendor.profile ? {
+                      account_number: order.vendor.profile.bankAccountNumber,
+                      ifsc: order.vendor.profile.bankIfscCode,
+                      beneficiary_name: order.vendor.profile.bankAccountHolderName,
+                    } : undefined,
+                  }),
+                }
+              );
+
+              const splitResult = await response.json();
+              console.log(
+                `Split payment processed for order ${orderId}:`,
+                splitResult
+              );
+            } catch (splitError) {
+              console.error(
+                'Error processing batch payment split:',
+                splitError
+              );
+            }
+          }
+        } catch (coPaymentError) {
+          console.error('Error handling co-payment:', coPaymentError);
         }
+      }
+
+      // Handle COD mode
+      else if (paymentType === 'cod') {
+        // COD doesn't need immediate payment, just mark as pending
+        console.log(`COD payment for order ${orderId} - awaiting delivery`);
       }
     }
 
-    return NextResponse.json({ success: true });
+    return NextResponse.json({ status: 'ok' });
   } catch (error) {
     console.error('Webhook error:', error);
     return NextResponse.json(
-      { error: 'Webhook processing failed' },
+      { error: 'Webhook handler failed' },
       { status: 500 }
     );
   }

@@ -618,9 +618,15 @@ model Order {
   
   // Payment
   paymentMethod         String?   // "online", "cod", "copay"
+  paymentType           String    @default("single") // "single", "split", "cod"
   paymentStatus         String    @default("pending") // pending, processing, completed, failed, refunded
+  splitStatus           String?   // "pending_payment", "all_paid", "split_complete" (for split payments)
   razorpayOrderId       String?
   razorpayPaymentId     String?
+  
+  // Relations for payment tracking
+  paymentLinks          PaymentLink[]
+  paymentSplits         PaymentSplit[]
   
   // Delivery Tracking
   deliveryPartnerId     String?
@@ -715,6 +721,69 @@ model DeliveryPartner {
 }
 
 // ============================================
+// PAYMENT LINKS (For Single & Split Payments)
+// ============================================
+
+model PaymentLink {
+  id                String    @id @default(cuid())
+  orderId           String
+  order             Order     @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  
+  razorpayLinkId    String    @unique // Razorpay payment link ID
+  razorpayLinkUrl   String    // Razorpay short URL
+  amount            Float     // Amount for this payment
+  currency          String    @default("INR")
+  
+  payerEmail        String    // Who is paying (for split, this is co-payer email)
+  payerName         String?
+  
+  status            String    @default("created") // created, issued, paid, cancelled, expired, rejected
+  paidAmount        Float?
+  
+  razorpayPaymentId String?   // Captured when payment is made
+  paidAt            DateTime?
+  
+  expiresAt         DateTime?
+  
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+  
+  @@index([orderId])
+  @@index([status])
+  @@index([razorpayLinkId])
+}
+
+// ============================================
+// PAYMENT SPLITS (Admin & Vendor Settlement)
+// ============================================
+
+model PaymentSplit {
+  id                String    @id @default(cuid())
+  orderId           String
+  order             Order     @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  
+  totalAmount       Float     // Total order amount that was paid
+  adminAmount       Float     // 20% to admin
+  vendorAmount      Float     // 80% to vendor
+  
+  adminRazorpayTransferId   String?   // Razorpay transfer ID for admin
+  vendorRazorpayTransferId  String?   // Razorpay transfer ID for vendor
+  
+  status            String    @default("pending") // pending, processing, completed, failed
+  adminTransferStatus String? // pending, completed, failed
+  vendorTransferStatus String? // pending, completed, failed
+  
+  completedAt       DateTime?
+  failureReason     String?
+  
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+  
+  @@index([orderId])
+  @@index([status])
+}
+
+// ============================================
 // CO-PAYMENT
 // ============================================
 
@@ -784,4 +853,23 @@ model Notification {
   @@index([userId, isRead])
   @@index([orderId])
   @@index([createdAt])
+}
+
+// ============================================
+// APP SETTINGS (Admin Bank Details, etc.)
+// ============================================
+
+model AppSettings {
+  id                      String    @id @default("app-settings")
+  
+  // Admin Bank Details for Settlements
+  adminBankAccountNumber  String?
+  adminBankIFSC           String?
+  adminBankAccountHolder  String?
+  
+  // Payment Settings
+  adminCommissionPercent  Float     @default(20) // Admin gets 20%
+  vendorCommissionPercent Float     @default(80) // Vendor gets 80%
+  
+  updatedAt               DateTime  @updatedAt
 }
