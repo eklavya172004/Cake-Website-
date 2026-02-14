@@ -54,6 +54,11 @@ export async function POST(
             id: true,
             name: true,
           }
+        },
+        coPayment: {
+          include: {
+            contributors: true
+          }
         }
       }
     });

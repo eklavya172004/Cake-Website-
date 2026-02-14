@@ -2,6 +2,7 @@
 'use client';
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
+import { useSession } from 'next-auth/react';
 
 export interface CartItem {
   id: string;
@@ -38,37 +39,55 @@ interface CartContextType {
 const CartContext = createContext<CartContextType | undefined>(undefined);
 
 export function CartProvider({ children }: { children: React.ReactNode }) {
+  const { data: session } = useSession();
   const [items, setItems] = useState<CartItem[]>([]);
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [isHydrated, setIsHydrated] = useState(false);
+  const [lastUserId, setLastUserId] = useState<string | null>(null);
 
-  // Load cart from localStorage on mount
+  // Load cart from localStorage on mount and when user changes
   useEffect(() => {
-    const savedCart = localStorage.getItem('cart');
-    if (savedCart) {
-      try {
-        const parsed = JSON.parse(savedCart);
-        if (Array.isArray(parsed)) {
-          setItems(parsed);
-        } else {
+    const currentUserId = session?.user?.email || 'guest';
+    
+    // If user has changed (logged in/out or switched user), clear cart and update userId
+    if (lastUserId !== null && lastUserId !== currentUserId) {
+      console.log(`🔄 User changed from ${lastUserId} to ${currentUserId}, clearing cart`);
+      localStorage.removeItem(`cart_${lastUserId}`);
+      setLastUserId(currentUserId);
+      setItems([]);
+    } else if (lastUserId === null) {
+      // First load - set the current user
+      setLastUserId(currentUserId);
+      
+      // Load cart for current user
+      const cartKey = `cart_${currentUserId}`;
+      const savedCart = localStorage.getItem(cartKey);
+      if (savedCart) {
+        try {
+          const parsed = JSON.parse(savedCart);
+          if (Array.isArray(parsed)) {
+            setItems(parsed);
+          } else {
+            setItems([]);
+          }
+        } catch (error) {
+          console.error('Error loading cart:', error);
           setItems([]);
         }
-      } catch (error) {
-        console.error('Error loading cart:', error);
+      } else {
         setItems([]);
       }
-    } else {
-      setItems([]);
+      setIsHydrated(true);
     }
-    setIsHydrated(true);
-  }, []);
+  }, [session?.user?.email, lastUserId]);
 
-  // Save cart to localStorage whenever it changes
+  // Save cart to localStorage whenever it changes (use user-specific key)
   useEffect(() => {
-    if (isHydrated) {
-      localStorage.setItem('cart', JSON.stringify(items));
+    if (isHydrated && lastUserId) {
+      const cartKey = `cart_${lastUserId}`;
+      localStorage.setItem(cartKey, JSON.stringify(items));
     }
-  }, [items, isHydrated]);
+  }, [items, isHydrated, lastUserId]);
 
   const addItem = (item: CartItem) => {
     setItems(prev => {
@@ -112,7 +131,9 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
 
   const clearCart = () => {
     setItems([]);
-    localStorage.removeItem('cart');
+    if (lastUserId) {
+      localStorage.removeItem(`cart_${lastUserId}`);
+    }
   };
 
   const getTotal = () => {

@@ -30,10 +30,18 @@ interface Order {
     phone: string;
     address: string;
     city: string;
+    state?: string;
     landmark?: string;
   };
+  deliveryPincode: string;
   vendor: {
+    id: string;
     name: string;
+    profile?: {
+      shopPhone?: string;
+      shopEmail?: string;
+      shopAddress?: string;
+    };
   };
   statusHistory: OrderStatusHistory[];
   createdAt: string;
@@ -248,20 +256,112 @@ export default function OrderTrackingPage() {
             </div>
           </div>
 
-          {/* Vendor Info */}
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-            <h3 className="font-bold text-gray-900 mb-4 flex items-center gap-2">
-              <Package className="w-5 h-5 text-pink-600" />
-              Preparing at
+          {/* Split Payment Info */}
+          {(order as any).coPayment && (
+            <div className="bg-blue-50 border border-blue-200 rounded-xl shadow-sm p-6 mb-6">
+              <h3 className="font-bold text-blue-900 mb-4 flex items-center gap-2">
+                👥 Split Payment Summary
+              </h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                <div>
+                  <p className="text-xs text-blue-700 font-medium mb-1">Total Amount</p>
+                  <p className="text-2xl font-bold text-blue-900">₹{(order as any).coPayment.totalAmount?.toFixed(0)}</p>
+                </div>
+                <div>
+                  <p className="text-xs text-blue-700 font-medium mb-1">Co-payers</p>
+                  <p className="text-2xl font-bold text-blue-900">{(order as any).coPayment.contributors?.length || 0}</p>
+                </div>
+              </div>
+              
+              {/* Contributors */}
+              {(order as any).coPayment.contributors && (order as any).coPayment.contributors.length > 0 && (
+                <div className="space-y-2">
+                  <p className="text-sm font-semibold text-blue-900">Payment Status:</p>
+                  {(order as any).coPayment.contributors.map((contributor: any, idx: number) => (
+                    <div key={idx} className="flex items-center justify-between p-2 bg-white rounded border border-blue-100">
+                      <span className="text-sm text-gray-700">{contributor.email}</span>
+                      <div className="flex items-center gap-2">
+                        <span className="font-semibold text-gray-900">₹{contributor.amount?.toFixed(0)}</span>
+                        <span className={`px-2 py-0.5 rounded text-xs font-bold ${
+                          contributor.status === 'paid'
+                            ? 'bg-green-100 text-green-700'
+                            : 'bg-amber-100 text-amber-700'
+                        }`}>
+                          {contributor.status === 'paid' ? '✓ Paid' : 'Pending'}
+                        </span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Vendor Info - Preparing at */}
+          <div className="bg-gradient-to-br from-purple-50 to-purple-100 rounded-xl shadow-sm border border-purple-200 p-6">
+            <h3 className="font-bold text-purple-900 mb-4 flex items-center gap-2">
+              <div className="bg-purple-600 text-white rounded-full p-2">
+                <Package className="w-4 h-4" />
+              </div>
+              Preparing At
             </h3>
-            <p className="text-lg font-semibold text-gray-900 mb-2">{order.vendor.name}</p>
-            <p className="text-sm text-gray-600">
-              Estimated delivery:{' '}
-              {new Date(order.estimatedDelivery).toLocaleTimeString([], {
-                hour: '2-digit',
-                minute: '2-digit',
-              })}
-            </p>
+            <div className="space-y-4">
+              <div>
+                <p className="text-xs font-semibold text-purple-700 uppercase tracking-wide mb-1">Shop Name</p>
+                <p className="text-xl font-bold text-gray-900">{order.vendor.name}</p>
+              </div>
+              
+              {order.vendor.profile?.shopAddress && (
+                <div className="pt-3 border-t border-purple-200">
+                  <p className="text-xs font-semibold text-purple-700 uppercase tracking-wide mb-1 flex items-center gap-2">
+                    📍 Shop Address
+                  </p>
+                  <p className="text-sm font-semibold text-gray-800">{order.vendor.profile.shopAddress}</p>
+                </div>
+              )}
+              
+              <div className="pt-3 border-t border-purple-200 space-y-3">
+                {order.vendor.profile?.shopPhone && (
+                  <div className="flex items-center gap-3">
+                    <Phone className="w-4 h-4 text-purple-600 flex-shrink-0" />
+                    <div>
+                      <p className="text-xs font-semibold text-purple-700 uppercase tracking-wide\">Contact</p>
+                      <p className="text-sm font-semibold text-gray-900">{order.vendor.profile.shopPhone}</p>
+                    </div>
+                  </div>
+                )}
+                
+                {order.vendor.profile?.shopEmail && (
+                  <div className="flex items-center gap-3">
+                    <Mail className="w-4 h-4 text-purple-600 flex-shrink-0" />
+                    <div>
+                      <p className="text-xs font-semibold text-purple-700 uppercase tracking-wide\">Email</p>
+                      <p className="text-sm font-semibold text-gray-900 break-all">{order.vendor.profile.shopEmail}</p>
+                    </div>
+                  </div>
+                )}
+              </div>
+              
+              <div className="pt-3 border-t border-purple-200">
+                <p className="text-xs font-semibold text-purple-700 uppercase tracking-wide mb-2 flex items-center gap-2">
+                  <Clock className="w-4 h-4" />
+                  Estimated Delivery
+                </p>
+                <p className="text-lg font-bold text-purple-900">
+                  {new Date(order.estimatedDelivery).toLocaleTimeString([], {
+                    hour: '2-digit',
+                    minute: '2-digit',
+                  })}
+                </p>
+                <p className="text-xs text-purple-700 mt-1">
+                  {new Date(order.estimatedDelivery).toLocaleDateString([], {
+                    weekday: 'short',
+                    month: 'short',
+                    day: 'numeric',
+                  })}
+                </p>
+              </div>
+            </div>
           </div>
 
           {/* Total */}
@@ -284,37 +384,79 @@ export default function OrderTrackingPage() {
           </div>
         </div>
 
-        {/* Delivery Address */}
+        {/* Delivery Address - Refactored */}
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-8 mb-8">
-          <h3 className="text-3xl font-bold text-gray-900 mb-6 flex items-center gap-2">
-            <Home className="w-6 h-6 text-pink-600" />
+          <h3 className="text-3xl font-bold text-gray-900 mb-8 flex items-center gap-3">
+            <div className="bg-pink-100 text-pink-600 rounded-full p-2.5">
+              <MapPin className="w-6 h-6" />
+            </div>
             Delivery Address
           </h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-            <div>
-              <p className="text-sm text-gray-600 mb-1 font-medium">Name</p>
-              <p className="font-semibold text-gray-900">{order.deliveryAddress.fullName}</p>
+          
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {/* Recipient Details Card */}
+            <div className="bg-gray-50 rounded-lg p-6 border border-gray-200">
+              <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3">Recipient</p>
+              <p className="text-2xl font-bold text-gray-900 mb-4">{order.deliveryAddress.fullName}</p>
+              
+              <div className="space-y-4">
+                <div className="flex items-center gap-3 pb-4 border-b border-gray-200">
+                  <Phone className="w-5 h-5 text-pink-600 flex-shrink-0" />
+                  <div>
+                    <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Phone</p>
+                    <p className="text-lg font-semibold text-gray-900">{order.deliveryAddress.phone}</p>
+                  </div>
+                </div>
+                
+                <div className="flex items-start gap-3">
+                  <Mail className="w-5 h-5 text-pink-600 flex-shrink-0 mt-0.5" />
+                  <div>
+                    <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Email</p>
+                    <p className="text-sm font-semibold text-gray-900 break-all">{order.deliveryAddress.email}</p>
+                  </div>
+                </div>
+              </div>
             </div>
-            <div>
-              <p className="text-sm text-gray-600 mb-1 font-medium">Phone</p>
-              <p className="font-semibold text-gray-900 flex items-center gap-2">
-                <Phone className="w-4 h-4 text-pink-600" />
-                {order.deliveryAddress.phone}
+            
+            {/* Address Details Card */}
+            <div className="bg-blue-50 rounded-lg p-6 border border-blue-200">
+              <p className="text-xs font-semibold text-blue-700 uppercase tracking-wide mb-3 flex items-center gap-2">
+                <Home className="w-4 h-4" />
+                Delivery Location
               </p>
-            </div>
-            <div className="md:col-span-2">
-              <p className="text-sm text-gray-600 mb-1 font-medium">Address</p>
-              <p className="font-semibold text-gray-900">
-                {order.deliveryAddress.address}
-                {order.deliveryAddress.landmark && `, ${order.deliveryAddress.landmark}`}
-              </p>
-            </div>
-            <div className="md:col-span-2">
-              <p className="text-sm text-gray-600 mb-1 font-medium">Email</p>
-              <p className="font-semibold text-gray-900 flex items-center gap-2">
-                <Mail className="w-4 h-4 text-pink-600" />
-                {order.deliveryAddress.email}
-              </p>
+              <div className="space-y-3">
+                <div>
+                  <p className="text-xs font-semibold text-blue-700 uppercase tracking-wide mb-1">Address</p>
+                  <p className="text-base font-semibold text-gray-900 leading-relaxed">
+                    {order.deliveryAddress.address}
+                  </p>
+                </div>
+                
+                {order.deliveryAddress.landmark && (
+                  <div className="pt-3 border-t border-blue-200">
+                    <p className="text-xs font-semibold text-blue-700 uppercase tracking-wide mb-1">Landmark</p>
+                    <p className="text-sm font-semibold text-gray-800 flex items-center gap-2 bg-white px-3 py-2 rounded-lg">
+                      📍 {order.deliveryAddress.landmark}
+                    </p>
+                  </div>
+                )}
+                
+                <div className="grid grid-cols-2 gap-3 pt-3 border-t border-blue-200">
+                  <div className="bg-white px-3 py-2 rounded-lg">
+                    <p className="text-xs font-semibold text-blue-700 uppercase tracking-wide mb-1">City</p>
+                    <p className="text-sm font-semibold text-gray-900">{order.deliveryAddress.city}</p>
+                  </div>
+                  <div className="bg-white px-3 py-2 rounded-lg">
+                    <p className="text-xs font-semibold text-blue-700 uppercase tracking-wide mb-1">State</p>
+                    <p className="text-sm font-semibold text-gray-900">{order.deliveryAddress.state || '-'}</p>
+                  </div>
+                </div>
+                
+                <div className="pt-3 border-t border-blue-200 bg-white px-3 py-2 rounded-lg">
+                  <p className="text-xs font-semibold text-blue-700 uppercase tracking-wide mb-1">📮 Pincode</p>
+                  <p className="text-base font-bold text-gray-900">{order.deliveryPincode}</p>
+                </div>
+              </div>
             </div>
           </div>
         </div>

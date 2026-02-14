@@ -11,6 +11,7 @@ export async function GET(
   try {
     const session = await getServerSession(authOptions);
     
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     if (!session?.user || (session.user as any).role !== 'admin') {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
@@ -67,6 +68,7 @@ export async function PATCH(
   try {
     const session = await getServerSession(authOptions);
     
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     if (!session?.user || (session.user as any).role !== 'admin') {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
@@ -157,6 +159,7 @@ export async function DELETE(
   try {
     const session = await getServerSession(authOptions);
     
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     if (!session?.user || (session.user as any).role !== 'admin') {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }

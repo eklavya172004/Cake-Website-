@@ -37,7 +37,6 @@ export async function POST(req: Request) {
         : 'elegant bakery-style decorations';
 
     const prompt = buildCakePrompt({
-      name,
       flavor,
       size,
       toppings: toppingsList,
@@ -92,16 +91,18 @@ export async function POST(req: Request) {
       model: 'gpt-image-1',
       size: '1024x1024',
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Error generating cake image:', error);
         // file deleted
+    const isAbortError = error instanceof Error && error.name === 'AbortError';
+    const errorMessage = error instanceof Error ? error.message : 'Image generation failed';
     return NextResponse.json(
       {
         success: false,
         error:
-          error?.name === 'AbortError'
+          isAbortError
             ? 'Image generation timed out'
-            : error?.message || 'Image generation failed',
+            : errorMessage,
       },
       { status: 500 }
     );
@@ -113,14 +114,12 @@ export async function POST(req: Request) {
  * (resize on frontend)
  */
 function buildCakePrompt({
-  name,
   flavor,
   size,
   toppings,
   frosting,
   message,
 }: {
-  name: string;
   flavor: string;
   size: string;
   toppings: string;

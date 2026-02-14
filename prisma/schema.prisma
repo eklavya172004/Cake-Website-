@@ -789,12 +789,13 @@ model PaymentSplit {
 
 model CoPayment {
   id              String   @id @default(cuid())
-  orderId         String   @unique
-  order           Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  orderId         String?  @unique  // Optional - will be linked to Order after order is created
+  order           Order?   @relation(fields: [orderId], references: [id], onDelete: Cascade)
   
   totalAmount     Float
   contributors    Contributor[]   // [{email, phone, amount, status, paymentLinkId, paidAt}]
   paymentLinks    Json[]   // Razorpay payment link details
+  orderData       Json?    // Store order details (items, customer, vendor, address) for creating order after all payments
   
   status          String   @default("pending") // pending, partial, completed, failed
   collectedAmount Float    @default(0)

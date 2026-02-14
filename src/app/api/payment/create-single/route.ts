@@ -1,8 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import Razorpay from 'razorpay';
-import { PrismaClient } from '@prisma/client';
-
-const prisma = new PrismaClient();
+import { prisma } from '@/lib/db/client';
 
 const razorpay = new Razorpay({
   key_id: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID!,
@@ -21,6 +19,9 @@ export async function POST(req: NextRequest) {
     }
 
     // Create Razorpay payment link
+    const baseUrl = process.env.NEXTAUTH_URL || 'http://localhost:3000';
+    const callbackUrl = `${baseUrl}/orders/${orderId}`;
+
     const paymentLink = await razorpay.paymentLink.create({
       amount: Math.round(amount * 100), // Convert to paise
       currency: 'INR',
@@ -30,6 +31,8 @@ export async function POST(req: NextRequest) {
         email: customerEmail,
         name: customerName,
       },
+      callback_url: callbackUrl,
+      callback_method: 'get',
       notify: {
         email: true,
         sms: false,
@@ -40,9 +43,14 @@ export async function POST(req: NextRequest) {
       },
     });
 
-    // Store payment link in database
-    // We'll track this with PaymentLink model once DB is migrated
-    // For now, just log the link creation
+    // Update order with payment_type and Razorpay payment link ID
+    await prisma.order.update({
+      where: { id: orderId },
+      data: {
+        paymentType: 'single',
+        razorpayOrderId: paymentLink.id, // Store payment link ID here
+      },
+    });
 
     return NextResponse.json({
       success: true,

@@ -69,10 +69,40 @@ export default function VendorLayout({
         {/* Logo */}
         <div className="p-4 border-b border-gray-700 flex items-center justify-between">
           {sidebarOpen && (
-            <div>
-              <div className="font-bold text-xl">PurblePalace</div>
-              <div className="text-xs text-gray-400">Vendor Panel</div>
+            <div className="flex items-center gap-3">
+              <svg className="w-6 h-6 flex-shrink-0" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
+                <rect width="512" height="512" rx="110" fill="white" opacity="0.1"/>
+                <rect x="136" y="260" width="240" height="90" rx="24" fill="#9333EA"/>
+                <rect x="168" y="200" width="176" height="70" rx="22" fill="#A855F7"/>
+                <rect x="200" y="150" width="112" height="55" rx="18" fill="#C084FC"/>
+                <path d="M168 200 Q190 215 212 200 Q234 215 256 200 Q278 215 300 200 Q322 215 344 200 L344 220 L168 220 Z" fill="#E9D5FF"/>
+                <rect x="248" y="115" width="16" height="35" rx="8" fill="#EC4899"/>
+                <circle cx="256" cy="105" r="10" fill="#FFFFFF"/>
+                <rect x="110" y="260" width="50" height="100" rx="18" fill="#A855F7"/>
+                <rect x="352" y="260" width="50" height="100" rx="18" fill="#A855F7"/>
+                <circle cx="135" cy="300" r="8" fill="#E9D5FF"/>
+                <circle cx="377" cy="300" r="8" fill="#E9D5FF"/>
+              </svg>
+              <div>
+                <div className="font-bold text-xl">PurblePalace</div>
+                <div className="text-xs text-gray-400">Vendor Panel</div>
+              </div>
             </div>
+          )}
+          {!sidebarOpen && (
+            <svg className="w-6 h-6" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
+              <rect width="512" height="512" rx="110" fill="white" opacity="0.1"/>
+              <rect x="136" y="260" width="240" height="90" rx="24" fill="#9333EA"/>
+              <rect x="168" y="200" width="176" height="70" rx="22" fill="#A855F7"/>
+              <rect x="200" y="150" width="112" height="55" rx="18" fill="#C084FC"/>
+              <path d="M168 200 Q190 215 212 200 Q234 215 256 200 Q278 215 300 200 Q322 215 344 200 L344 220 L168 220 Z" fill="#E9D5FF"/>
+              <rect x="248" y="115" width="16" height="35" rx="8" fill="#EC4899"/>
+              <circle cx="256" cy="105" r="10" fill="#FFFFFF"/>
+              <rect x="110" y="260" width="50" height="100" rx="18" fill="#A855F7"/>
+              <rect x="352" y="260" width="50" height="100" rx="18" fill="#A855F7"/>
+              <circle cx="135" cy="300" r="8" fill="#E9D5FF"/>
+              <circle cx="377" cy="300" r="8" fill="#E9D5FF"/>
+            </svg>
           )}
           <button
             onClick={() => setSidebarOpen(!sidebarOpen)}

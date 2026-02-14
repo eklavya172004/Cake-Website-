@@ -28,7 +28,7 @@ interface Order {
 }
 
 interface SplitPaymentData {
-  coPayers: Array<{
+  contributors: Array<{
     email: string;
     amount: number;
     status: 'pending' | 'paid';
@@ -46,32 +46,45 @@ const statusColors = {
   cancelled: { bg: 'bg-red-100', text: 'text-red-800', label: 'Cancelled' },
 };
 
+// Updated to work with new CoPayment structure
 const getSplitPaymentData = (order: Order): SplitPaymentData | null => {
+  // First try to use new coPayment structure (from API)
+  if ((order as any).coPayment?.contributors && (order as any).coPayment.contributors.length > 0) {
+    return {
+      contributors: (order as any).coPayment.contributors.map((c: any) => ({
+        email: c.email,
+        amount: c.amount,
+        status: c.status,
+      })),
+    };
+  }
+  
+  // Fallback to old notes structure for backward compatibility
   if (!order.notes) return null;
   try {
     const notes = JSON.parse(order.notes);
-    return notes.splitPaymentLinks ? { coPayers: notes.splitPaymentLinks } : null;
+    return notes.splitPaymentLinks ? { contributors: notes.splitPaymentLinks } : null;
   } catch (e) {
     return null;
   }
 };
 
 const calculatePaymentStatus = (data: SplitPaymentData) => {
-  const paidAmount = data.coPayers
+  const paidAmount = data.contributors
     .filter(p => p.status === 'paid')
     .reduce((sum, p) => sum + p.amount, 0);
-  const pendingAmount = data.coPayers
+  const pendingAmount = data.contributors
     .filter(p => p.status === 'pending')
     .reduce((sum, p) => sum + p.amount, 0);
-  const totalAmount = data.coPayers.reduce((sum, p) => sum + p.amount, 0);
-  const paidCount = data.coPayers.filter(p => p.status === 'paid').length;
+  const totalAmount = data.contributors.reduce((sum, p) => sum + p.amount, 0);
+  const paidCount = data.contributors.filter(p => p.status === 'paid').length;
   
   return {
     paidAmount,
     pendingAmount,
     totalAmount,
     paidCount,
-    totalCount: data.coPayers.length,
+    totalCount: data.contributors.length,
   };
 };
 
@@ -212,11 +225,7 @@ export default function OrdersHistoryPage() {
                 <button
                   key={order.id}
                   onClick={() => {
-                    if (order.paymentMethod === 'split') {
-                      router.push(`/split-payment-status/${order.id}`);
-                    } else {
-                      router.push(`/orders/${order.id}`);
-                    }
+                    router.push(`/orders/${order.id}`);
                   }}
                   className="w-full text-left bg-white rounded-xl border border-gray-200 p-6 hover:shadow-md hover:border-pink-300 transition-all group"
                 >
@@ -317,7 +326,7 @@ export default function OrdersHistoryPage() {
 
                       {/* Co-payers List */}
                       <div className="mt-4 space-y-2">
-                        {splitPaymentData?.coPayers.map((payer, idx) => (
+                        {splitPaymentData?.contributors.map((payer, idx) => (
                           <div key={idx} className="flex items-center justify-between text-xs p-2 bg-gray-50 rounded-lg border border-gray-200">
                             <div className="flex-1">
                               <p className="text-gray-700 truncate">{payer.email}</p>

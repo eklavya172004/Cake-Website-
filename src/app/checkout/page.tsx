@@ -82,6 +82,20 @@ export default function CheckoutPage() {
     fetchVendorDetails();
   }, [items]);
 
+  // Auto-fill email and name if user is logged in
+  React.useEffect(() => {
+    if (session?.user) {
+      const user = session.user;
+      const nameParts = user.name?.split(' ') || ['', ''];
+      setFormData(prev => ({
+        ...prev,
+        email: user.email || prev.email,
+        firstName: prev.firstName || nameParts[0] || '',
+        lastName: prev.lastName || nameParts.slice(1).join(' ') || '',
+      }));
+    }
+  }, [session]);
+
   if (items.length === 0) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
@@ -338,14 +352,36 @@ export default function CheckoutPage() {
 
       // If Razorpay payment
       if (paymentMethod === 'razorpay') {
-        // TODO: Add actual Razorpay integration later
-        // For now, just confirm the order as paid
-        clearCart();
-        // Redirect to success page if guest, otherwise to orders page
-        if (!isLoggedInAtStart) {
-          router.push(`/guest-checkout-success/${result.orderId}`);
-        } else {
-          router.push(`/orders/${result.orderId}`);
+        try {
+          // Generate Razorpay payment link
+          const paymentResponse = await fetch('/api/payment/create-single', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              orderId: result.orderId,
+              amount: itemsSubtotal + deliveryFee,
+              customerEmail: formData.email,
+              customerName: formData.firstName + ' ' + formData.lastName,
+            }),
+          });
+
+          const paymentData = await paymentResponse.json();
+
+          if (!paymentResponse.ok) {
+            throw new Error(paymentData.error || 'Failed to generate payment link');
+          }
+
+          console.log('Payment link generated:', paymentData.paymentLink.url);
+
+          // Clear cart and redirect to Razorpay link
+          clearCart();
+          
+          // Redirect to Razorpay payment link
+          window.location.href = paymentData.paymentLink.url;
+        } catch (paymentError) {
+          console.error('Error generating payment link:', paymentError);
+          alert('Failed to generate payment link. Please try again.');
+          setLoading(false);
         }
       } else {
         // COD - redirect to success page if guest, otherwise to orders page
@@ -617,6 +653,34 @@ export default function CheckoutPage() {
                     <SplitPaymentUI 
                       totalAmount={getItemsOnlySubtotal() + (parseFloat(String(deliveryFee)) || 0)}
                       cakeName={items.map(i => i.name).join(', ')}
+                      orderData={{
+                        items: items.map(item => ({
+                          cakeId: item.id,
+                          name: item.name,
+                          quantity: item.quantity,
+                          price: item.price,
+                          vendorId: item.vendorId,
+                          customization: item.customization,
+                        })),
+                        customer: {
+                          name: formData.firstName + ' ' + formData.lastName,
+                          email: formData.email || session?.user?.email,
+                          phone: formData.phone,
+                        },
+                        deliveryAddress: selectedAddress || {
+                          street: formData.address,
+                          city: formData.city,
+                          state: formData.state,
+                          pincode: formData.pincode,
+                          phone: formData.phone,
+                          fullName: formData.firstName + ' ' + formData.lastName,
+                          email: formData.email || session?.user?.email,
+                        },
+                        vendorDetails: vendorDetails,
+                        deliveryFee: deliveryFee,
+                        subtotal: getItemsOnlySubtotal(),
+                        instructions: formData.instructions,
+                      }}
                       onPaymentLinksGenerated={(links) => {
                         setSplitPaymentLinks(links);
                         alert('Payment links have been sent. Order will be placed once all co-payers complete their payment.');

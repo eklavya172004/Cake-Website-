@@ -14,6 +14,16 @@ interface OrderData {
   deliveryType: string;
   createdAt: string;
   estimatedDelivery?: string;
+  coPayment?: {
+    id: string;
+    totalAmount: number;
+    contributors: Array<{
+      id: string;
+      email: string;
+      amount: number;
+      status: 'pending' | 'paid';
+    }>;
+  };
   vendor: {
     id: string;
     name: string;
@@ -265,6 +275,47 @@ export default function GuestOrderTrackingPage() {
               </div>
             </div>
           </div>
+
+          {/* Split Payment Info */}
+          {order.coPayment && (
+            <div className="bg-blue-50 border border-blue-200 rounded-2xl shadow-lg p-6">
+              <h2 className="text-2xl font-bold text-blue-900 mb-4 flex items-center gap-2">
+                👥 Split Payment Summary
+              </h2>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                <div>
+                  <p className="text-xs text-blue-700 font-medium mb-1">Total Amount</p>
+                  <p className="text-2xl font-bold text-blue-900">₹{order.coPayment.totalAmount?.toFixed(0)}</p>
+                </div>
+                <div>
+                  <p className="text-xs text-blue-700 font-medium mb-1">Co-payers</p>
+                  <p className="text-2xl font-bold text-blue-900">{order.coPayment.contributors?.length || 0}</p>
+                </div>
+              </div>
+              
+              {/* Contributors */}
+              {order.coPayment.contributors && order.coPayment.contributors.length > 0 && (
+                <div className="space-y-2">
+                  <p className="text-sm font-semibold text-blue-900">Payment Status:</p>
+                  {order.coPayment.contributors.map((contributor, idx) => (
+                    <div key={idx} className="flex items-center justify-between p-3 bg-white rounded-lg border border-blue-100">
+                      <span className="text-sm text-gray-700">{contributor.email}</span>
+                      <div className="flex items-center gap-2">
+                        <span className="font-semibold text-gray-900">₹{contributor.amount?.toFixed(0)}</span>
+                        <span className={`px-2 py-0.5 rounded text-xs font-bold ${
+                          contributor.status === 'paid'
+                            ? 'bg-green-100 text-green-700'
+                            : 'bg-amber-100 text-amber-700'
+                        }`}>
+                          {contributor.status === 'paid' ? '✓ Paid' : 'Pending'}
+                        </span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
 
           {/* Status Timeline */}
           <div className="bg-white rounded-2xl shadow-lg border border-pink-100 p-6">

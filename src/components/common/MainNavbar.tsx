@@ -179,7 +179,19 @@ export default function MainNavbar() {
           <div className="flex items-center gap-4">
             {/* Logo */}
             <Link href="/" className="flex items-center gap-2 font-bold text-lg md:text-xl text-white hover:text-pink-100 transition-colors flex-shrink-0">
-              <Home className="w-5 h-5 md:w-6 md:h-6" />
+              <svg className="w-6 h-6 md:w-7 md:h-7" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
+                <rect width="512" height="512" rx="110" fill="currentColor" opacity="0.2"/>
+                <rect x="136" y="260" width="240" height="90" rx="24" fill="#F3E8FF"/>
+                <rect x="168" y="200" width="176" height="70" rx="22" fill="#E9D5FF"/>
+                <rect x="200" y="150" width="112" height="55" rx="18" fill="#F5F3FF"/>
+                <path d="M168 200 Q190 215 212 200 Q234 215 256 200 Q278 215 300 200 Q322 215 344 200 L344 220 L168 220 Z" fill="#FAFAF8"/>
+                <rect x="248" y="115" width="16" height="35" rx="8" fill="#FCA5A5"/>
+                <circle cx="256" cy="105" r="10" fill="#FFFFFF"/>
+                <rect x="110" y="260" width="50" height="100" rx="18" fill="#E9D5FF"/>
+                <rect x="352" y="260" width="50" height="100" rx="18" fill="#E9D5FF"/>
+                <circle cx="135" cy="300" r="8" fill="#F5F3FF"/>
+                <circle cx="377" cy="300" r="8" fill="#F5F3FF"/>
+              </svg>
               <span className="hidden sm:inline">Purblepalace</span>
             </Link>
 
@@ -269,10 +281,12 @@ export default function MainNavbar() {
               <button
                 onClick={() => router.push('/checkout')}
                 className="flex items-center gap-2 px-3 py-2 bg-white text-pink-600 rounded-lg hover:bg-pink-50 transition-all font-medium text-sm whitespace-nowrap relative border border-white hover:border-pink-600"
-                title="View Cart"
+                title={itemCount > 0 ? `View Cart (${itemCount} item${itemCount !== 1 ? 's' : ''})` : 'View Cart'}
               >
                 <ShoppingCart className="w-4 h-4" />
-                <span className="hidden md:inline">Cart</span>
+                <span className="hidden md:inline">
+                  {itemCount > 0 ? `Cart (${itemCount})` : 'Cart'}
+                </span>
                 {itemCount > 0 && (
                   <span className="absolute -top-2 -right-2 bg-orange-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center font-bold animate-pulse">
                     {itemCount > 99 ? '99+' : itemCount}

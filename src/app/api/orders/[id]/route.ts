@@ -1,10 +1,10 @@
-import { NextResponse } from "next/server";
+import { NextResponse, NextRequest } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { db as prisma } from '@/lib/db/client';
 
 export async function GET(
-  request: any,
+  _request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
@@ -22,6 +22,14 @@ export async function GET(
     const order = await prisma.order.findUnique({
       where: { id: orderId },
       include: {
+        user: {
+          select: {
+            id: true,
+            email: true,
+            name: true,
+            phone: true,
+          }
+        },
         vendor: {
           select: {
             id: true,
@@ -30,14 +38,16 @@ export async function GET(
             logo: true,
             rating: true,
             description: true,
-          }
-        },
-        user: {
-          select: {
-            id: true,
-            email: true,
-            name: true,
-            phone: true,
+            profile: {
+              select: {
+                businessName: true,
+                shopPhone: true,
+                shopEmail: true,
+                shopAddress: true,
+                ownerName: true,
+                ownerPhone: true,
+              }
+            }
           }
         },
         statusHistory: {
@@ -52,6 +62,17 @@ export async function GET(
             currentLat: true,
             currentLng: true,
             lastLocationUpdate: true,
+          }
+        },
+        coPayment: {
+          include: {
+            contributors: {
+              select: {
+                email: true,
+                amount: true,
+                status: true,
+              }
+            }
           }
         }
       }
@@ -73,10 +94,11 @@ export async function GET(
     }
 
     return NextResponse.json(order);
-  } catch (error: any) {
+  } catch (error) {
     console.error("Order fetch error:", error);
+    const errorMessage = error instanceof Error ? error.message : "Failed to fetch order";
     return NextResponse.json(
-      { error: error.message || "Failed to fetch order" },
+      { error: errorMessage },
       { status: 500 }
     );
   } finally {

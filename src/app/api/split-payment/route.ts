@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import Razorpay from 'razorpay';
 import { randomUUID } from 'crypto';
-import nodemailer from 'nodemailer';
+import { Resend } from 'resend';
+import { prisma } from '@/lib/db/client';
 
 function getRazorpayInstance() {
   const keyId = process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID;
@@ -17,23 +18,14 @@ function getRazorpayInstance() {
   });
 }
 
-function getEmailTransporter() {
-  return nodemailer.createTransport({
-    service: 'gmail',
-    auth: {
-      user: process.env.EMAIL_USER,
-      pass: process.env.EMAIL_PASSWORD,
-    },
-  });
-}
-
 async function sendPaymentEmail(email: string, paymentLink: string, amount: number, cakeName: string) {
   try {
-    console.log(`Attempting to send email to ${email}`);
-    const transporter = getEmailTransporter();
+    console.log(`[SPLIT-PAYMENT] Sending email to ${email}`);
     
-    const mailOptions = {
-      from: process.env.EMAIL_USER,
+    const resend = new Resend(process.env.RESEND_API_KEY);
+    
+    const result = await resend.emails.send({
+      from: "noreply@purblepalace.in",
       to: email,
       subject: `Payment Link for ${cakeName} Order`,
       html: `
@@ -64,24 +56,36 @@ async function sendPaymentEmail(email: string, paymentLink: string, amount: numb
           </p>
         </div>
       `,
-    };
-
-    const result = await transporter.sendMail(mailOptions);
-    console.log(`Email sent successfully to ${email}:`, result.messageId);
+    });
+    
+    if (result.error) {
+      console.error(`[SPLIT-PAYMENT] Email error for ${email}:`, result.error);
+      return false;
+    }
+    
+    console.log(`[SPLIT-PAYMENT] Email sent to ${email}: ${result.data?.id}`);
     return true;
   } catch (error) {
-    console.error(`Error sending email to ${email}:`, error);
+    console.error(`[SPLIT-PAYMENT] Error sending email to ${email}:`, error);
     return false;
   }
 }
 
 export async function POST(request: NextRequest) {
   try {
+    console.log('[SPLIT-PAYMENT] API called');
+    
     const razorpay = getRazorpayInstance();
     const body = await request.json();
-    const { totalAmount, coPayers, orderId, cakeName } = body;
+    let { totalAmount, coPayers, orderId, cakeName, orderData } = body;
+
+    // Remove emojis from cake name (Razorpay doesn't support them)
+    cakeName = cakeName.replace(/[\p{Emoji_Presentation}\p{Extended_Pictographic}]/gu, '').trim() || 'Cake Order';
+
+    console.log('[SPLIT-PAYMENT] Request data:', { totalAmount, coPayers: coPayers?.length, cakeName });
 
     if (!totalAmount || !coPayers || coPayers.length === 0) {
+      console.error('[SPLIT-PAYMENT] Invalid parameters');
       return NextResponse.json(
         { error: 'Invalid request parameters. Required: totalAmount, coPayers' },
         { status: 400 }
@@ -89,6 +93,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Create Razorpay order
+    console.log('[SPLIT-PAYMENT] Creating Razorpay order...');
     const order = await razorpay.orders.create({
       amount: Math.round(totalAmount * 100),
       currency: 'INR',
@@ -100,55 +105,138 @@ export async function POST(request: NextRequest) {
       },
     });
 
+    console.log('[SPLIT-PAYMENT] Razorpay order created:', order.id);
+
     // Generate payment links for each co-payer
+    console.log('[SPLIT-PAYMENT] Creating payment links for', coPayers.length, 'co-payers');
+    
     const links = await Promise.all(
       coPayers.map(async (payer: any) => {
-        console.log(`Creating payment link for ${payer.email} with amount ${payer.amount}`);
+        try {
+          console.log(`[SPLIT-PAYMENT] Creating link for ${payer.email}: ₹${payer.amount}`);
 
-        const link = await razorpay.paymentLink.create({
-          amount: Math.round(payer.amount * 100),
-          currency: 'INR',
-          description: `Split payment for ${cakeName} - ${payer.email}`,
-        } as any);
+          const link = await razorpay.paymentLink.create({
+            amount: Math.round(payer.amount * 100),
+            currency: 'INR',
+            description: `Split payment for ${cakeName}`,
+            notes: {
+              order_id: orderId || 'split-payment',
+              type: 'split_payment',
+            },
+          } as any);
 
-        console.log(`Payment link created: ${link.short_url}`);
+          console.log(`[SPLIT-PAYMENT] Link created for ${payer.email}:`, link.id);
 
-        // Send email with payment link
-        if (payer.email) {
-          console.log(`Sending email to ${payer.email}...`);
-          const emailSent = await sendPaymentEmail(
-            payer.email,
-            link.short_url || `https://rzp.io/${link.id}`,
-            payer.amount,
-            cakeName
-          );
-          console.log(`Email sent result: ${emailSent}`);
+          // Send email with payment link
+          if (payer.email) {
+            const emailUrl = link.short_url || `https://rzp.io/${link.id}`;
+            console.log(`[SPLIT-PAYMENT] Will send link to ${payer.email}: ${emailUrl}`);
+            
+            const emailSent = await sendPaymentEmail(
+              payer.email,
+              emailUrl,
+              payer.amount,
+              cakeName
+            );
+            
+            console.log(`[SPLIT-PAYMENT] Email result for ${payer.email}: ${emailSent}`);
+          }
+
+          // Return link with co-payer details
+          return {
+            id: link.id,
+            shortUrl: link.short_url || `https://rzp.io/${link.id}`,
+            url: link.short_url || `https://rzp.io/${link.id}`,
+            email: payer.email,
+            amount: payer.amount,
+            status: link.status || 'pending',
+          };
+        } catch (payerError: any) {
+          console.error(`[SPLIT-PAYMENT] Error creating link for ${payer.email}:`, payerError.message || payerError);
+          throw payerError;
         }
-
-        // Return link with co-payer details
-        return {
-          id: link.id,
-          shortUrl: link.short_url || `https://rzp.io/${link.id}`,
-          url: link.short_url || `https://rzp.io/${link.id}`,
-          email: payer.email,
-          amount: payer.amount,
-          status: 'pending',
-        };
       })
     );
 
-    return NextResponse.json({
-      success: true,
-      orderId: order.id,
-      amount: order.amount,
-      currency: order.currency,
-      links: links,
-      message: 'Payment links generated and emails sent to co-payers',
+    console.log('[SPLIT-PAYMENT] All links created successfully. Returning response...');
+
+    // Save CoPayment record to database
+    try {
+      console.log('[SPLIT-PAYMENT] Saving CoPayment with orderData:');
+      console.log('[SPLIT-PAYMENT] orderData customer email:', orderData?.customer?.email);
+      console.log('[SPLIT-PAYMENT] orderData items:', JSON.stringify(orderData?.items, null, 2));
+      console.log('[SPLIT-PAYMENT] orderData delivery address:', JSON.stringify(orderData?.deliveryAddress, null, 2));
+      console.log('[SPLIT-PAYMENT] Full orderData size:', JSON.stringify(orderData).length, 'bytes');
+      
+      const coPayment = await prisma.coPayment.create({
+        data: {
+          // Don't set orderId yet - it will be linked after order is created
+          totalAmount,
+          status: 'pending', // Will update when payments are received
+          orderData: orderData || null, // Store order details for creating order after payment
+          contributors: {
+            create: coPayers.map((payer: any, idx: number) => ({
+              email: payer.email,
+              name: payer.name || payer.email.split('@')[0],
+              amount: payer.amount,
+              status: 'pending',
+              paymentLinkId: links[idx]?.id, // Store Razorpay payment link ID
+            })),
+          },
+          paymentLinks: links.map(l => ({
+            id: l.id,
+            url: l.shortUrl || l.url,
+            email: l.email,
+            amount: l.amount,
+          })),
+        },
+        include: {
+          contributors: true,
+        },
+      });
+
+      console.log('[SPLIT-PAYMENT] CoPayment record saved:', coPayment.id);
+
+      return NextResponse.json({
+        success: true,
+        coPaymentId: coPayment.id,  // Use coPaymentId instead of orderId
+        amount: totalAmount,
+        currency: 'INR',
+        links: links,
+        contributors: coPayment.contributors.map(c => ({
+          email: c.email,
+          name: c.name,
+          amount: c.amount,
+          status: c.status,
+        })),
+        message: 'Payment links generated and emails sent to co-payers',
+      });
+    } catch (dbError: any) {
+      console.error('[SPLIT-PAYMENT] Error saving to database:', dbError);
+      // Still return success since payment links were created
+      return NextResponse.json({
+        success: true,
+        amount: totalAmount,
+        currency: 'INR',
+        links: links,
+        message: 'Payment links generated and emails sent to co-payers',
+      });
+    }
+  } catch (error: any) {
+    console.error('[SPLIT-PAYMENT] Error in split payment:', error);
+    console.error('[SPLIT-PAYMENT] Error details:', {
+      message: error.message,
+      code: error.code,
+      statusCode: error.statusCode,
+      response: error.response?.data,
     });
-  } catch (error) {
-    console.error('Error creating split payment:', error);
+    
     return NextResponse.json(
-      { error: 'Failed to create payment order' },
+      { 
+        error: 'Failed to create payment order',
+        details: error.message || 'Unknown error',
+        code: error.code || 'UNKNOWN'
+      },
       { status: 500 }
     );
   }

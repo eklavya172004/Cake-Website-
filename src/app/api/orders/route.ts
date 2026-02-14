@@ -10,7 +10,7 @@ export async function POST(req: NextRequest) {
     const {
       items,
       deliveryDetails,
-      deliveryType,
+      // deliveryType, // Not used in this flow
       paymentMethod,
       subtotal,
       deliveryFee,
@@ -89,6 +89,7 @@ export async function POST(req: NextRequest) {
         orderNumber,
         vendorId: cake.vendorId,
         userId: user.id,
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         items: items.map((item: any) => ({
           cakeId: item.cakeId,
           name: item.name,
@@ -130,57 +131,76 @@ export async function POST(req: NextRequest) {
       },
     });
 
-    // Send vendor notification email
-    const vendorAccount = await prisma.account.findUnique({
-      where: { vendorId: cake.vendorId },
-    });
+    // ⚠️ IMPORTANT: Only send confirmation emails for COD orders
+    // For Razorpay (single or split) payments, emails are sent by webhook AFTER successful payment
+    if (paymentMethod === 'cod' || paymentMethod === 'cash') {
+      // Send vendor notification email
+      const vendorAccount = await prisma.account.findUnique({
+        where: { vendorId: cake.vendorId },
+      });
 
-    if (vendorAccount?.email && order.estimatedDelivery) {
-      await sendVendorOrderNotification(
-        vendorAccount.email,
-        cake.vendor?.name || 'Vendor',
-        order.orderNumber,
-        deliveryDetails.fullName,
-        deliveryDetails.email,
-        deliveryDetails.phone,
-        items.map((item: any) => ({
-          name: item.name,
-          quantity: item.quantity,
-          price: item.price,
-          customization: item.customization || null,
-        })),
-        {
-          fullName: deliveryDetails.fullName,
-          email: deliveryDetails.email,
-          phone: deliveryDetails.phone,
-          address: deliveryDetails.address,
-          city: deliveryDetails.city,
-          landmark: deliveryDetails.landmark,
-        },
-        order.estimatedDelivery,
-        total
-      );
-    }
+      if (vendorAccount?.email && order.estimatedDelivery) {
+        try {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          await sendVendorOrderNotification(
+            vendorAccount.email,
+            cake.vendor?.name || 'Vendor',
+            order.orderNumber,
+            deliveryDetails.fullName,
+            deliveryDetails.email,
+            deliveryDetails.phone,
+            items.map((item: any) => ({
+              name: item.name,
+              quantity: item.quantity,
+              price: item.price,
+              customization: item.customization || null,
+            })),
+            {
+              fullName: deliveryDetails.fullName,
+              email: deliveryDetails.email,
+              phone: deliveryDetails.phone,
+              address: deliveryDetails.address,
+              city: deliveryDetails.city,
+              landmark: deliveryDetails.landmark,
+            },
+            order.estimatedDelivery,
+            total
+          );
+          console.log(`📧 COD: Vendor email sent for order ${order.orderNumber}`);
+        } catch (error) {
+          console.error(`⚠️  Failed to send vendor email:`, error);
+        }
+      }
 
-    // Send customer confirmation email
-    if (order.estimatedDelivery) {
-      await sendCustomerOrderConfirmation(
-        deliveryDetails.email,
-        deliveryDetails.fullName,
-        order.orderNumber,
-        items.map((item: any) => ({
-          name: item.name,
-          quantity: item.quantity,
-          price: item.price,
-          customization: item.customization || null,
-        })),
-        total,
-        order.estimatedDelivery,
-        cake.vendor?.name || 'Our Shop',
-        cake.vendor?.profile?.shopPhone,
-        cake.vendor?.profile?.shopEmail,
-        cake.vendor?.profile?.shopAddress
-      );
+      // Send customer confirmation email
+      if (order.estimatedDelivery) {
+        try {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          await sendCustomerOrderConfirmation(
+            deliveryDetails.email,
+            deliveryDetails.fullName,
+            order.orderNumber,
+            items.map((item: any) => ({
+              name: item.name,
+              quantity: item.quantity,
+              price: item.price,
+              customization: item.customization || null,
+            })),
+            total,
+            order.estimatedDelivery,
+            cake.vendor?.name || 'Our Shop',
+            cake.vendor?.profile?.shopPhone,
+            cake.vendor?.profile?.shopEmail,
+            cake.vendor?.profile?.shopAddress
+          );
+          console.log(`📧 COD: Customer confirmation email sent for order ${order.orderNumber}`);
+        } catch (error) {
+          console.error(`⚠️  Failed to send customer email:`, error);
+        }
+      }
+    } else {
+      console.log(`ℹ️  Razorpay payment detected - skipping email. Will be sent after payment confirmation via webhook.`);
+      console.log(`📋 Payment Status: ${paymentStatus} | Payment Method: ${paymentMethod}`);
     }
 
     return NextResponse.json({
@@ -212,9 +232,18 @@ export async function GET(req: NextRequest) {
     const order = await prisma.order.findUnique({
       where: { id: orderId },
       include: {
-        vendor: true,
+        vendor: {
+          include: {
+            profile: true,
+          },
+        },
         statusHistory: {
           orderBy: { createdAt: 'desc' },
+        },
+        coPayment: {
+          include: {
+            contributors: true,
+          },
         },
       },
     });

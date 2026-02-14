@@ -1,24 +1,36 @@
 'use client';
 import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { Users, X, AlertCircle, CheckCircle } from 'lucide-react';
 
 export default function SplitPaymentUI({ 
   totalAmount, 
   cakeName,
+  orderData,
   onPaymentLinksGenerated 
 }: { 
   totalAmount: number;
   cakeName: string;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  orderData?: any;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   onPaymentLinksGenerated?: (links: any[]) => void;
 }) {
+  const router = useRouter();
   const [coPayers, setCoPayers] = useState([{ email: '', amount: totalAmount }]);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [generatedLinks, setGeneratedLinks] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState(false);
 
   const addPayer = () => {
+    if (coPayers.length >= 3) {
+      setError('❌ Maximum 3 co-payers allowed for split payment');
+      return;
+    }
     setCoPayers([...coPayers, { email: '', amount: 0 }]);
+    setError(''); // Clear error when adding valid payer
   };
 
   const removePayer = (index: number) => {
@@ -42,17 +54,32 @@ export default function SplitPaymentUI({
     setSuccess(false);
     setLoading(true);
     
-    // Validate
-    const total = calculateTotal();
-    if (Math.abs(total - totalAmount) > 0.01) {
-      setError(`Total amounts must equal ₹${totalAmount.toFixed(2)}`);
+    // Validate minimum order amount
+    if (totalAmount < 500) {
+      setError('❌ Split payment only works for orders above ₹500');
       setLoading(false);
       return;
     }
 
+    // Validate minimum users
     const validPayersWithEmails = coPayers.filter(p => p.email && p.amount > 0);
-    if (validPayersWithEmails.length === 0) {
-      setError('Please add at least one co-payer with email and amount');
+    if (validPayersWithEmails.length < 2) {
+      setError('❌ Minimum 2 co-payers required for split payment');
+      setLoading(false);
+      return;
+    }
+
+    // Validate maximum users
+    if (validPayersWithEmails.length > 3) {
+      setError('❌ Maximum 3 co-payers allowed for split payment');
+      setLoading(false);
+      return;
+    }
+    
+    // Validate total amount matches
+    const total = calculateTotal();
+    if (Math.abs(total - totalAmount) > 0.01) {
+      setError(`❌ Total amounts must equal ₹${totalAmount.toFixed(2)}`);
       setLoading(false);
       return;
     }
@@ -65,15 +92,26 @@ export default function SplitPaymentUI({
           totalAmount, 
           coPayers: validPayersWithEmails, 
           orderId: `ORDER-${Date.now()}`,
-          cakeName
+          cakeName,
+          orderData: orderData // Pass full order info to create order after payment
         }),
       });
       const data = await res.json();
       
-      if (data.success && data.links) {
+      if (data.success && data.links && data.coPaymentId) {
         setGeneratedLinks(data.links);
         setSuccess(true);
+        
+        // Store coPaymentId for tracking
+        sessionStorage.setItem('coPaymentId', data.coPaymentId);
+        
         onPaymentLinksGenerated?.(data.links);
+        
+        // ✅ Redirect to tracking page after 2 seconds using coPaymentId
+        setTimeout(() => {
+          console.log('Redirecting to split payment tracking:', data.coPaymentId);
+          router.push(`/split-payment-status/${data.coPaymentId}`);
+        }, 2000);
       } else {
         setError(data.error || 'Failed to generate links');
       }
@@ -86,7 +124,7 @@ export default function SplitPaymentUI({
   };
 
   return (
-    <div className="w-full bg-gradient-to-br from-pink-50 to-purple-50 rounded-lg shadow-lg p-6 border border-pink-200">
+    <div className="w-full bg-linear-to-br from-pink-50 to-purple-50 rounded-lg shadow-lg p-6 border border-pink-200">
       <div className="flex items-center gap-2 mb-4">
         <Users className="text-pink-600" size={24} />
         <h2 className="text-2xl font-bold text-pink-700">Split Payment</h2>
@@ -95,26 +133,36 @@ export default function SplitPaymentUI({
       <div className="mb-4 p-3 bg-blue-50 border border-blue-200 text-blue-800 rounded text-sm">
         <p className="font-semibold mb-1">How it works:</p>
         <ol className="list-decimal list-inside space-y-1 text-xs">
-          <li>Add your co-payers and their payment amounts</li>
-          <li>Click "Generate & Send Payment Links"</li>
+          <li>Add 2-3 co-payers and their payment amounts</li>
+          <li>Minimum order amount: ₹500</li>
+          <li>Click &quot;Generate &amp; Send Payment Links&quot;</li>
           <li>Payment links will be emailed to each person</li>
           <li>Once all payments are received, your order will be confirmed</li>
         </ol>
+        <p className="mt-2 pt-2 border-t border-blue-300 text-xs font-semibold">📋 Rules: 2-3 co-payers required • Order must be ≥₹500</p>
       </div>
+      
+      {totalAmount < 500 && (
+        <div className="mb-4 p-3 bg-yellow-100 border border-yellow-400 text-yellow-800 rounded flex gap-2 items-start">
+          <AlertCircle size={20} className="shrink-0 mt-0.5" />
+          <span className="text-sm"><strong>⚠️ Note:</strong> Split payment requires minimum order of ₹500. Current order: ₹{totalAmount.toFixed(2)}</span>
+        </div>
+      )}
       
       {error && (
         <div className="mb-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded flex gap-2 items-start">
-          <AlertCircle size={20} className="flex-shrink-0 mt-0.5" />
+          <AlertCircle size={20} className="shrink-0 mt-0.5" />
           <span>{error}</span>
         </div>
       )}
 
       {success && (
         <div className="mb-4 p-3 bg-green-100 border border-green-400 text-green-700 rounded flex gap-2 items-start">
-          <CheckCircle size={20} className="flex-shrink-0 mt-0.5" />
+          <CheckCircle size={20} className="shrink-0 mt-0.5" />
           <div>
-            <p className="font-semibold">Payment links sent successfully!</p>
-            <p className="text-sm mt-1">Now click "Pay" button below to place your order. It will be confirmed once all co-payers complete their payment.</p>
+            <p className="font-semibold">✅ Payment links sent successfully!</p>
+            <p className="text-sm mt-1">🔄 Redirecting to payment tracker...</p>
+            <p className="text-xs mt-2">You&apos;ll be able to track each co-payer&apos;s payment status in real-time.</p>
           </div>
         </div>
       )}
@@ -147,6 +195,8 @@ export default function SplitPaymentUI({
                 type="button"
                 onClick={() => removePayer(i)}
                 className="p-2 hover:bg-red-100 rounded text-red-600"
+                title="Remove this co-payer"
+                aria-label="Remove co-payer"
               >
                 <X size={20} />
               </button>
@@ -167,16 +217,19 @@ export default function SplitPaymentUI({
       <button 
         type="button"
         onClick={addPayer}
-        className="w-full mb-3 text-pink-600 font-semibold py-2 rounded border-2 border-pink-600 hover:bg-pink-50 transition"
+        disabled={coPayers.length >= 3}
+        className="w-full mb-3 text-pink-600 font-semibold py-2 rounded border-2 border-pink-600 hover:bg-pink-50 transition disabled:opacity-50 disabled:cursor-not-allowed"
+        title={coPayers.length >= 3 ? 'Maximum 3 co-payers allowed' : 'Add another co-payer'}
       >
-        + Add Co-Payer
+        + Add Co-Payer {coPayers.length < 3 && `(${coPayers.length}/3)`}
       </button>
 
       <button 
         type="button"
         onClick={handleCreateLinks}
-        disabled={loading}
-        className="w-full bg-gradient-to-r from-pink-600 to-purple-600 text-white font-bold py-3 rounded-lg hover:from-pink-700 hover:to-purple-700 disabled:opacity-50 transition shadow-md"
+        disabled={loading || totalAmount < 500}
+        className="w-full bg-linear-to-r from-pink-600 to-purple-600 text-white font-bold py-3 rounded-lg hover:from-pink-700 hover:to-purple-700 disabled:opacity-50 transition shadow-md"
+        title={totalAmount < 500 ? 'Order must be at least ₹500 for split payment' : ''}
       >
         {loading ? 'Generating Links...' : 'Generate & Send Payment Links'}
       </button>
